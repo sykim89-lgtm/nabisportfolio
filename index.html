@@ -155,6 +155,47 @@
     .pos { color: var(--green); }
     .neg { color: var(--red); }
     .neu { color: var(--text); }
+
+    /* ── Tabs ───────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color .2s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Portfolio ──────────────────────────── */
+    .port-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .port-table td:first-child { font-weight: 500; }
+    .port-table .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .weight-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .weight-fill { height: 100%; border-radius: 2px; background: var(--accent); }
   </style>
 </head>
 <body>
@@ -172,6 +213,12 @@
 
 <div id="error-box"></div>
 
+<div class="tabs">
+  <button class="tab-btn active" id="btn-analysis" onclick="switchTab('analysis')">📈 수익률 분석</button>
+  <button class="tab-btn" id="btn-portfolio" onclick="switchTab('portfolio')">💼 내 포트폴리오</button>
+</div>
+
+<div id="tab-analysis">
 <!-- Summary -->
 <div class="summary-grid">
   <div class="card">
@@ -234,11 +281,75 @@
     <tbody><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">로딩 중...</td></tr></tbody>
   </table>
 </div>
+</div><!-- /tab-analysis -->
+
+<!-- ── 내 포트폴리오 탭 ─────────────────────────── -->
+<div id="tab-portfolio" style="display:none">
+
+  <div class="port-summary">
+    <div class="card">
+      <div class="card-label">총 평가금액 (원화환산)</div>
+      <div class="card-value neu" id="p-total">-</div>
+    </div>
+    <div class="card">
+      <div class="card-label">총 평가손익</div>
+      <div class="card-value" id="p-gain">-</div>
+    </div>
+    <div class="card">
+      <div class="card-label">총 수익률</div>
+      <div class="card-value" id="p-return">-</div>
+    </div>
+    <div class="card">
+      <div class="card-label">환율 (USD/KRW)</div>
+      <div class="card-value neu" id="p-fx">-</div>
+      <div class="card-sub">수동 설정값</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">보유 종목</div>
+    <div class="chart-subtitle">평가금액 기준 정렬</div>
+    <table id="t-portfolio" class="port-table">
+      <thead>
+        <tr>
+          <th style="text-align:left">종목명</th>
+          <th>평단가</th>
+          <th>보유수량</th>
+          <th>현재가</th>
+          <th>평가금액</th>
+          <th>보유비중</th>
+          <th>평가손익</th>
+          <th>평가수익률</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div><!-- /tab-portfolio -->
 
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
 const API_KEY  = 'AIzaSyAFyyUDcLzM3Q6YOkg61JMzQbv-l9Nwsjg';
 const SHEET_ID = '1ZPl5NDOI2yzwm7cCAidcfzZz73C6aXcVDzf_HMbaUuo';
+
+// ─── 포트폴리오 데이터 ─────────────────────────────────────────────────────────
+const FX_USD_KRW = 1471.32; // USD → KRW 환율
+
+const HOLDINGS = [
+  { name: 'MU',          sub: 'Micron Technology Inc',              currency: 'USD', avgCost: 223.98,  qty: 220,  currentPrice: 724.09  },
+  { name: 'SNDK',        sub: 'Sandisk Corp',                       currency: 'USD', avgCost: 266.47,  qty: 100,  currentPrice: 1407    },
+  { name: 'NBIS',        sub: 'Nebius Group NV',                    currency: 'USD', avgCost: 132.14,  qty: 385,  currentPrice: 219.89  },
+  { name: '파두',         sub: '440110',                             currency: 'KRW', avgCost: 95000,   qty: 1000, currentPrice: 100100  },
+  { name: '원화',         sub: 'KRW',                               currency: 'KRW', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 71261764 },
+  { name: '두산에너빌리티', sub: '034020',                           currency: 'KRW', avgCost: 70306,   qty: 500,  currentPrice: 110800  },
+  { name: 'KODEX 미국나스닥100', sub: '379810',                     currency: 'KRW', avgCost: 20684,   qty: 1005, currentPrice: 29075   },
+  { name: 'KODEX 미국S&P500',   sub: '379800',                     currency: 'KRW', avgCost: 19480,   qty: 1005, currentPrice: 25280   },
+  { name: 'TIGER 구리실물',      sub: '160580',                     currency: 'KRW', avgCost: 16320,   qty: 1060, currentPrice: 16580   },
+  { name: 'PLUS 글로벌원자력밸류체인', sub: '0007G0',               currency: 'KRW', avgCost: 17907,   qty: 1000, currentPrice: 16460   },
+  { name: 'ACE KRX금현물',       sub: '411060',                     currency: 'KRW', avgCost: 26610,   qty: 434,  currentPrice: 30495   },
+  { name: 'TIME 미국나스닥100채권혼합50액티브', sub: '0019K0',      currency: 'KRW', avgCost: 11823,   qty: 190,  currentPrice: 13975   },
+  { name: '달러',         sub: 'USD',                               currency: 'USD', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 106.35 },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt    = n => new Intl.NumberFormat('ko-KR').format(Math.round(n));
@@ -566,6 +677,85 @@ function renderYearly(yearlyData, sp500, nasdaq, monthly) {
   tbody.innerHTML = rows;
 }
 
+// ─── 탭 전환 ──────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tab-analysis').style.display  = tab === 'analysis'  ? '' : 'none';
+  document.getElementById('tab-portfolio').style.display = tab === 'portfolio' ? '' : 'none';
+  document.getElementById('btn-analysis').classList.toggle('active',  tab === 'analysis');
+  document.getElementById('btn-portfolio').classList.toggle('active', tab === 'portfolio');
+}
+
+// ─── 포트폴리오 렌더링 ────────────────────────────────────────────────────────
+function renderPortfolio() {
+  const fx = FX_USD_KRW;
+
+  // 원화 환산 평가금액 계산
+  const enriched = HOLDINGS.map(h => {
+    let valueKRW, value, gain, gainPct;
+
+    if (h.fixedValue != null) {
+      value    = h.fixedValue;
+      valueKRW = h.currency === 'USD' ? h.fixedValue * fx : h.fixedValue;
+      gain     = null;
+      gainPct  = null;
+    } else {
+      value    = h.qty * h.currentPrice;
+      valueKRW = h.currency === 'USD' ? value * fx : value;
+      gain     = (h.currentPrice - h.avgCost) * h.qty;
+      gainPct  = ((h.currentPrice - h.avgCost) / h.avgCost) * 100;
+    }
+    return { ...h, value, valueKRW, gain, gainPct };
+  });
+
+  const totalKRW   = enriched.reduce((s, h) => s + h.valueKRW, 0);
+  const totalGain  = enriched.reduce((s, h) => s + (h.gain != null ? (h.currency === 'USD' ? h.gain * fx : h.gain) : 0), 0);
+  const totalCost  = enriched.reduce((s, h) => {
+    if (h.qty == null) return s;
+    const cost = h.qty * h.avgCost;
+    return s + (h.currency === 'USD' ? cost * fx : cost);
+  }, 0);
+  const totalRet = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
+
+  // 요약 카드
+  document.getElementById('p-total').textContent  = `₩${fmt(totalKRW)}`;
+  const gainEl = document.getElementById('p-gain');
+  gainEl.textContent = `${totalGain >= 0 ? '+' : ''}₩${fmt(totalGain)}`;
+  gainEl.className   = `card-value ${cls(totalGain)}`;
+  const retEl = document.getElementById('p-return');
+  retEl.textContent = fmtPct(totalRet);
+  retEl.className   = `card-value ${cls(totalRet)}`;
+  document.getElementById('p-fx').textContent = `${fmt(fx)}원`;
+
+  // 테이블 (평가금액 내림차순)
+  const sorted = [...enriched].sort((a, b) => b.valueKRW - a.valueKRW);
+  const tbody = document.querySelector('#t-portfolio tbody');
+
+  const fmtPrice = (h, val) => {
+    if (val == null) return '-';
+    return h.currency === 'USD' ? `$${val.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}` : `₩${fmt(val)}`;
+  };
+
+  tbody.innerHTML = sorted.map(h => {
+    const weight = (h.valueKRW / totalKRW * 100).toFixed(2);
+    return `<tr>
+      <td>
+        <div>${h.name}</div>
+        <div class="sub">${h.sub}</div>
+      </td>
+      <td>${fmtPrice(h, h.avgCost)}</td>
+      <td>${h.qty != null ? h.qty.toLocaleString() : '-'}</td>
+      <td>${fmtPrice(h, h.currentPrice)}</td>
+      <td>${fmtPrice(h, h.value)}</td>
+      <td>
+        <div>${weight}%</div>
+        <div class="weight-bar"><div class="weight-fill" style="width:${Math.min(weight, 100)}%"></div></div>
+      </td>
+      <td class="${h.gain != null ? cls(h.gain) : 'neu'}">${h.gain != null ? (h.gain >= 0 ? '+' : '') + fmtPrice(h, h.gain) : '-'}</td>
+      <td class="${h.gainPct != null ? cls(h.gainPct) : 'neu'}">${h.gainPct != null ? fmtPct(h.gainPct) : '-'}</td>
+    </tr>`;
+  }).join('');
+}
+
 function toggleYear(year) {
   const rows = document.querySelectorAll(`.month-row[data-year="${year}"]`);
   const arrow = document.getElementById(`arrow-${year}`);
@@ -672,6 +862,7 @@ function toggleTheme() {
 // 저장된 테마 복원 (기본값: 라이트)
 if (localStorage.getItem('theme') !== 'dark') toggleTheme();
 
+renderPortfolio();
 loadAll();
 
 // 탭 포커스 시 자동 새로고침 (마지막 로드 후 1분 이상 지났을 때만)
