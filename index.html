@@ -196,6 +196,47 @@
       overflow: hidden;
     }
     .weight-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+
+    /* ── Market Cap ─────────────────────────────── */
+    .mc-sub-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 18px;
+    }
+    .mc-sub-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all .2s;
+    }
+    .mc-sub-btn:hover { color: var(--text); }
+    .mc-sub-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .mc-status {
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .mc-table th { font-size: 12px; }
+    .mc-table td { font-size: 13px; }
+    .rank-badge {
+      display: inline-block;
+      min-width: 28px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .rank-badge.top3 { color: var(--accent); font-size: 14px; }
   </style>
 </head>
 <body>
@@ -216,6 +257,7 @@
 <div class="tabs">
   <button class="tab-btn active" id="btn-analysis" onclick="switchTab('analysis')">📈 수익률 분석</button>
   <button class="tab-btn" id="btn-portfolio" onclick="switchTab('portfolio')">💼 내 포트폴리오</button>
+  <button class="tab-btn" id="btn-marketcap" onclick="switchTab('marketcap')">📊 시가총액 순위</button>
 </div>
 
 <div id="tab-analysis">
@@ -306,6 +348,62 @@
     </table>
   </div>
 </div><!-- /tab-portfolio -->
+
+<!-- ── 시가총액 순위 탭 ────────────────────────────── -->
+<div id="tab-marketcap" style="display:none">
+
+  <div class="mc-sub-tabs">
+    <button class="mc-sub-btn active" id="btn-mc-kr" onclick="switchMcTab('kr')">🇰🇷 한국 (KOSPI+KOSDAQ)</button>
+    <button class="mc-sub-btn" id="btn-mc-us" onclick="switchMcTab('us')">🇺🇸 미국 (NYSE+NASDAQ)</button>
+  </div>
+
+  <!-- 한국 -->
+  <div id="mc-kr">
+    <div class="chart-card">
+      <div class="chart-title">한국 시가총액 순위</div>
+      <div class="chart-subtitle">KOSPI + KOSDAQ 통합 — 시가총액 기준 정렬</div>
+      <div id="mc-kr-status" class="mc-status">⏳ 데이터 로딩 중...</div>
+      <div id="mc-kr-table" style="display:none;overflow-x:auto">
+        <table class="mc-table">
+          <thead>
+            <tr>
+              <th style="text-align:center;width:50px">순위</th>
+              <th style="text-align:left">종목명</th>
+              <th>시가총액</th>
+              <th>현재가</th>
+              <th>등락률</th>
+            </tr>
+          </thead>
+          <tbody id="mc-kr-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 미국 -->
+  <div id="mc-us" style="display:none">
+    <div class="chart-card">
+      <div class="chart-title">미국 시가총액 순위</div>
+      <div class="chart-subtitle">S&amp;P500 + NASDAQ100 구성종목 — 시가총액 기준 정렬</div>
+      <div id="mc-us-status" class="mc-status">⏳ 데이터 로딩 중...</div>
+      <div id="mc-us-table" style="display:none;overflow-x:auto">
+        <table class="mc-table">
+          <thead>
+            <tr>
+              <th style="text-align:center;width:50px">순위</th>
+              <th style="text-align:left">종목명</th>
+              <th>시가총액</th>
+              <th>현재가</th>
+              <th>등락률</th>
+            </tr>
+          </thead>
+          <tbody id="mc-us-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-marketcap -->
 
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -659,10 +757,15 @@ function renderYearly(yearlyData, sp500, nasdaq, monthly) {
 
 // ─── 탭 전환 ──────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  document.getElementById('tab-analysis').style.display  = tab === 'analysis'  ? '' : 'none';
-  document.getElementById('tab-portfolio').style.display = tab === 'portfolio' ? '' : 'none';
-  document.getElementById('btn-analysis').classList.toggle('active',  tab === 'analysis');
-  document.getElementById('btn-portfolio').classList.toggle('active', tab === 'portfolio');
+  ['analysis', 'portfolio', 'marketcap'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none';
+    document.getElementById(`btn-${t}`).classList.toggle('active', t === tab);
+  });
+  // 시가총액 탭 최초 진입 시 자동 로드
+  if (tab === 'marketcap' && !mcTabLoaded.kr) {
+    mcTabLoaded.kr = true;
+    loadKoreaMarketCap();
+  }
 }
 
 // ─── 포트폴리오 렌더링 ────────────────────────────────────────────────────────
@@ -842,6 +945,230 @@ function toggleTheme() {
     tp.bodyColor       = tooltipBody;
     chart.update();
   });
+}
+
+// ─── 시가총액 순위 ────────────────────────────────────────────────────────────
+const FMP_KEY = '385IYPVvt7Td1S1NCVo6oq6JI8mYgNVS';
+const mcTabLoaded = { kr: false, us: false };
+
+function switchMcTab(market) {
+  ['kr', 'us'].forEach(m => {
+    document.getElementById(`mc-${m}`).style.display     = m === market ? '' : 'none';
+    document.getElementById(`btn-mc-${m}`).classList.toggle('active', m === market);
+  });
+  if (!mcTabLoaded[market]) {
+    mcTabLoaded[market] = true;
+    market === 'us' ? loadUSMarketCap() : loadKoreaMarketCap();
+  }
+}
+
+function retryMc(market) {
+  mcTabLoaded[market] = false;
+  switchMcTab(market);
+}
+
+// ── 미국 시가총액 ─────────────────────────────────────────────────────────────
+async function loadUSMarketCap() {
+  const statusEl = document.getElementById('mc-us-status');
+  const tableEl  = document.getElementById('mc-us-table');
+  statusEl.style.display = '';
+  statusEl.innerHTML = '⏳ S&P500 + NASDAQ100 구성종목 조회 중...';
+  tableEl.style.display = 'none';
+
+  try {
+    // 1. 구성종목 리스트 가져오기
+    const [spRes, nqRes] = await Promise.allSettled([
+      fetch(`https://financialmodelingprep.com/stable/index-constituent?symbol=%5EGSPC&apikey=${FMP_KEY}`).then(r => r.json()),
+      fetch(`https://financialmodelingprep.com/stable/index-constituent?symbol=%5ENDX&apikey=${FMP_KEY}`).then(r => r.json())
+    ]);
+
+    const symbols = new Set();
+    if (spRes.status === 'fulfilled' && Array.isArray(spRes.value))
+      spRes.value.forEach(s => s.symbol && symbols.add(s.symbol));
+    if (nqRes.status === 'fulfilled' && Array.isArray(nqRes.value))
+      nqRes.value.forEach(s => s.symbol && symbols.add(s.symbol));
+
+    // 구성종목 API 실패 시 폴백 리스트
+    if (symbols.size < 10) {
+      ['AAPL','MSFT','NVDA','AMZN','GOOGL','META','TSLA','AVGO','BRK-B','JPM',
+       'LLY','V','UNH','XOM','MA','COST','HD','PG','WMT','NFLX','JNJ','ABBV',
+       'BAC','CRM','MRK','AMD','ORCL','CVX','KO','WFC','PEP','CSCO','ACN','TMO',
+       'MCD','ABT','DHR','LIN','GE','IBM','INTU','TXN','AXP','PM','MS','AMGN',
+       'CAT','RTX','ISRG','BKNG','NOW','GS','SPGI','BLK','PLD','VRTX','AMAT',
+       'LOW','T','DE','ADP','SYK','ETN','MDT','GILD','REGN','ADI','PANW','UBER',
+       'MU','LRCX','SCHW','PH','BSX','CB','ZTS','KLAC','MMC','SHW','SBUX','FI',
+       'AMT','CTAS','CME','SO','EQIX','DUK','MO','NEE','CL','MSI','BMY','MMM',
+       'BA','WM','CI','GD','ITW','TJX','MDLZ','ICE','NOC','EOG','APD','AON',
+       'HCA','MCO','PSA','F','GM','VLO','PNC','ECL','MPC','FDX','TGT','OXY',
+       'EMR','TT','MAR','FCX','AFL','AIG','CARR','PCAR','SRE','ADSK','NXPI',
+       'MNST','MCHP','ROST','IDXX','ROP','BIIB','ILMN','ALGN','ANSS','CDNS',
+       'FTNT','SNPS','VRSK','FANG','DVN','HES','BKR','HAL','SLB','COP','MRO',
+       'TRGP','WMB','KMI','OKE','LNG','PSX','DD','DOW','LYB','PPG','NUE','NEM',
+       'GOLD','QCOM','INTC','TXN','MU','HPQ','HPE','DELL','WDC','STX','ANET',
+       'KEYS','FFIV','ZBRA','CDW','NTAP','CSCO','JNPR','AKAM','GDDY','LDOS',
+       'JKHY','EPAM','CTSH','ACN','INFY','WIT','GLOB','FLUT','CPRT','ODFL',
+       'CHRW','EXPD','XPO','JBHT','LSTR','WERN','KNX','SAIA','R','GXO',
+       'UPS','FDX','AMZL','USPS','DHL','SPGI','MCO','MSCI','NDAQ','ICE',
+       'CME','CBOE','TW','MKTX','LPLA','RJF','SSNC','FDS','VRSK',
+       'PGR','ALL','TRV','CB','AIG','AFL','LNC','PRU','MET','EV',
+       'GS','MS','JPM','BAC','WFC','C','USB','PNC','TFC','KEY',
+       'RF','HBAN','CFG','FITB','MTB','ZION','CMA','SIVBQ','FRC',
+       'SCHW','ETFC','AMTD','IBKR','HOOD','COIN','SOFI',
+       'BLK','IVZ','BEN','TROW','STT','BK','NTRS','SEI','AMG',
+       'LMT','NOC','GD','BA','RTX','L3H','TDY','HEI','LDOS','SAIC',
+       'CVS','WBA','MCK','CAH','ABC','HUM','CNC','MOH','ELV',
+       'DGX','LH','IDXX','PKI','HOLX','HOLOGIC','VRTX','BIIB','GILD',
+       'MRNA','BNTX','PFE','JNJ','MRK','ABT','TMO','DHR','A','WAT',
+       'SHW','ECL','PPG','RPM','EMN','HUN','CE','OLN','LYB','DD','DOW',
+       'APD','PX','LINDE','ALB','SQM','MP','ENPH','SEDG','FSLR','CSIQ',
+       'RUN','NOVA','ARRY','CWEN','NEP','BEP','AES','NEE','ED','D','EXC',
+       'DTE','FE','PPL','ETR','XEL','WEC','CMS','LNT','EVRG','OTTR',
+       'AMT','CCI','EQIX','DLR','CONE','QTS','IRM','COR','VICI','MGM',
+       'LVS','WYNN','CZR','BYD','RCL','CCL','NCLH','MAR','HLT','WH',
+       'H','IHG','CHH','MCRI','SHO','PK','RHP','APLE','BRAEMAR'].forEach(s => symbols.add(s));
+    }
+
+    const tickerArr = [...symbols];
+    statusEl.innerHTML = `⏳ ${tickerArr.length}개 종목 시세 로딩 중...`;
+
+    // 2. 배치로 시세 조회 (100개씩)
+    const allQuotes = [];
+    const BATCH = 100;
+    for (let i = 0; i < tickerArr.length; i += BATCH) {
+      const batch = tickerArr.slice(i, i + BATCH).join(',');
+      try {
+        const res  = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${batch}&apikey=${FMP_KEY}`);
+        const data = await res.json();
+        if (Array.isArray(data)) allQuotes.push(...data.filter(q => q.marketCap > 0));
+      } catch (e) { /* 배치 실패 시 skip */ }
+      if (i + BATCH < tickerArr.length) await new Promise(r => setTimeout(r, 150));
+    }
+
+    if (allQuotes.length === 0) throw new Error('시세 데이터를 가져올 수 없습니다');
+
+    // 3. 시가총액 기준 정렬
+    allQuotes.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
+    renderMcTable('us', allQuotes.slice(0, 500));
+    statusEl.style.display = 'none';
+    tableEl.style.display  = '';
+
+  } catch (e) {
+    statusEl.innerHTML = `<div style="color:var(--red)">❌ 데이터 로딩 실패: ${e.message}</div>
+      <button onclick="retryMc('us')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
+  }
+}
+
+// ── 한국 시가총액 ─────────────────────────────────────────────────────────────
+async function loadKoreaMarketCap() {
+  const statusEl = document.getElementById('mc-kr-status');
+  const tableEl  = document.getElementById('mc-kr-table');
+  statusEl.style.display = '';
+  statusEl.innerHTML = '⏳ KRX 데이터 조회 중...';
+  tableEl.style.display = 'none';
+
+  // 거래일 계산 (주말이면 금요일로)
+  const d = new Date();
+  if (d.getDay() === 0) d.setDate(d.getDate() - 2);
+  if (d.getDay() === 6) d.setDate(d.getDate() - 1);
+  const trdDd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+
+  const fetchKRX = async (mktId) => {
+    const params = `bld=dbms/MDC/STAT/standard/MDCSTAT03901&locale=ko_KR&mktId=${mktId}&trdDd=${trdDd}&money=1&csvxls_isNo=false`;
+    const krxUrl = `https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd?${params}`;
+    // allorigins 프록시 경유
+    const proxied = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(krxUrl)}`);
+    if (!proxied.ok) throw new Error(`HTTP ${proxied.status}`);
+    const text = await proxied.text();
+    // 빈 응답 or HTML이면 오류
+    if (!text.trim().startsWith('{')) throw new Error('KRX 데이터 형식 오류 (JSON이 아님)');
+    return JSON.parse(text);
+  };
+
+  try {
+    statusEl.innerHTML = '⏳ KOSPI + KOSDAQ 데이터 조회 중...';
+    const [kospiRes, kosdaqRes] = await Promise.allSettled([
+      fetchKRX('STK'), // KOSPI
+      fetchKRX('KSQ'), // KOSDAQ
+    ]);
+
+    const all = [];
+
+    const parseStock = (s, market) => {
+      const cap = parseFloat((s.MKTCAP || '0').replace(/,/g, '')) * 1e6; // 단위: 백만원 → 원
+      const price = parseFloat((s.TDD_CLSPRC || s.CLSPRC || '0').replace(/,/g, ''));
+      const change = parseFloat(s.FLUC_RT || '0');
+      return {
+        symbol: s.ISU_SRT_CD || s.ISU_CD || '',
+        name:   s.ISU_ABBRV  || s.ISU_NM  || '-',
+        marketCap: cap,
+        price,
+        change,
+        market
+      };
+    };
+
+    if (kospiRes.status === 'fulfilled'  && kospiRes.value?.output)
+      all.push(...kospiRes.value.output.map(s => parseStock(s, 'KOSPI')));
+    if (kosdaqRes.status === 'fulfilled' && kosdaqRes.value?.output)
+      all.push(...kosdaqRes.value.output.map(s => parseStock(s, 'KOSDAQ')));
+
+    if (all.length === 0) {
+      const errMsg = [kospiRes, kosdaqRes].map(r => r.reason?.message || '').join(' / ');
+      throw new Error(errMsg || 'KRX 응답 데이터 없음');
+    }
+
+    all.sort((a, b) => b.marketCap - a.marketCap);
+    renderMcTable('kr', all.slice(0, 500));
+    statusEl.style.display = 'none';
+    tableEl.style.display  = '';
+
+  } catch (e) {
+    statusEl.innerHTML = `<div style="color:var(--red)">❌ KRX 데이터 로딩 실패: ${e.message}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">KRX 서버에서 외부 접근을 제한하는 경우 데이터를 불러올 수 없습니다.</div>
+      <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
+  }
+}
+
+// ── 시가총액 테이블 렌더링 ─────────────────────────────────────────────────────
+function renderMcTable(market, stocks) {
+  const isKR = market === 'kr';
+  const fmtCap = cap => {
+    if (!cap || cap === 0) return '-';
+    if (isKR) {
+      if (cap >= 1e12) return (cap / 1e12).toFixed(1) + '조';
+      if (cap >= 1e8)  return Math.round(cap / 1e8) + '억';
+      return fmt(cap) + '원';
+    } else {
+      if (cap >= 1e12) return '$' + (cap / 1e12).toFixed(2) + 'T';
+      if (cap >= 1e9)  return '$' + (cap / 1e9).toFixed(1) + 'B';
+      if (cap >= 1e6)  return '$' + Math.round(cap / 1e6) + 'M';
+      return '$' + fmt(cap);
+    }
+  };
+
+  const tbody = document.getElementById(`mc-${market}-tbody`);
+  tbody.innerHTML = stocks.map((s, i) => {
+    const rank   = i + 1;
+    const isTop3 = rank <= 3;
+    const price  = isKR ? `₩${fmt(s.price || 0)}` : `$${(s.price || 0).toFixed(2)}`;
+    const chg    = s.change ?? 0;
+    const mktBadge = s.market
+      ? `<span style="font-size:10px;background:var(--border);color:var(--muted);padding:1px 5px;border-radius:3px;margin-left:5px">${s.market}</span>`
+      : '';
+
+    return `<tr>
+      <td style="text-align:center">
+        <span class="rank-badge${isTop3 ? ' top3' : ''}">${rank}</span>
+      </td>
+      <td>
+        <div style="font-weight:600">${s.name || s.companyName || '-'}${mktBadge}</div>
+        <div style="font-size:11px;color:var(--muted)">${s.symbol || ''}</div>
+      </td>
+      <td style="text-align:right">${fmtCap(s.marketCap)}</td>
+      <td style="text-align:right">${price}</td>
+      <td style="text-align:right" class="${cls(chg)}">${fmtPct(chg)}</td>
+    </tr>`;
+  }).join('');
 }
 
 // 저장된 테마 복원 (기본값: 라이트)
