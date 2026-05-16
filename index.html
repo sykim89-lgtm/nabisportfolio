@@ -1039,21 +1039,44 @@ const US_BASE = [
   {symbol:'QCOM',  name:'Qualcomm',            marketCap:2.2e11, stooq:'qcom.us'},
 ];
 
-// Stooq에서 시세 조회 (종목당 close/change)
+function abortFetch(ms) {
+  const ctrl = new AbortController();
+  setTimeout(() => ctrl.abort(), ms);
+  return ctrl.signal;
+}
+
+// Stooq에서 시세·시가총액 조회
 async function fetchStooqPrices(items) {
   const symbols = items.map(s => s.stooq).join(',');
-  const url = `https://stooq.com/q/l/?s=${symbols}&f=sd2c&h&e=json`;
+  const url = `https://stooq.com/q/l/?s=${symbols}&f=sd2op&h&e=json`;
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 10000);
-    const res = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(t);
+    const res = await fetch(url, { signal: abortFetch(10000) });
     if (!res.ok) return {};
     const json = await res.json();
     const map = {};
     (json.symbols || []).forEach(s => { map[s.Symbol?.toLowerCase()] = s; });
     return map;
   } catch (_) { return {}; }
+}
+
+// Yahoo Finance에서 시가총액 포함 전체 데이터 조회
+async function fetchYahooMarketCap(yahooSymbols) {
+  const sym = yahooSymbols.join(',');
+  const urls = [
+    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${sym}&formatted=false`,
+    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${sym}&formatted=false`,
+    `https://corsproxy.io/?${encodeURIComponent(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${sym}&formatted=false`)}`,
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { signal: abortFetch(8000) });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const result = json.quoteResponse?.result;
+      if (Array.isArray(result) && result.length > 0) return result;
+    } catch (_) {}
+  }
+  return [];
 }
 
 async function loadMarketCap(market) {
@@ -1063,25 +1086,60 @@ async function loadMarketCap(market) {
   const tableEl  = document.getElementById(`mc-${market}-table`);
 
   statusEl.style.display = '';
-  statusEl.innerHTML = '⏳ 시세 조회 중...';
+  statusEl.innerHTML = '⏳ 데이터 조회 중...';
   tableEl.style.display = 'none';
 
-  // 기준 데이터로 즉시 표시
+  // 내장 기준 데이터로 즉시 표시
   renderMcTable(market, base.map(s => ({ ...s, price: 0, change: 0 })));
   tableEl.style.display = '';
+  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ 최신 시세 업데이트 중...</div>';
 
-  // Stooq에서 실시간 시세 업데이트 시도
-  const priceMap = await fetchStooqPrices(base);
-  const updated = base.map(s => {
-    const row = priceMap[s.stooq.toLowerCase()];
-    const price  = row ? parseFloat(row.Close  || 0) : 0;
-    const change = row ? parseFloat(row.Change || 0) : 0;
-    return { ...s, price, change };
-  });
+  // 1단계: Yahoo Finance로 실시간 시가총액 업데이트 시도
+  const yahooSymbols = isKR
+    ? base.map(s => s.symbol + '.KS').map((sym, i) => base[i].market === 'KOSDAQ' ? base[i].symbol + '.KQ' : sym)
+    : base.map(s => s.symbol);
 
-  renderMcTable(market, updated);
-  const now = new Date().toLocaleTimeString('ko-KR');
-  statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 시가총액 순위: 2025년 상반기 기준 &nbsp;|&nbsp; 시세: ${now} 조회</div>`;
+  const BATCH = 20;
+  const allYahoo = [];
+  for (let i = 0; i < yahooSymbols.length; i += BATCH) {
+    const results = await fetchYahooMarketCap(yahooSymbols.slice(i, i + BATCH));
+    allYahoo.push(...results);
+    if (i + BATCH < yahooSymbols.length) await new Promise(r => setTimeout(r, 300));
+  }
+
+  let finalData;
+  if (allYahoo.length > 0) {
+    const yahooMap = {};
+    allYahoo.forEach(q => { yahooMap[q.symbol] = q; });
+    finalData = base.map((s, i) => {
+      const ySym = yahooSymbols[i];
+      const q = yahooMap[ySym];
+      return {
+        ...s,
+        marketCap: q?.marketCap || s.marketCap,
+        price:     q?.regularMarketPrice || 0,
+        change:    q?.regularMarketChangePercent || 0,
+      };
+    }).sort((a, b) => b.marketCap - a.marketCap);
+
+    renderMcTable(market, finalData);
+    const now = new Date().toLocaleTimeString('ko-KR');
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 실시간 &nbsp;|&nbsp; ${now} 기준</div>`;
+  } else {
+    // 2단계: Yahoo 실패 → Stooq으로 시세만 업데이트
+    const priceMap = await fetchStooqPrices(base);
+    finalData = base.map(s => {
+      const row = priceMap[s.stooq.toLowerCase()];
+      return {
+        ...s,
+        price:  row ? parseFloat(row.Open || 0) : 0,
+        change: 0,
+      };
+    });
+    renderMcTable(market, finalData);
+    const now = new Date().toLocaleTimeString('ko-KR');
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 시가총액: 2025년 기준 (참고값) &nbsp;|&nbsp; 시세: ${now} 조회</div>`;
+  }
   statusEl.style.display = '';
 }
 
