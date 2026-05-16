@@ -948,7 +948,6 @@ function toggleTheme() {
 }
 
 // ─── 시가총액 순위 ────────────────────────────────────────────────────────────
-const FMP_KEY = '385IYPVvt7Td1S1NCVo6oq6JI8mYgNVS';
 const mcTabLoaded = { kr: false, us: false };
 
 function switchMcTab(market) {
@@ -968,87 +967,79 @@ function retryMc(market) {
 }
 
 // ── 미국 시가총액 ─────────────────────────────────────────────────────────────
+
+// S&P500 + NASDAQ100 주요 구성종목 (시가총액 상위)
+const US_TICKERS = [
+  'AAPL','MSFT','NVDA','AMZN','GOOGL','GOOG','META','TSLA','AVGO','BRK-B',
+  'JPM','LLY','V','UNH','XOM','MA','COST','HD','PG','WMT','NFLX','JNJ','ABBV',
+  'BAC','CRM','MRK','AMD','ORCL','CVX','KO','WFC','PEP','CSCO','ACN','TMO',
+  'MCD','ABT','DHR','LIN','GE','IBM','INTU','TXN','AXP','PM','MS','AMGN',
+  'CAT','RTX','ISRG','BKNG','NOW','GS','SPGI','BLK','PLD','VRTX','AMAT',
+  'LOW','T','DE','ADP','SYK','ETN','MDT','GILD','REGN','ADI','PANW','UBER',
+  'MU','LRCX','SCHW','PH','BSX','CB','ZTS','KLAC','MMC','SHW','SBUX','FI',
+  'AMT','CTAS','CME','SO','EQIX','DUK','MO','NEE','CL','MSI','BMY','MMM',
+  'BA','WM','CI','GD','ITW','TJX','MDLZ','ICE','NOC','EOG','APD','AON',
+  'HCA','MCO','PSA','F','GM','VLO','PNC','ECL','MPC','FDX','TGT','OXY',
+  'EMR','FCX','AFL','CARR','PCAR','SRE','ADSK','NXPI','MNST','MCHP',
+  'ROST','IDXX','ROP','CDNS','FTNT','SNPS','VRSK','DVN','HAL','SLB','COP',
+  'QCOM','INTC','HPQ','HPE','DELL','ANET','CPRT','ODFL','UPS','LMT',
+  'CVS','MCK','HUM','ELV','PFE','MRNA','A','WAT','ALB','FSLR','ENPH',
+  'NEE','DTE','PPL','XEL','WEC','AMT','CCI','DLR','VICI','MAR','HLT',
+  'RCL','CCL','LVS','WYNN','COIN','SOFI','HOOD','IBKR',
+];
+
+async function fetchYahooQuotes(symbols) {
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}&fields=symbol,shortName,regularMarketPrice,marketCap,regularMarketChangePercent`;
+  // 직접 요청 → corsproxy → allorigins 순으로 시도
+  const attempts = [
+    () => fetch(url, { signal: AbortSignal.timeout(8000) }),
+    () => fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) }),
+    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) }),
+  ];
+  for (const attempt of attempts) {
+    try {
+      const res = await attempt();
+      if (!res.ok) continue;
+      const json = await res.json();
+      const result = json.quoteResponse?.result;
+      if (Array.isArray(result) && result.length > 0) return result;
+    } catch (_) {}
+  }
+  return [];
+}
+
 async function loadUSMarketCap() {
   const statusEl = document.getElementById('mc-us-status');
   const tableEl  = document.getElementById('mc-us-table');
   statusEl.style.display = '';
-  statusEl.innerHTML = '⏳ S&P500 + NASDAQ100 구성종목 조회 중...';
+  statusEl.innerHTML = '⏳ 미국 시가총액 데이터 조회 중...';
   tableEl.style.display = 'none';
 
   try {
-    // 1. 구성종목 리스트 가져오기
-    const [spRes, nqRes] = await Promise.allSettled([
-      fetch(`https://financialmodelingprep.com/stable/index-constituent?symbol=%5EGSPC&apikey=${FMP_KEY}`).then(r => r.json()),
-      fetch(`https://financialmodelingprep.com/stable/index-constituent?symbol=%5ENDX&apikey=${FMP_KEY}`).then(r => r.json())
-    ]);
-
-    const symbols = new Set();
-    if (spRes.status === 'fulfilled' && Array.isArray(spRes.value))
-      spRes.value.forEach(s => s.symbol && symbols.add(s.symbol));
-    if (nqRes.status === 'fulfilled' && Array.isArray(nqRes.value))
-      nqRes.value.forEach(s => s.symbol && symbols.add(s.symbol));
-
-    // 구성종목 API 실패 시 폴백 리스트
-    if (symbols.size < 10) {
-      ['AAPL','MSFT','NVDA','AMZN','GOOGL','META','TSLA','AVGO','BRK-B','JPM',
-       'LLY','V','UNH','XOM','MA','COST','HD','PG','WMT','NFLX','JNJ','ABBV',
-       'BAC','CRM','MRK','AMD','ORCL','CVX','KO','WFC','PEP','CSCO','ACN','TMO',
-       'MCD','ABT','DHR','LIN','GE','IBM','INTU','TXN','AXP','PM','MS','AMGN',
-       'CAT','RTX','ISRG','BKNG','NOW','GS','SPGI','BLK','PLD','VRTX','AMAT',
-       'LOW','T','DE','ADP','SYK','ETN','MDT','GILD','REGN','ADI','PANW','UBER',
-       'MU','LRCX','SCHW','PH','BSX','CB','ZTS','KLAC','MMC','SHW','SBUX','FI',
-       'AMT','CTAS','CME','SO','EQIX','DUK','MO','NEE','CL','MSI','BMY','MMM',
-       'BA','WM','CI','GD','ITW','TJX','MDLZ','ICE','NOC','EOG','APD','AON',
-       'HCA','MCO','PSA','F','GM','VLO','PNC','ECL','MPC','FDX','TGT','OXY',
-       'EMR','TT','MAR','FCX','AFL','AIG','CARR','PCAR','SRE','ADSK','NXPI',
-       'MNST','MCHP','ROST','IDXX','ROP','BIIB','ILMN','ALGN','ANSS','CDNS',
-       'FTNT','SNPS','VRSK','FANG','DVN','HES','BKR','HAL','SLB','COP','MRO',
-       'TRGP','WMB','KMI','OKE','LNG','PSX','DD','DOW','LYB','PPG','NUE','NEM',
-       'GOLD','QCOM','INTC','TXN','MU','HPQ','HPE','DELL','WDC','STX','ANET',
-       'KEYS','FFIV','ZBRA','CDW','NTAP','CSCO','JNPR','AKAM','GDDY','LDOS',
-       'JKHY','EPAM','CTSH','ACN','INFY','WIT','GLOB','FLUT','CPRT','ODFL',
-       'CHRW','EXPD','XPO','JBHT','LSTR','WERN','KNX','SAIA','R','GXO',
-       'UPS','FDX','AMZL','USPS','DHL','SPGI','MCO','MSCI','NDAQ','ICE',
-       'CME','CBOE','TW','MKTX','LPLA','RJF','SSNC','FDS','VRSK',
-       'PGR','ALL','TRV','CB','AIG','AFL','LNC','PRU','MET','EV',
-       'GS','MS','JPM','BAC','WFC','C','USB','PNC','TFC','KEY',
-       'RF','HBAN','CFG','FITB','MTB','ZION','CMA','SIVBQ','FRC',
-       'SCHW','ETFC','AMTD','IBKR','HOOD','COIN','SOFI',
-       'BLK','IVZ','BEN','TROW','STT','BK','NTRS','SEI','AMG',
-       'LMT','NOC','GD','BA','RTX','L3H','TDY','HEI','LDOS','SAIC',
-       'CVS','WBA','MCK','CAH','ABC','HUM','CNC','MOH','ELV',
-       'DGX','LH','IDXX','PKI','HOLX','HOLOGIC','VRTX','BIIB','GILD',
-       'MRNA','BNTX','PFE','JNJ','MRK','ABT','TMO','DHR','A','WAT',
-       'SHW','ECL','PPG','RPM','EMN','HUN','CE','OLN','LYB','DD','DOW',
-       'APD','PX','LINDE','ALB','SQM','MP','ENPH','SEDG','FSLR','CSIQ',
-       'RUN','NOVA','ARRY','CWEN','NEP','BEP','AES','NEE','ED','D','EXC',
-       'DTE','FE','PPL','ETR','XEL','WEC','CMS','LNT','EVRG','OTTR',
-       'AMT','CCI','EQIX','DLR','CONE','QTS','IRM','COR','VICI','MGM',
-       'LVS','WYNN','CZR','BYD','RCL','CCL','NCLH','MAR','HLT','WH',
-       'H','IHG','CHH','MCRI','SHO','PK','RHP','APLE','BRAEMAR'].forEach(s => symbols.add(s));
-    }
-
-    const tickerArr = [...symbols];
-    statusEl.innerHTML = `⏳ ${tickerArr.length}개 종목 시세 로딩 중...`;
-
-    // 2. 배치로 시세 조회 (100개씩)
     const allQuotes = [];
-    const BATCH = 100;
-    for (let i = 0; i < tickerArr.length; i += BATCH) {
-      const batch = tickerArr.slice(i, i + BATCH).join(',');
-      try {
-        const res  = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${batch}&apikey=${FMP_KEY}`);
-        const data = await res.json();
-        if (Array.isArray(data)) allQuotes.push(...data.filter(q => q.marketCap > 0));
-      } catch (e) { /* 배치 실패 시 skip */ }
-      if (i + BATCH < tickerArr.length) await new Promise(r => setTimeout(r, 150));
+    const BATCH = 50;
+
+    for (let i = 0; i < US_TICKERS.length; i += BATCH) {
+      const batch = US_TICKERS.slice(i, i + BATCH);
+      statusEl.innerHTML = `⏳ ${i + 1}~${Math.min(i + BATCH, US_TICKERS.length)} / ${US_TICKERS.length}개 종목 조회 중...`;
+      const quotes = await fetchYahooQuotes(batch);
+      allQuotes.push(...quotes.filter(q => q.marketCap > 0));
+      if (i + BATCH < US_TICKERS.length) await new Promise(r => setTimeout(r, 200));
     }
 
     if (allQuotes.length === 0) throw new Error('시세 데이터를 가져올 수 없습니다');
 
-    // 3. 시가총액 기준 정렬
     allQuotes.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
-    renderMcTable('us', allQuotes.slice(0, 500));
+
+    const stocks = allQuotes.map(q => ({
+      symbol:    q.symbol,
+      name:      q.shortName || q.symbol,
+      marketCap: q.marketCap,
+      price:     q.regularMarketPrice,
+      change:    q.regularMarketChangePercent,
+    }));
+
+    renderMcTable('us', stocks.slice(0, 300));
     statusEl.style.display = 'none';
     tableEl.style.display  = '';
 
