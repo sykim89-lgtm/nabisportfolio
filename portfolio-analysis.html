@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>계좌 수익률 분석</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --border: #2a2d3e;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --accent: #a78bfa;
+      --green: #10b981;
+      --red: #ef4444;
+      --yellow: #fb923c;
+      --blue: #34d399;
+    }
+
+    :root.light {
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --border: #e2e5ed;
+      --text: #1a1d27;
+      --muted: #6b7280;
+      --accent: #7c3aed;
+      --green: #059669;
+      --red: #dc2626;
+      --yellow: #ea6c00;
+      --blue: #047857;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 28px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 28px;
+    }
+    header h1 { font-size: 22px; font-weight: 700; }
+    header p  { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+    .btn:hover { opacity: .85; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── Error ─────────────────────────────── */
+    .error {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      color: #ef4444;
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    /* ── Summary cards ──────────────────────── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+    }
+    .card-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 8px;
+    }
+    .card-value { font-size: 26px; font-weight: 700; }
+    .card-sub   { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+    /* ── Chart cards ────────────────────────── */
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin-bottom: 22px;
+    }
+    .chart-title    { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+    .chart-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    .chart-wrap     { position: relative; height: 280px; }
+
+    .legend {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Table ──────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      text-align: right;
+      padding: 9px 14px;
+      color: var(--muted);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+    th:first-child { text-align: left; }
+    td {
+      text-align: right;
+      padding: 11px 14px;
+    }
+    td:first-child { text-align: left; font-weight: 600; }
+    tr:hover td { background: rgba(128,128,128,0.06); }
+
+    /* ── Util ───────────────────────────────── */
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .neu { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>계좌 수익률 분석</h1>
+    <p id="last-updated">데이터 로딩 중...</p>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn" id="theme-btn" onclick="toggleTheme()" style="background:var(--card);color:var(--text);border:1px solid var(--border)">☀️ 라이트</button>
+    <button class="btn" id="refresh-btn" onclick="loadAll()">새로고침</button>
+  </div>
+</header>
+
+<div id="error-box"></div>
+
+<!-- Summary -->
+<div class="summary-grid">
+  <div class="card">
+    <div class="card-label">현재 평가금액</div>
+    <div class="card-value neu" id="s-value">-</div>
+    <div class="card-sub"  id="s-invested">투자원금: -</div>
+  </div>
+  <div class="card">
+    <div class="card-label">누적 수익률 (TWR)</div>
+    <div class="card-value" id="s-total">-</div>
+    <div class="card-sub"  id="s-gain">손익: -</div>
+  </div>
+  <div class="card">
+    <div class="card-label">연환산 수익률 (CAGR)</div>
+    <div class="card-value" id="s-cagr">-</div>
+    <div class="card-sub"  id="s-period">투자기간: -</div>
+  </div>
+  <div class="card">
+    <div class="card-label">올해 수익률 (YTD)</div>
+    <div class="card-value" id="s-ytd">-</div>
+    <div class="card-sub"  id="s-ytd-label">-</div>
+  </div>
+</div>
+
+<!-- Cumulative chart -->
+<div class="chart-card">
+  <div class="chart-title">누적 수익률 비교</div>
+  <div class="chart-subtitle">포트폴리오 vs S&amp;P 500 vs NASDAQ 100 — 투자 시작일 기준 정규화</div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>내 포트폴리오</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>S&amp;P 500</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>NASDAQ 100</div>
+  </div>
+  <div class="chart-wrap"><canvas id="c-cumulative"></canvas></div>
+</div>
+
+<!-- Monthly chart -->
+<div class="chart-card">
+  <div class="chart-title">월별 수익률</div>
+  <div class="chart-subtitle">Modified Dietz 방식 — 입출금 영향 제거</div>
+  <div class="chart-wrap"><canvas id="c-monthly"></canvas></div>
+</div>
+
+<!-- Yearly table -->
+<div class="chart-card">
+  <div class="chart-title">연도별 성과</div>
+  <div class="chart-subtitle">포트폴리오 vs 벤치마크 연간 수익률 비교</div>
+  <table id="t-yearly">
+    <thead>
+      <tr>
+        <th>연도 / 월</th>
+        <th>내 수익률</th>
+        <th>S&amp;P 500</th>
+        <th>NASDAQ 100</th>
+        <th>기말 평가금액</th>
+        <th>투자금</th>
+        <th>누적 투자금</th>
+      </tr>
+    </thead>
+    <tbody><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">로딩 중...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+// ─── Config ───────────────────────────────────────────────────────────────────
+const API_KEY  = 'AIzaSyAFyyUDcLzM3Q6YOkg61JMzQbv-l9Nwsjg';
+const SHEET_ID = '1ZPl5NDOI2yzwm7cCAidcfzZz73C6aXcVDzf_HMbaUuo';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const fmt    = n => new Intl.NumberFormat('ko-KR').format(Math.round(n));
+const fmtPct = (n, d = 2) => (n >= 0 ? '+' : '') + n.toFixed(d) + '%';
+const cls    = n => n > 0 ? 'pos' : n < 0 ? 'neg' : 'neu';
+
+// ─── Google Sheets ────────────────────────────────────────────────────────────
+async function fetchSheet() {
+  // 시트 이름에 작은따옴표가 있어서 ''로 이스케이프, 전체를 ''로 감쌈
+  const range = encodeURIComponent("'투자계획 및 현황(~''50.01.)'!H:K");
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Google Sheets API 오류 (${res.status}): API 키 또는 시트 공유 설정을 확인하세요.`);
+  const json = await res.json();
+  return json.values || [];
+}
+
+function parseRows(rows) {
+  const data = [];
+  for (const row of rows) {
+    const raw = (row[0] || '').trim();
+    if (!raw) continue;
+
+    // Accept: 2024.01.01 / 2024-01-01 / 2024/01/01
+    const normalized = raw.replace(/[./]/g, '-');
+    const date = new Date(normalized);
+    if (isNaN(date.getTime())) continue;
+
+    const total    = parseFloat(String(row[1] || '').replace(/,/g, ''));
+    const cashFlow = parseFloat(String(row[2] || '0').replace(/,/g, '')) || 0;
+    const dividend = parseFloat(String(row[3] || '0').replace(/,/g, '')) || 0;
+    if (isNaN(total) || total <= 0) continue;
+
+    data.push({ date, total, cashFlow, dividend });
+  }
+  return data.sort((a, b) => a.date - b.date);
+}
+
+// ─── Yahoo Finance (with fallback proxy) ──────────────────────────────────────
+async function fetchBenchmark(range) {
+  const enc = encodeURIComponent(`'벤치마크'!${range}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${enc}?key=${API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const json = await res.json();
+  return (json.values || []).slice(1).map(row => {
+    // "2023. 1. 6 오후 4:00:00" 형식 파싱
+    const m = (row[0] || '').match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
+    if (!m) return null;
+    const date = new Date(+m[1], +m[2] - 1, +m[3]);
+    const close = parseFloat((row[1] || '').replace(/,/g, ''));
+    if (isNaN(close)) return null;
+    return { date, close };
+  }).filter(Boolean);
+}
+
+// ─── Return calculations ──────────────────────────────────────────────────────
+function calcReturns(data) {
+  // Modified Dietz per period → chain to TWR
+  let twr = 1;
+  const monthly = [];
+  const history = [{ date: data[0].date, cumReturn: 0, value: data[0].total }];
+
+  for (let i = 1; i < data.length; i++) {
+    const prev = data[i - 1], curr = data[i];
+    const bmv = prev.total, emv = curr.total, cf = curr.cashFlow;
+    const denom = bmv + 0.5 * cf;
+    const r = denom > 0 ? (emv - bmv - cf) / denom : 0;
+
+    twr *= (1 + r);
+    monthly.push({ date: curr.date, r: r * 100, value: curr.total, cashFlow: curr.cashFlow });
+    history.push({ date: curr.date, cumReturn: (twr - 1) * 100, value: curr.total });
+  }
+
+  const first = data[0], last = data[data.length - 1];
+  const years = (last.date - first.date) / (365.25 * 24 * 3600 * 1000);
+  const cagr  = years > 0 ? (Math.pow(twr, 1 / years) - 1) * 100 : 0;
+  const totalInvested = data.reduce((s, d) => s + d.cashFlow, 0);
+
+  // YTD
+  const thisYear  = new Date().getFullYear();
+  const prevYearEnd = [...data].reverse().find(d => d.date.getFullYear() < thisYear);
+  let ytd = null;
+  if (prevYearEnd) {
+    const ytdRows = [prevYearEnd, ...data.filter(d => d.date.getFullYear() >= thisYear)];
+    let ytdTwr = 1;
+    for (let i = 1; i < ytdRows.length; i++) {
+      const p = ytdRows[i - 1], c = ytdRows[i];
+      const denom = p.total + 0.5 * c.cashFlow;
+      if (denom > 0) ytdTwr *= 1 + (c.total - p.total - c.cashFlow) / denom;
+    }
+    ytd = (ytdTwr - 1) * 100;
+  }
+
+  return { monthly, history, totalReturn: (twr - 1) * 100, cagr, years, totalInvested, currentValue: last.total, ytd };
+}
+
+function calcYearly(data) {
+  const years = [...new Set(data.map(d => d.date.getFullYear()))].sort();
+  return years.map(yr => {
+    const before  = [...data].reverse().find(d => d.date.getFullYear() < yr);
+    const inYear  = data.filter(d => d.date.getFullYear() === yr);
+    const segment = before ? [before, ...inYear] : inYear;
+    let twr = 1;
+    for (let i = 1; i < segment.length; i++) {
+      const p = segment[i - 1], c = segment[i];
+      const denom = p.total + 0.5 * c.cashFlow;
+      if (denom > 0) twr *= 1 + (c.total - p.total - c.cashFlow) / denom;
+    }
+    return {
+      year: yr,
+      ret: (twr - 1) * 100,
+      endValue: inYear[inYear.length - 1]?.total ?? 0,
+      invested: inYear.reduce((s, d) => s + d.cashFlow, 0)
+    };
+  });
+}
+
+function benchmarkReturn(bench, fromDate, toDate) {
+  if (!bench) return null;
+  const base = bench.find(d => d.date >= fromDate);
+  const end  = [...bench].reverse().find(d => d.date <= toDate);
+  if (!base || !end || base === end) return null;
+  return ((end.close / base.close) - 1) * 100;
+}
+
+function alignBenchmark(bench, history) {
+  if (!bench || !bench.length) return null;
+  const base = bench.find(d => d.date >= history[0].date) || bench[0];
+  return history.map(h => {
+    const closest = bench.reduce((a, b) =>
+      Math.abs(b.date - h.date) < Math.abs(a.date - h.date) ? b : a
+    );
+    return { date: h.date, ret: (closest.close / base.close - 1) * 100 };
+  });
+}
+
+// ─── Charts ───────────────────────────────────────────────────────────────────
+let charts = {};
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function tc() {
+  const light = document.documentElement.classList.contains('light');
+  return {
+    grid:    light ? 'rgba(0,0,0,0.07)' : '#2a2d3e',
+    tick:    light ? '#6b7280' : '#8892a4',
+    tipBg:   light ? '#ffffff' : '#1a1d27',
+    tipBord: light ? '#e2e5ed' : '#2a2d3e',
+    tipTitle:light ? '#6b7280' : '#8892a4',
+    tipBody: light ? '#1a1d27' : '#e2e8f0',
+  };
+}
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#1a1d27',
+      borderColor: '#2a2d3e',
+      borderWidth: 1,
+      titleColor: '#8892a4',
+      bodyColor: '#e2e8f0',
+    },
+    beforeRender(chart) {
+      const t = tc();
+      const tip = chart.options.plugins.tooltip;
+      tip.backgroundColor = t.tipBg;
+      tip.borderColor     = t.tipBord;
+      tip.titleColor      = t.tipTitle;
+      tip.bodyColor       = t.tipBody;
+    }
+  },
+  scales: {
+    x: { grid: { color: '#2a2d3e' }, ticks: { color: '#8892a4' } },
+    y: { grid: { color: '#2a2d3e' }, ticks: { color: '#8892a4' } }
+  }
+};
+
+function renderCumulative(history, sp500, nasdaq) {
+  destroyChart('cumulative');
+  const ctx = document.getElementById('c-cumulative').getContext('2d');
+
+  const mkDataset = (label, arr, color, dash) => ({
+    label,
+    data: arr.map(d => ({ x: d.date, y: +d.cumReturn?.toFixed(2) ?? +d.ret?.toFixed(2) })),
+    borderColor: color,
+    backgroundColor: dash ? 'transparent' : color + '18',
+    fill: !dash,
+    borderDash: dash || [],
+    tension: 0.35,
+    borderWidth: dash ? 1.8 : 2.5,
+    pointRadius: 0,
+    pointHoverRadius: 5
+  });
+
+  const datasets = [mkDataset('내 포트폴리오', history, '#a78bfa', null)];
+  if (sp500)  datasets.push(mkDataset('S&P 500', sp500.map(d => ({ date: d.date, cumReturn: d.ret })), '#fb923c', [5, 3]));
+  if (nasdaq) datasets.push(mkDataset('NASDAQ 100',  nasdaq.map(d => ({ date: d.date, cumReturn: d.ret })), '#34d399', [5, 3]));
+
+  charts.cumulative = new Chart(ctx, {
+    type: 'line',
+    data: { datasets },
+    options: {
+      ...chartDefaults,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: c => `${c.dataset.label}: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'month', displayFormats: { month: 'yy.MM' } },
+          grid: { color: tc().grid },
+          ticks: { color: tc().tick, maxTicksLimit: 14 }
+        },
+        y: {
+          grid: { color: tc().grid },
+          ticks: { color: tc().tick, callback: v => (v >= 0 ? '+' : '') + v + '%' }
+        }
+      }
+    }
+  });
+}
+
+function renderMonthly(monthly) {
+  destroyChart('monthly');
+  const ctx = document.getElementById('c-monthly').getContext('2d');
+  const labels = monthly.map(m => {
+    const d = m.date;
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  charts.monthly = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: monthly.map(m => +m.r.toFixed(2)),
+        backgroundColor: monthly.map(m => m.r >= 0 ? 'rgba(16,185,129,.75)' : 'rgba(239,68,68,.75)'),
+        borderRadius: 3
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: { label: c => (c.parsed.y >= 0 ? '+' : '') + c.parsed.y + '%' }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: tc().tick, maxTicksLimit: 24, maxRotation: 45 } },
+        y: {
+          grid: { color: tc().grid },
+          ticks: { color: tc().tick, callback: v => (v >= 0 ? '+' : '') + v + '%' }
+        }
+      }
+    }
+  });
+}
+
+function renderYearly(yearlyData, sp500, nasdaq, monthly) {
+  const tbody = document.querySelector('#t-yearly tbody');
+  const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+  // monthly 데이터를 연도-월로 인덱싱
+  const monthlyMap = {};
+  for (const m of monthly) {
+    const key = `${m.date.getFullYear()}-${m.date.getMonth()}`;
+    monthlyMap[key] = m;
+  }
+
+  // 연도 오름차순으로 누적 투자금 계산
+  let cumulative = 0;
+  const cumulativeMap = {};
+  for (const y of yearlyData) {
+    cumulative += y.invested;
+    cumulativeMap[y.year] = cumulative;
+  }
+
+  const rows = [...yearlyData].reverse().map(y => {
+    const yStart = new Date(y.year, 0, 1);
+    const yEnd   = new Date(y.year, 11, 31);
+    const sp  = benchmarkReturn(sp500,  yStart, yEnd);
+    const nq  = benchmarkReturn(nasdaq, yStart, yEnd);
+
+    // 해당 연도의 월별 행
+    const monthRows = Array.from({ length: 12 }, (_, mo) => {
+      const key = `${y.year}-${mo}`;
+      const m = monthlyMap[key];
+      if (!m) return '';
+      return `<tr class="month-row" data-year="${y.year}" style="display:none">
+        <td style="padding-left:32px;color:var(--muted);font-weight:400">${MONTHS[mo]}</td>
+        <td class="${cls(m.r)}" style="font-size:12px">${fmtPct(m.r)}</td>
+        <td>-</td><td>-</td>
+        <td style="font-size:12px">₩${fmt(m.value ?? 0)}</td>
+        <td style="font-size:12px">₩${fmt(m.cashFlow ?? 0)}</td>
+        <td>-</td>
+      </tr>`;
+    }).join('');
+
+    return `<tr class="year-row" onclick="toggleYear(${y.year})" style="cursor:pointer">
+      <td><span id="arrow-${y.year}" style="display:inline-block;transition:transform .2s;margin-right:6px;font-size:11px;color:var(--muted)">▶</span>${y.year}년</td>
+      <td class="${cls(y.ret)}">${fmtPct(y.ret)}</td>
+      <td class="${sp  != null ? cls(sp)  : 'neu'}">${sp  != null ? fmtPct(sp)  : '-'}</td>
+      <td class="${nq  != null ? cls(nq)  : 'neu'}">${nq  != null ? fmtPct(nq)  : '-'}</td>
+      <td>₩${fmt(y.endValue)}</td>
+      <td>₩${fmt(y.invested)}</td>
+      <td>₩${fmt(cumulativeMap[y.year])}</td>
+    </tr>${monthRows}`;
+  }).join('');
+
+  tbody.innerHTML = rows;
+}
+
+function toggleYear(year) {
+  const rows = document.querySelectorAll(`.month-row[data-year="${year}"]`);
+  const arrow = document.getElementById(`arrow-${year}`);
+  const isOpen = rows[0]?.style.display !== 'none';
+  rows.forEach(r => r.style.display = isOpen ? 'none' : '');
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+async function loadAll() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '로딩 중...';
+  document.getElementById('error-box').innerHTML = '';
+
+  try {
+    const rows = await fetchSheet();
+    const data = parseRows(rows);
+
+    if (data.length < 2) {
+      throw new Error('유효한 데이터가 2행 이상 필요합니다. H열=기준일자, I열=총액, J열=월 투자금액, K열=배당 형식으로 입력해주세요.');
+    }
+
+    const analysis = calcReturns(data);
+    const yearly   = calcYearly(data);
+
+    // Benchmarks
+    const [sp500Raw, nasdaqRaw] = await Promise.all([
+      fetchBenchmark('A:B'),
+      fetchBenchmark('D:E')
+    ]);
+
+    const sp500Aligned  = alignBenchmark(sp500Raw,  analysis.history);
+    const nasdaqAligned = alignBenchmark(nasdaqRaw, analysis.history);
+
+    // Summary cards
+    document.getElementById('s-value').textContent    = `₩${fmt(analysis.currentValue)}`;
+    document.getElementById('s-invested').textContent = `투자원금: ₩${fmt(analysis.totalInvested)}`;
+
+    const retEl = document.getElementById('s-total');
+    retEl.textContent = fmtPct(analysis.totalReturn);
+    retEl.className   = `card-value ${cls(analysis.totalReturn)}`;
+
+    const gain = analysis.currentValue - analysis.totalInvested;
+    document.getElementById('s-gain').textContent = `손익: ${gain >= 0 ? '+' : ''}₩${fmt(gain)}`;
+
+    const cagrEl = document.getElementById('s-cagr');
+    cagrEl.textContent = fmtPct(analysis.cagr);
+    cagrEl.className   = `card-value ${cls(analysis.cagr)}`;
+    document.getElementById('s-period').textContent = `투자기간: ${analysis.years.toFixed(1)}년`;
+
+    if (analysis.ytd !== null) {
+      const ytdEl = document.getElementById('s-ytd');
+      ytdEl.textContent = fmtPct(analysis.ytd);
+      ytdEl.className   = `card-value ${cls(analysis.ytd)}`;
+      document.getElementById('s-ytd-label').textContent = `${new Date().getFullYear()}년 YTD`;
+    }
+
+    // Charts & table
+    renderCumulative(analysis.history, sp500Aligned, nasdaqAligned);
+    renderMonthly(analysis.monthly);
+    renderYearly(yearly, sp500Raw, nasdaqRaw, analysis.monthly);
+
+    document.getElementById('last-updated').textContent =
+      `마지막 업데이트: ${new Date().toLocaleString('ko-KR')}`;
+
+  } catch (e) {
+    document.getElementById('error-box').innerHTML = `<div class="error">오류: ${e.message}</div>`;
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '새로고침';
+  }
+}
+
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  const btn = document.getElementById('theme-btn');
+  btn.textContent = isLight ? '🌙 다크' : '☀️ 라이트';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+
+  // 차트 색상 업데이트
+  const gridColor  = isLight ? '#e2e5ed' : '#2a2d3e';
+  const tickColor  = isLight ? '#6b7280' : '#8892a4';
+  const tooltipBg  = isLight ? '#ffffff' : '#1a1d27';
+  const tooltipBorder = isLight ? '#e2e5ed' : '#2a2d3e';
+  const tooltipTitle  = isLight ? '#6b7280' : '#8892a4';
+  const tooltipBody   = isLight ? '#1a1d27' : '#e2e8f0';
+
+  Object.values(charts).forEach(chart => {
+    chart.options.scales.x.grid.color  = gridColor;
+    chart.options.scales.x.ticks.color = tickColor;
+    chart.options.scales.y.grid.color  = gridColor;
+    chart.options.scales.y.ticks.color = tickColor;
+    const tp = chart.options.plugins.tooltip;
+    tp.backgroundColor = tooltipBg;
+    tp.borderColor     = tooltipBorder;
+    tp.titleColor      = tooltipTitle;
+    tp.bodyColor       = tooltipBody;
+    chart.update();
+  });
+}
+
+// 저장된 테마 복원 (기본값: 라이트)
+if (localStorage.getItem('theme') !== 'dark') toggleTheme();
+
+loadAll();
+
+// 탭 포커스 시 자동 새로고침 (마지막 로드 후 1분 이상 지났을 때만)
+let lastLoaded = Date.now();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && Date.now() - lastLoaded > 60_000) {
+    lastLoaded = Date.now();
+    loadAll();
+  }
+});
+
+</script>
+</body>
+</html>
