@@ -966,9 +966,9 @@ function retryMc(market) {
   switchMcTab(market);
 }
 
-// ── 미국 시가총액 ─────────────────────────────────────────────────────────────
+// ── 시가총액 공통: Yahoo Finance (한국·미국 통합) ────────────────────────────
 
-// S&P500 + NASDAQ100 주요 구성종목 (시가총액 상위)
+// 미국: S&P500 + NASDAQ100 주요 구성종목
 const US_TICKERS = [
   'AAPL','MSFT','NVDA','AMZN','GOOGL','GOOG','META','TSLA','AVGO','BRK-B',
   'JPM','LLY','V','UNH','XOM','MA','COST','HD','PG','WMT','NFLX','JNJ','ABBV',
@@ -976,25 +976,64 @@ const US_TICKERS = [
   'MCD','ABT','DHR','LIN','GE','IBM','INTU','TXN','AXP','PM','MS','AMGN',
   'CAT','RTX','ISRG','BKNG','NOW','GS','SPGI','BLK','PLD','VRTX','AMAT',
   'LOW','T','DE','ADP','SYK','ETN','MDT','GILD','REGN','ADI','PANW','UBER',
-  'MU','LRCX','SCHW','PH','BSX','CB','ZTS','KLAC','MMC','SHW','SBUX','FI',
-  'AMT','CTAS','CME','SO','EQIX','DUK','MO','NEE','CL','MSI','BMY','MMM',
+  'MU','LRCX','SCHW','BSX','CB','ZTS','KLAC','MMC','SHW','SBUX',
+  'CTAS','CME','SO','EQIX','DUK','MO','NEE','CL','MSI','BMY','MMM',
   'BA','WM','CI','GD','ITW','TJX','MDLZ','ICE','NOC','EOG','APD','AON',
   'HCA','MCO','PSA','F','GM','VLO','PNC','ECL','MPC','FDX','TGT','OXY',
-  'EMR','FCX','AFL','CARR','PCAR','SRE','ADSK','NXPI','MNST','MCHP',
-  'ROST','IDXX','ROP','CDNS','FTNT','SNPS','VRSK','DVN','HAL','SLB','COP',
-  'QCOM','INTC','HPQ','HPE','DELL','ANET','CPRT','ODFL','UPS','LMT',
-  'CVS','MCK','HUM','ELV','PFE','MRNA','A','WAT','ALB','FSLR','ENPH',
-  'NEE','DTE','PPL','XEL','WEC','AMT','CCI','DLR','VICI','MAR','HLT',
-  'RCL','CCL','LVS','WYNN','COIN','SOFI','HOOD','IBKR',
+  'EMR','FCX','AFL','ADSK','NXPI','MNST','MCHP','ROST','IDXX','ROP',
+  'CDNS','FTNT','SNPS','DVN','HAL','SLB','COP','QCOM','INTC','DELL','ANET',
+  'UPS','LMT','CVS','MCK','HUM','ELV','PFE','MRNA','FSLR','MAR','HLT',
 ];
 
+// 한국: KOSPI + KOSDAQ 시가총액 상위 종목 (Yahoo Finance .KS/.KQ 심볼)
+const KR_TICKERS = [
+  // KOSPI 상위
+  '005930.KS','000660.KS','373220.KS','207940.KS','005935.KS','000270.KS',
+  '005380.KS','051910.KS','068270.KS','035420.KS','055550.KS','105560.KS',
+  '003670.KS','028260.KS','012330.KS','066570.KS','035720.KS','017670.KS',
+  '030200.KS','032830.KS','009150.KS','018260.KS','011200.KS','006400.KS',
+  '034730.KS','003490.KS','090430.KS','010950.KS','015760.KS','000720.KS',
+  '009540.KS','329180.KS','086790.KS','004020.KS','047050.KS','051900.KS',
+  '010130.KS','000810.KS','096770.KS','267250.KS','316140.KS','003550.KS',
+  '001570.KS','000080.KS','097950.KS','161390.KS','002790.KS','011070.KS',
+  '042660.KS','009830.KS','010140.KS','000120.KS','021240.KS','139480.KS',
+  '033780.KS','007070.KS','001040.KS','003410.KS','000150.KS','001800.KS',
+  '004990.KS','023530.KS','271560.KS','006800.KS','000070.KS','088350.KS',
+  '016360.KS','071050.KS','003230.KS','000210.KS','008770.KS','011780.KS',
+  '014680.KS','282330.KS','383220.KS','000040.KS','001450.KS','007810.KS',
+  // KOSDAQ 상위
+  '247540.KQ','086520.KQ','196170.KQ','357780.KQ','058470.KQ','222080.KQ',
+  '145020.KQ','041510.KQ','263750.KQ','293490.KQ','112040.KQ','035760.KQ',
+  '066970.KQ','214150.KQ','089030.KQ','036570.KQ','054540.KQ','950130.KQ',
+  '240810.KQ','096530.KQ','253450.KQ','039030.KQ','403870.KQ','238120.KQ',
+  '032350.KQ','099320.KQ','041960.KQ','078340.KQ','131970.KQ','064760.KQ',
+];
+
+let _yahooCrumb = null;
+
+async function getYahooCrumb() {
+  if (_yahooCrumb) return _yahooCrumb;
+  try {
+    const res = await fetch('https://query2.finance.yahoo.com/v1/test/getcrumb', {
+      credentials: 'include',
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok) {
+      const crumb = await res.text();
+      if (crumb && crumb.length < 50) { _yahooCrumb = crumb; return crumb; }
+    }
+  } catch (_) {}
+  return '';
+}
+
 async function fetchYahooQuotes(symbols) {
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}&fields=symbol,shortName,regularMarketPrice,marketCap,regularMarketChangePercent`;
-  // 직접 요청 → corsproxy → allorigins 순으로 시도
+  const crumb = await getYahooCrumb();
+  const base = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}&fields=symbol,shortName,regularMarketPrice,marketCap,regularMarketChangePercent${crumb ? '&crumb=' + encodeURIComponent(crumb) : ''}`;
   const attempts = [
-    () => fetch(url, { signal: AbortSignal.timeout(8000) }),
-    () => fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) }),
-    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) }),
+    () => fetch(base, { credentials: 'include', signal: AbortSignal.timeout(10000) }),
+    () => fetch(`https://query2.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}&fields=symbol,shortName,regularMarketPrice,marketCap,regularMarketChangePercent`, { signal: AbortSignal.timeout(10000) }),
+    () => fetch(`https://corsproxy.io/?${encodeURIComponent(base)}`, { signal: AbortSignal.timeout(10000) }),
+    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(base)}`, { signal: AbortSignal.timeout(10000) }),
   ];
   for (const attempt of attempts) {
     try {
@@ -1008,135 +1047,55 @@ async function fetchYahooQuotes(symbols) {
   return [];
 }
 
-async function loadUSMarketCap() {
-  const statusEl = document.getElementById('mc-us-status');
-  const tableEl  = document.getElementById('mc-us-table');
+async function loadMarketCap(market) {
+  const tickers = market === 'us' ? US_TICKERS : KR_TICKERS;
+  const isKR    = market === 'kr';
+  const statusEl = document.getElementById(`mc-${market}-status`);
+  const tableEl  = document.getElementById(`mc-${market}-table`);
   statusEl.style.display = '';
-  statusEl.innerHTML = '⏳ 미국 시가총액 데이터 조회 중...';
+  statusEl.innerHTML = `⏳ ${isKR ? '한국' : '미국'} 시가총액 데이터 조회 중...`;
   tableEl.style.display = 'none';
 
   try {
     const allQuotes = [];
-    const BATCH = 50;
-
-    for (let i = 0; i < US_TICKERS.length; i += BATCH) {
-      const batch = US_TICKERS.slice(i, i + BATCH);
-      statusEl.innerHTML = `⏳ ${i + 1}~${Math.min(i + BATCH, US_TICKERS.length)} / ${US_TICKERS.length}개 종목 조회 중...`;
+    const BATCH = 40;
+    for (let i = 0; i < tickers.length; i += BATCH) {
+      const batch = tickers.slice(i, i + BATCH);
+      statusEl.innerHTML = `⏳ ${i + 1}~${Math.min(i + BATCH, tickers.length)} / ${tickers.length}개 종목 조회 중...`;
       const quotes = await fetchYahooQuotes(batch);
       allQuotes.push(...quotes.filter(q => q.marketCap > 0));
-      if (i + BATCH < US_TICKERS.length) await new Promise(r => setTimeout(r, 200));
+      if (i + BATCH < tickers.length) await new Promise(r => setTimeout(r, 300));
     }
 
     if (allQuotes.length === 0) throw new Error('시세 데이터를 가져올 수 없습니다');
 
     allQuotes.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
 
-    const stocks = allQuotes.map(q => ({
-      symbol:    q.symbol,
-      name:      q.shortName || q.symbol,
-      marketCap: q.marketCap,
-      price:     q.regularMarketPrice,
-      change:    q.regularMarketChangePercent,
-    }));
+    const stocks = allQuotes.map(q => {
+      const sym = q.symbol || '';
+      const mkt = isKR ? (sym.endsWith('.KS') ? 'KOSPI' : 'KOSDAQ') : undefined;
+      return {
+        symbol:    isKR ? sym.replace(/\.(KS|KQ)$/, '') : sym,
+        name:      q.shortName || q.symbol,
+        marketCap: q.marketCap,
+        price:     q.regularMarketPrice,
+        change:    q.regularMarketChangePercent,
+        market:    mkt,
+      };
+    });
 
-    renderMcTable('us', stocks.slice(0, 300));
+    renderMcTable(market, stocks.slice(0, 300));
     statusEl.style.display = 'none';
     tableEl.style.display  = '';
 
   } catch (e) {
     statusEl.innerHTML = `<div style="color:var(--red)">❌ 데이터 로딩 실패: ${e.message}</div>
-      <button onclick="retryMc('us')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
+      <button onclick="retryMc('${market}')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
   }
 }
 
-// ── 한국 시가총액 ─────────────────────────────────────────────────────────────
-
-// 최근 거래일 후보 목록 (최대 5일 전까지, 주말 제외)
-function recentTradingDates(maxDays = 5) {
-  const dates = [];
-  const d = new Date();
-  while (dates.length < maxDays) {
-    d.setDate(d.getDate() - 1);
-    if (d.getDay() !== 0 && d.getDay() !== 6) {
-      dates.push(d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'));
-    }
-  }
-  return dates;
-}
-
-// CORS 프록시 목록 (순서대로 시도)
-const KRX_PROXIES = [
-  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-];
-
-async function fetchKRXWithFallback(mktId, trdDd) {
-  const params = `bld=dbms/MDC/STAT/standard/MDCSTAT03901&locale=ko_KR&mktId=${mktId}&trdDd=${trdDd}&money=1&csvxls_isNo=false`;
-  const krxUrl = `https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd?${params}`;
-
-  for (const makeProxy of KRX_PROXIES) {
-    try {
-      const res = await fetch(makeProxy(krxUrl), { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) continue;
-      const text = await res.text();
-      if (!text.trim().startsWith('{')) continue;
-      const json = JSON.parse(text);
-      if (json.output && json.output.length > 0) return json;
-    } catch (_) { /* 다음 프록시 시도 */ }
-  }
-  return null;
-}
-
-async function loadKoreaMarketCap() {
-  const statusEl = document.getElementById('mc-kr-status');
-  const tableEl  = document.getElementById('mc-kr-table');
-  statusEl.style.display = '';
-  statusEl.innerHTML = '⏳ KRX 데이터 조회 중...';
-  tableEl.style.display = 'none';
-
-  const parseStock = (s, market) => ({
-    symbol:    s.ISU_SRT_CD || s.ISU_CD || '',
-    name:      s.ISU_ABBRV  || s.ISU_NM  || '-',
-    marketCap: parseFloat((s.MKTCAP || '0').replace(/,/g, '')) * 1e6,
-    price:     parseFloat((s.TDD_CLSPRC || s.CLSPRC || '0').replace(/,/g, '')),
-    change:    parseFloat(s.FLUC_RT || '0'),
-    market
-  });
-
-  try {
-    const dates = recentTradingDates(5);
-    let all = [], usedDate = null;
-
-    for (const trdDd of dates) {
-      statusEl.innerHTML = `⏳ KRX 조회 중... (${trdDd.slice(0,4)}-${trdDd.slice(4,6)}-${trdDd.slice(6)})`;
-      const [kospiRes, kosdaqRes] = await Promise.all([
-        fetchKRXWithFallback('STK', trdDd),
-        fetchKRXWithFallback('KSQ', trdDd),
-      ]);
-
-      if (kospiRes?.output)  all.push(...kospiRes.output.map(s => parseStock(s, 'KOSPI')));
-      if (kosdaqRes?.output) all.push(...kosdaqRes.output.map(s => parseStock(s, 'KOSDAQ')));
-
-      if (all.length > 0) { usedDate = trdDd; break; }
-    }
-
-    if (all.length === 0) throw new Error('모든 프록시/날짜 시도 실패');
-
-    all.sort((a, b) => b.marketCap - a.marketCap);
-    renderMcTable('kr', all.slice(0, 500));
-
-    const label = usedDate ? `${usedDate.slice(0,4)}-${usedDate.slice(4,6)}-${usedDate.slice(6)} 종가 기준` : '';
-    statusEl.innerHTML = label ? `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">📅 ${label}</div>` : '';
-    statusEl.style.display = label ? '' : 'none';
-    tableEl.style.display = '';
-
-  } catch (e) {
-    statusEl.innerHTML = `<div style="color:var(--red)">❌ KRX 데이터 로딩 실패: ${e.message}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:8px">KRX 서버 접근이 일시적으로 제한될 수 있습니다.</div>
-      <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
-  }
-}
+function loadUSMarketCap()    { return loadMarketCap('us'); }
+function loadKoreaMarketCap() { return loadMarketCap('kr'); }
 
 // ── 시가총액 테이블 렌더링 ─────────────────────────────────────────────────────
 function renderMcTable(market, stocks) {
