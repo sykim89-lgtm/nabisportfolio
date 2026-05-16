@@ -735,6 +735,11 @@ function renderPortfolio() {
     return h.currency === 'USD' ? `$${val.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}` : `₩${fmt(val)}`;
   };
 
+  const totalGainKRW = enriched.reduce((s, h) => {
+    if (h.gain == null) return s;
+    return s + (h.currency === 'USD' ? h.gain * fx : h.gain);
+  }, 0);
+
   tbody.innerHTML = sorted.map(h => {
     const weight = (h.valueKRW / totalKRW * 100).toFixed(2);
     return `<tr>
@@ -753,7 +758,17 @@ function renderPortfolio() {
       <td class="${h.gain != null ? cls(h.gain) : 'neu'}">${h.gain != null ? (h.gain >= 0 ? '+' : '') + fmtPrice(h, h.gain) : '-'}</td>
       <td class="${h.gainPct != null ? cls(h.gainPct) : 'neu'}">${h.gainPct != null ? fmtPct(h.gainPct) : '-'}</td>
     </tr>`;
-  }).join('');
+  }).join('') + `
+  <tr style="border-top:2px solid var(--border);font-weight:700">
+    <td>합계</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>₩${fmt(totalKRW)}</td>
+    <td>100%</td>
+    <td class="${cls(totalGainKRW)}">${totalGainKRW >= 0 ? '+' : ''}₩${fmt(totalGainKRW)}</td>
+    <td class="${cls(totalRet)}">${fmtPct(totalRet)}</td>
+  </tr>`;
 }
 
 function toggleYear(year) {
