@@ -1059,6 +1059,44 @@ async function loadUSMarketCap() {
 }
 
 // ── 한국 시가총액 ─────────────────────────────────────────────────────────────
+
+// 최근 거래일 후보 목록 (최대 5일 전까지, 주말 제외)
+function recentTradingDates(maxDays = 5) {
+  const dates = [];
+  const d = new Date();
+  while (dates.length < maxDays) {
+    d.setDate(d.getDate() - 1);
+    if (d.getDay() !== 0 && d.getDay() !== 6) {
+      dates.push(d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'));
+    }
+  }
+  return dates;
+}
+
+// CORS 프록시 목록 (순서대로 시도)
+const KRX_PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+
+async function fetchKRXWithFallback(mktId, trdDd) {
+  const params = `bld=dbms/MDC/STAT/standard/MDCSTAT03901&locale=ko_KR&mktId=${mktId}&trdDd=${trdDd}&money=1&csvxls_isNo=false`;
+  const krxUrl = `https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd?${params}`;
+
+  for (const makeProxy of KRX_PROXIES) {
+    try {
+      const res = await fetch(makeProxy(krxUrl), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (!text.trim().startsWith('{')) continue;
+      const json = JSON.parse(text);
+      if (json.output && json.output.length > 0) return json;
+    } catch (_) { /* 다음 프록시 시도 */ }
+  }
+  return null;
+}
+
 async function loadKoreaMarketCap() {
   const statusEl = document.getElementById('mc-kr-status');
   const tableEl  = document.getElementById('mc-kr-table');
@@ -1066,65 +1104,45 @@ async function loadKoreaMarketCap() {
   statusEl.innerHTML = '⏳ KRX 데이터 조회 중...';
   tableEl.style.display = 'none';
 
-  // 거래일 계산 (주말이면 금요일로)
-  const d = new Date();
-  if (d.getDay() === 0) d.setDate(d.getDate() - 2);
-  if (d.getDay() === 6) d.setDate(d.getDate() - 1);
-  const trdDd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
-
-  const fetchKRX = async (mktId) => {
-    const params = `bld=dbms/MDC/STAT/standard/MDCSTAT03901&locale=ko_KR&mktId=${mktId}&trdDd=${trdDd}&money=1&csvxls_isNo=false`;
-    const krxUrl = `https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd?${params}`;
-    // allorigins 프록시 경유
-    const proxied = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(krxUrl)}`);
-    if (!proxied.ok) throw new Error(`HTTP ${proxied.status}`);
-    const text = await proxied.text();
-    // 빈 응답 or HTML이면 오류
-    if (!text.trim().startsWith('{')) throw new Error('KRX 데이터 형식 오류 (JSON이 아님)');
-    return JSON.parse(text);
-  };
+  const parseStock = (s, market) => ({
+    symbol:    s.ISU_SRT_CD || s.ISU_CD || '',
+    name:      s.ISU_ABBRV  || s.ISU_NM  || '-',
+    marketCap: parseFloat((s.MKTCAP || '0').replace(/,/g, '')) * 1e6,
+    price:     parseFloat((s.TDD_CLSPRC || s.CLSPRC || '0').replace(/,/g, '')),
+    change:    parseFloat(s.FLUC_RT || '0'),
+    market
+  });
 
   try {
-    statusEl.innerHTML = '⏳ KOSPI + KOSDAQ 데이터 조회 중...';
-    const [kospiRes, kosdaqRes] = await Promise.allSettled([
-      fetchKRX('STK'), // KOSPI
-      fetchKRX('KSQ'), // KOSDAQ
-    ]);
+    const dates = recentTradingDates(5);
+    let all = [], usedDate = null;
 
-    const all = [];
+    for (const trdDd of dates) {
+      statusEl.innerHTML = `⏳ KRX 조회 중... (${trdDd.slice(0,4)}-${trdDd.slice(4,6)}-${trdDd.slice(6)})`;
+      const [kospiRes, kosdaqRes] = await Promise.all([
+        fetchKRXWithFallback('STK', trdDd),
+        fetchKRXWithFallback('KSQ', trdDd),
+      ]);
 
-    const parseStock = (s, market) => {
-      const cap = parseFloat((s.MKTCAP || '0').replace(/,/g, '')) * 1e6; // 단위: 백만원 → 원
-      const price = parseFloat((s.TDD_CLSPRC || s.CLSPRC || '0').replace(/,/g, ''));
-      const change = parseFloat(s.FLUC_RT || '0');
-      return {
-        symbol: s.ISU_SRT_CD || s.ISU_CD || '',
-        name:   s.ISU_ABBRV  || s.ISU_NM  || '-',
-        marketCap: cap,
-        price,
-        change,
-        market
-      };
-    };
+      if (kospiRes?.output)  all.push(...kospiRes.output.map(s => parseStock(s, 'KOSPI')));
+      if (kosdaqRes?.output) all.push(...kosdaqRes.output.map(s => parseStock(s, 'KOSDAQ')));
 
-    if (kospiRes.status === 'fulfilled'  && kospiRes.value?.output)
-      all.push(...kospiRes.value.output.map(s => parseStock(s, 'KOSPI')));
-    if (kosdaqRes.status === 'fulfilled' && kosdaqRes.value?.output)
-      all.push(...kosdaqRes.value.output.map(s => parseStock(s, 'KOSDAQ')));
-
-    if (all.length === 0) {
-      const errMsg = [kospiRes, kosdaqRes].map(r => r.reason?.message || '').join(' / ');
-      throw new Error(errMsg || 'KRX 응답 데이터 없음');
+      if (all.length > 0) { usedDate = trdDd; break; }
     }
+
+    if (all.length === 0) throw new Error('모든 프록시/날짜 시도 실패');
 
     all.sort((a, b) => b.marketCap - a.marketCap);
     renderMcTable('kr', all.slice(0, 500));
-    statusEl.style.display = 'none';
-    tableEl.style.display  = '';
+
+    const label = usedDate ? `${usedDate.slice(0,4)}-${usedDate.slice(4,6)}-${usedDate.slice(6)} 종가 기준` : '';
+    statusEl.innerHTML = label ? `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">📅 ${label}</div>` : '';
+    statusEl.style.display = label ? '' : 'none';
+    tableEl.style.display = '';
 
   } catch (e) {
     statusEl.innerHTML = `<div style="color:var(--red)">❌ KRX 데이터 로딩 실패: ${e.message}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:8px">KRX 서버에서 외부 접근을 제한하는 경우 데이터를 불러올 수 없습니다.</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">KRX 서버 접근이 일시적으로 제한될 수 있습니다.</div>
       <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
   }
 }
