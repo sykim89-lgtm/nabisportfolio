@@ -286,26 +286,6 @@
 <!-- ── 내 포트폴리오 탭 ─────────────────────────── -->
 <div id="tab-portfolio" style="display:none">
 
-  <div class="port-summary">
-    <div class="card">
-      <div class="card-label">총 평가금액 (원화환산)</div>
-      <div class="card-value neu" id="p-total">-</div>
-    </div>
-    <div class="card">
-      <div class="card-label">총 평가손익</div>
-      <div class="card-value" id="p-gain">-</div>
-    </div>
-    <div class="card">
-      <div class="card-label">총 수익률</div>
-      <div class="card-value" id="p-return">-</div>
-    </div>
-    <div class="card">
-      <div class="card-label">환율 (USD/KRW)</div>
-      <div class="card-value neu" id="p-fx">-</div>
-      <div class="card-sub">수동 설정값</div>
-    </div>
-  </div>
-
   <div class="chart-card">
     <div class="chart-title">보유 종목</div>
     <div class="chart-subtitle">평가금액 기준 정렬</div>
@@ -715,16 +695,6 @@ function renderPortfolio() {
     return s + (h.currency === 'USD' ? cost * fx : cost);
   }, 0);
   const totalRet = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
-
-  // 요약 카드
-  document.getElementById('p-total').textContent  = `₩${fmt(totalKRW)}`;
-  const gainEl = document.getElementById('p-gain');
-  gainEl.textContent = `${totalGain >= 0 ? '+' : ''}₩${fmt(totalGain)}`;
-  gainEl.className   = `card-value ${cls(totalGain)}`;
-  const retEl = document.getElementById('p-return');
-  retEl.textContent = fmtPct(totalRet);
-  retEl.className   = `card-value ${cls(totalRet)}`;
-  document.getElementById('p-fx').textContent = `${fmt(fx)}원`;
 
   // 테이블 (평가금액 내림차순)
   const sorted = [...enriched].sort((a, b) => b.valueKRW - a.valueKRW);
