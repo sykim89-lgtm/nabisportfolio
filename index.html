@@ -1144,7 +1144,59 @@ async function loadMarketCap(market) {
 }
 
 function loadUSMarketCap()    { return loadMarketCap('us'); }
-function loadKoreaMarketCap() { return loadMarketCap('kr'); }
+// 네이버 금융 시가총액 순위 페이지 파싱
+async function fetchNaverMarketCap(sosok, page) {
+  const url = `https://finance.naver.com/sise/sise_market_sum.naver?sosok=${sosok}&page=${page}`;
+  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+  const res = await fetch(proxyUrl, { signal: abortFetch(10000) });
+  if (!res.ok) throw new Error('Naver API error: ' + res.status);
+  const buf = await res.arrayBuffer();
+  const html = new TextDecoder('euc-kr').decode(buf);
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const rows = doc.querySelectorAll('table.type_2 tbody tr');
+  const stocks = [];
+  rows.forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if (tds.length < 7) return;
+    const rank = tds[0]?.textContent?.trim();
+    if (!rank || isNaN(parseInt(rank))) return;
+    const nameEl = tds[1]?.querySelector('a');
+    const name = nameEl?.textContent?.trim();
+    const code = nameEl?.href?.match(/code=(\d+)/)?.[1] || '';
+    const price = parseInt((tds[2]?.textContent || '').replace(/,/g, '')) || 0;
+    const changeRate = parseFloat((tds[4]?.textContent || '').replace('%', '')) || 0;
+    const marketCapMillion = parseInt((tds[6]?.textContent || '').replace(/,/g, '')) || 0;
+    const marketCap = marketCapMillion * 1e6;
+    const market = sosok === 0 ? 'KOSPI' : 'KOSDAQ';
+    if (name && code) stocks.push({ symbol: code, name, market, marketCap, price, change: changeRate });
+  });
+  return stocks;
+}
+
+// 한국 시가총액 - 네이버 금융 실시간 시세
+async function loadKoreaMarketCap() {
+  const statusEl = document.getElementById('mc-kr-status');
+  const tableEl = document.getElementById('mc-kr-table');
+  statusEl.style.display = '';
+  statusEl.innerHTML = '⏳ 네이버 금융에서 데이터 조회 중...';
+  tableEl.style.display = 'none';
+  try {
+    const [kospi, kosdaq] = await Promise.all([
+      fetchNaverMarketCap(0, 1),
+      fetchNaverMarketCap(1, 1),
+    ]);
+    const allStocks = [...kospi, ...kosdaq].sort((a, b) => b.marketCap - a.marketCap);
+    if (allStocks.length === 0) throw new Error('데이터 없음');
+    renderMcTable('kr', allStocks);
+    tableEl.style.display = '';
+    const now = new Date().toLocaleTimeString('ko-KR');
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${kospi.length}개 + KOSDAQ ${kosdaq.length}개</div>`;
+  } catch (e) {
+    console.error('Naver MarketCap Error:', e);
+    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⚠️ 네이버 금융 연결 실패, 기존 데이터 사용 중...</div>';
+    return loadMarketCap('kr');
+  }
+}
 
 // ── 시가총액 테이블 렌더링 ─────────────────────────────────────────────────────
 function renderMcTable(market, stocks) {
