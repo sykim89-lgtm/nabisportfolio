@@ -372,6 +372,7 @@
             <tr>
               <th style="text-align:center;width:50px">순위</th>
               <th style="text-align:left">종목명</th>
+              <th style="text-align:left;width:80px">거래소</th>
               <th>시가총액</th>
               <th>현재가</th>
               <th>등락률</th>
@@ -1221,8 +1222,8 @@ function renderMcTable(market, stocks) {
     const isTop3 = rank <= 3;
     const price  = isKR ? `₩${fmt(s.price || 0)}` : `$${(s.price || 0).toFixed(2)}`;
     const chg    = s.change ?? 0;
-    const mktBadge = s.market
-      ? `<span style="font-size:10px;background:var(--border);color:var(--muted);padding:1px 5px;border-radius:3px;margin-left:5px">${s.market}</span>`
+    const exchangeCell = isKR && s.market
+      ? `<td><span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;white-space:nowrap">${s.market}</span></td>`
       : '';
 
     return `<tr>
@@ -1230,9 +1231,10 @@ function renderMcTable(market, stocks) {
         <span class="rank-badge${isTop3 ? ' top3' : ''}">${rank}</span>
       </td>
       <td>
-        <div style="font-weight:600">${s.name || s.companyName || '-'}${mktBadge}</div>
+        <div style="font-weight:600">${s.name || s.companyName || '-'}</div>
         <div style="font-size:11px;color:var(--muted)">${s.symbol || ''}</div>
       </td>
+      ${exchangeCell}
       <td style="text-align:right">${fmtCap(s.marketCap)}</td>
       <td style="text-align:right">${price}</td>
       <td style="text-align:right" class="${cls(chg)}">${fmtPct(chg)}</td>
