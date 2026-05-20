@@ -235,11 +235,11 @@
       display: inline-block;
       min-width: 28px;
       text-align: center;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 700;
       color: var(--muted);
     }
-    .rank-badge.top3 { color: var(--accent); font-size: 18px; }
+    .rank-badge.top3 { color: var(--accent); font-size: 20px; }
   </style>
 </head>
 <body>
@@ -371,7 +371,7 @@
           <thead>
             <tr>
               <th style="text-align:center;width:50px">순위</th>
-              <th style="text-align:left">종목명</th>
+              <th style="text-align:left;padding-left:14px">종목명</th>
               <th style="text-align:left;width:80px">거래소</th>
               <th>시가총액</th>
               <th>현재가</th>
@@ -1230,7 +1230,7 @@ function renderMcTable(market, stocks) {
       <td style="text-align:center">
         <span class="rank-badge${isTop3 ? ' top3' : ''}">${rank}</span>
       </td>
-      <td>
+      <td style="text-align:left;padding-left:14px">
         <div style="font-weight:600">${s.name || s.companyName || '-'}</div>
         <div style="font-size:11px;color:var(--muted)">${s.symbol || ''}</div>
       </td>
