@@ -1233,10 +1233,13 @@ async function fetchNaverMarketCap(sosok, page) {
     const code = nameEl?.href?.match(/code=(\d+)/)?.[1] || '';
     const price = parseInt((tds[2]?.textContent || '').replace(/,/g, '')) || 0;
     const changeRate = parseFloat((tds[4]?.textContent || '').replace('%', '')) || 0;
-    const marketCapMillion = parseInt((tds[6]?.textContent || '').replace(/,/g, '')) || 0;
-    const marketCap = marketCapMillion * 1e6;
+    const marketCapUk = parseInt((tds[6]?.textContent || '').replace(/,/g, '')) || 0;
+    const marketCap = marketCapUk * 1e8; // 네이버는 억원 단위
     const market = sosok === 0 ? 'KOSPI' : 'KOSDAQ';
-    if (name && code) stocks.push({ symbol: code, name, market, marketCap, price, change: changeRate });
+    if (name && code) {
+      const base = KR_BASE.find(b => b.symbol === code);
+      stocks.push({ symbol: code, name, market, marketCap, price, change: changeRate, logo: base?.logo });
+    }
   });
   return stocks;
 }
@@ -1260,9 +1263,9 @@ async function loadKoreaMarketCap() {
     const now = new Date().toLocaleTimeString('ko-KR');
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${kospi.length}개 + KOSDAQ ${kosdaq.length}개</div>`;
   } catch (e) {
-    console.error('Naver MarketCap Error:', e);
-    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⚠️ 네이버 금융 연결 실패, 기존 데이터 사용 중...</div>';
-    return loadMarketCap('kr');
+    statusEl.innerHTML = `<div style="color:var(--red)">❌ 네이버 금융 데이터 조회 실패: ${e.message}</div>
+      <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
+    statusEl.style.display = '';
   }
 }
 
