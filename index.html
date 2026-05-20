@@ -1227,8 +1227,8 @@ function renderMcTable(market, stocks) {
       : '';
 
     const logoHtml = s.logo
-      ? `<img src="https://logo.clearbit.com/${s.logo}"
-              style="width:30px;height:30px;border-radius:6px;object-fit:contain;background:#fff;padding:2px;flex-shrink:0"
+      ? `<img src="https://www.google.com/s2/favicons?domain=${s.logo}&sz=64"
+              style="width:30px;height:30px;border-radius:6px;object-fit:contain;background:#fff;padding:3px;flex-shrink:0"
               onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'${(s.name||'?')[0]}',style:'width:30px;height:30px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0'}))">`
       : `<div style="width:30px;height:30px;border-radius:6px;background:var(--border);color:var(--muted);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(s.name||'?')[0]}</div>`;
 
