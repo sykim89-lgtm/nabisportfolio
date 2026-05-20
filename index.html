@@ -1126,17 +1126,42 @@ async function fetchStooqPrices(items) {
   } catch (_) { return {}; }
 }
 
-// Yahoo Finance에서 시가총액 포함 전체 데이터 조회
+// Yahoo Finance crumb 캐시
+let _yahooCrumb = null;
+async function getYahooCrumb() {
+  if (_yahooCrumb) return _yahooCrumb;
+  try {
+    const res = await fetch('https://query2.finance.yahoo.com/v1/test/getcrumb', {
+      credentials: 'include', signal: abortFetch(5000)
+    });
+    if (res.ok) {
+      const t = (await res.text()).trim();
+      if (t && t.length < 30 && !t.includes('<')) { _yahooCrumb = t; return t; }
+    }
+  } catch (_) {}
+  return '';
+}
+
+// Yahoo Finance에서 시가총액 포함 전체 데이터 조회 (프리/애프터/종가 모두 포함)
 async function fetchYahooMarketCap(yahooSymbols) {
-  const sym = yahooSymbols.join(',');
-  const urls = [
-    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${sym}&formatted=false`,
-    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${sym}&formatted=false`,
-    `https://corsproxy.io/?${encodeURIComponent(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${sym}&formatted=false`)}`,
+  const sym    = yahooSymbols.join(',');
+  const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState';
+  const crumb  = await getYahooCrumb();
+
+  const makeUrl = (host, withCrumb) =>
+    `https://${host}/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false${withCrumb && crumb ? '&crumb=' + encodeURIComponent(crumb) : ''}`;
+
+  const attempts = [
+    () => fetch(makeUrl('query1.finance.yahoo.com', true),  { credentials: 'include', signal: abortFetch(10000) }),
+    () => fetch(makeUrl('query2.finance.yahoo.com', true),  { credentials: 'include', signal: abortFetch(10000) }),
+    () => fetch(makeUrl('query1.finance.yahoo.com', false), { signal: abortFetch(10000) }),
+    () => fetch(`https://corsproxy.io/?${encodeURIComponent(makeUrl('query1.finance.yahoo.com', true))}`,  { signal: abortFetch(10000) }),
+    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(makeUrl('query1.finance.yahoo.com', false))}`, { signal: abortFetch(10000) }),
   ];
-  for (const url of urls) {
+
+  for (const attempt of attempts) {
     try {
-      const res = await fetch(url, { signal: abortFetch(8000) });
+      const res = await attempt();
       if (!res.ok) continue;
       const json = await res.json();
       const result = json.quoteResponse?.result;
@@ -1144,6 +1169,15 @@ async function fetchYahooMarketCap(yahooSymbols) {
     } catch (_) {}
   }
   return [];
+}
+
+// 마켓 상태에 따라 최적 시세 선택 (프리 > 애프터 > 종가)
+function getBestYahooPrice(q) {
+  const state = q.marketState || '';
+  if (state === 'PRE'  && q.preMarketPrice)  return { price: q.preMarketPrice,  change: q.preMarketChangePercent  || 0, label: '프리마켓' };
+  if (state === 'POST' && q.postMarketPrice) return { price: q.postMarketPrice, change: q.postMarketChangePercent || 0, label: '애프터마켓' };
+  if (q.postMarketPrice && state === 'POSTPOST') return { price: q.postMarketPrice, change: q.postMarketChangePercent || 0, label: '애프터마켓' };
+  return { price: q.regularMarketPrice || 0, change: q.regularMarketChangePercent || 0, label: '종가' };
 }
 
 async function loadMarketCap(market) {
@@ -1233,13 +1267,17 @@ async function loadUSMarketCap() {
     const yahooMap = {};
     allResults.forEach(q => { yahooMap[q.symbol] = q; });
 
+    const marketLabels = new Set();
     const stocks = US_BASE.map(s => {
       const q = yahooMap[s.symbol];
+      if (!q) return { ...s, marketCap: 0, price: 0, change: 0 };
+      const best = getBestYahooPrice(q);
+      marketLabels.add(best.label);
       return {
         ...s,
-        marketCap: q?.marketCap || 0,
-        price:     q?.regularMarketPrice || 0,
-        change:    q?.regularMarketChangePercent || 0,
+        marketCap: q.marketCap || 0,
+        price:     best.price,
+        change:    best.change,
       };
     }).filter(s => s.marketCap > 0)
       .sort((a, b) => b.marketCap - a.marketCap);
@@ -1249,7 +1287,8 @@ async function loadUSMarketCap() {
     renderMcTable('us', stocks);
     tableEl.style.display = '';
     const now = new Date().toLocaleTimeString('ko-KR');
-    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 &nbsp;|&nbsp; ${now} 기준</div>`;
+    const labelText = [...marketLabels].join('/') || '종가';
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 (${labelText}) &nbsp;|&nbsp; ${now} 기준</div>`;
     statusEl.style.display = '';
 
   } catch (e) {
