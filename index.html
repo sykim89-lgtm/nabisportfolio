@@ -1183,7 +1183,8 @@ async function loadMarketCap(market) {
       const q = yahooMap[ySym];
       return {
         ...s,
-        marketCap: q?.marketCap || s.marketCap,
+        // 한국 주식은 Yahoo 시총 값이 부정확 → 내장 기준값 유지, 미국만 Yahoo 값 사용
+        marketCap: (!isKR && q?.marketCap) ? q.marketCap : s.marketCap,
         price:     q?.regularMarketPrice || 0,
         change:    q?.regularMarketChangePercent || 0,
       };
