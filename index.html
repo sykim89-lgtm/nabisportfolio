@@ -1205,9 +1205,13 @@ function renderMcTable(market, stocks) {
   const fmtCap = cap => {
     if (!cap || cap === 0) return '-';
     if (isKR) {
-      if (cap >= 1e12) return (cap / 1e12).toFixed(1) + '조';
-      if (cap >= 1e8)  return Math.round(cap / 1e8) + '억';
-      return fmt(cap) + '원';
+      const jo     = Math.floor(cap / 1e12);
+      const chonUk = Math.floor((cap % 1e12) / 1e11);
+      if (jo > 0 && chonUk > 0) return `${jo}조 ${chonUk}천억원`;
+      if (jo > 0)                return `${jo}조`;
+      if (chonUk > 0)            return `${chonUk}천억원`;
+      const uk = Math.round(cap / 1e8);
+      return uk > 0 ? `${uk}억원` : '-';
     } else {
       if (cap >= 1e12) return '$' + (cap / 1e12).toFixed(2) + 'T';
       if (cap >= 1e9)  return '$' + (cap / 1e9).toFixed(1) + 'B';
