@@ -974,70 +974,70 @@ function retryMc(market) {
 
 // 한국 시가총액 상위 (순위·시가총액은 2025년 상반기 기준 내장값)
 const KR_BASE = [
-  {symbol:'005930',name:'삼성전자',    market:'KOSPI', marketCap:3.3e14, stooq:'005930.kw'},
-  {symbol:'000660',name:'SK하이닉스', market:'KOSPI', marketCap:1.2e14, stooq:'000660.kw'},
-  {symbol:'373220',name:'LG에너지솔루션',market:'KOSPI',marketCap:6.5e13,stooq:'373220.kw'},
-  {symbol:'207940',name:'삼성바이오로직스',market:'KOSPI',marketCap:5.5e13,stooq:'207940.kw'},
-  {symbol:'005380',name:'현대차',       market:'KOSPI', marketCap:5.0e13, stooq:'005380.kw'},
-  {symbol:'000270',name:'기아',         market:'KOSPI', marketCap:4.0e13, stooq:'000270.kw'},
-  {symbol:'068270',name:'셀트리온',     market:'KOSPI', marketCap:3.2e13, stooq:'068270.kw'},
-  {symbol:'105560',name:'KB금융',       market:'KOSPI', marketCap:2.9e13, stooq:'105560.kw'},
-  {symbol:'035420',name:'NAVER',        market:'KOSPI', marketCap:2.8e13, stooq:'035420.kw'},
-  {symbol:'055550',name:'신한지주',     market:'KOSPI', marketCap:2.5e13, stooq:'055550.kw'},
-  {symbol:'003670',name:'POSCO홀딩스', market:'KOSPI', marketCap:2.4e13, stooq:'003670.kw'},
-  {symbol:'051910',name:'LG화학',       market:'KOSPI', marketCap:2.3e13, stooq:'051910.kw'},
-  {symbol:'006400',name:'삼성SDI',      market:'KOSPI', marketCap:2.2e13, stooq:'006400.kw'},
-  {symbol:'086790',name:'하나금융지주', market:'KOSPI', marketCap:1.9e13, stooq:'086790.kw'},
-  {symbol:'028260',name:'삼성물산',     market:'KOSPI', marketCap:1.9e13, stooq:'028260.kw'},
-  {symbol:'012330',name:'현대모비스',   market:'KOSPI', marketCap:1.8e13, stooq:'012330.kw'},
-  {symbol:'066570',name:'LG전자',       market:'KOSPI', marketCap:1.7e13, stooq:'066570.kw'},
-  {symbol:'096770',name:'SK이노베이션', market:'KOSPI', marketCap:1.6e13, stooq:'096770.kw'},
-  {symbol:'035720',name:'카카오',       market:'KOSPI', marketCap:1.5e13, stooq:'035720.kw'},
-  {symbol:'017670',name:'SK텔레콤',     market:'KOSPI', marketCap:1.3e13, stooq:'017670.kw'},
-  {symbol:'009540',name:'한국조선해양', market:'KOSPI', marketCap:1.3e13, stooq:'009540.kw'},
-  {symbol:'329180',name:'현대중공업',   market:'KOSPI', marketCap:1.2e13, stooq:'329180.kw'},
-  {symbol:'000810',name:'삼성화재',     market:'KOSPI', marketCap:1.2e13, stooq:'000810.kw'},
-  {symbol:'030200',name:'KT',           market:'KOSPI', marketCap:1.1e13, stooq:'030200.kw'},
-  {symbol:'032830',name:'삼성생명',     market:'KOSPI', marketCap:1.1e13, stooq:'032830.kw'},
-  {symbol:'247540',name:'에코프로비엠', market:'KOSDAQ',marketCap:9.0e12, stooq:'247540.kq'},
-  {symbol:'086520',name:'에코프로',     market:'KOSDAQ',marketCap:7.0e12, stooq:'086520.kq'},
-  {symbol:'196170',name:'알테오젠',     market:'KOSDAQ',marketCap:6.0e12, stooq:'196170.kq'},
-  {symbol:'091990',name:'셀트리온헬스케어',market:'KOSDAQ',marketCap:5.5e12,stooq:'091990.kq'},
-  {symbol:'058470',name:'리노공업',     market:'KOSDAQ',marketCap:4.0e12, stooq:'058470.kq'},
+  {symbol:'005930',name:'삼성전자',       market:'KOSPI', marketCap:3.3e14, stooq:'005930.kw', logo:'samsung.com'},
+  {symbol:'000660',name:'SK하이닉스',    market:'KOSPI', marketCap:1.2e14, stooq:'000660.kw', logo:'skhynix.com'},
+  {symbol:'373220',name:'LG에너지솔루션',market:'KOSPI', marketCap:6.5e13, stooq:'373220.kw', logo:'lgenergysolution.com'},
+  {symbol:'207940',name:'삼성바이오로직스',market:'KOSPI',marketCap:5.5e13, stooq:'207940.kw', logo:'samsungbiologics.com'},
+  {symbol:'005380',name:'현대차',         market:'KOSPI', marketCap:5.0e13, stooq:'005380.kw', logo:'hyundai.com'},
+  {symbol:'000270',name:'기아',           market:'KOSPI', marketCap:4.0e13, stooq:'000270.kw', logo:'kia.com'},
+  {symbol:'068270',name:'셀트리온',       market:'KOSPI', marketCap:3.2e13, stooq:'068270.kw', logo:'celltrion.com'},
+  {symbol:'105560',name:'KB금융',         market:'KOSPI', marketCap:2.9e13, stooq:'105560.kw', logo:'kbfg.com'},
+  {symbol:'035420',name:'NAVER',          market:'KOSPI', marketCap:2.8e13, stooq:'035420.kw', logo:'naver.com'},
+  {symbol:'055550',name:'신한지주',       market:'KOSPI', marketCap:2.5e13, stooq:'055550.kw', logo:'shinhangroup.com'},
+  {symbol:'003670',name:'POSCO홀딩스',   market:'KOSPI', marketCap:2.4e13, stooq:'003670.kw', logo:'posco.com'},
+  {symbol:'051910',name:'LG화학',         market:'KOSPI', marketCap:2.3e13, stooq:'051910.kw', logo:'lgchem.com'},
+  {symbol:'006400',name:'삼성SDI',        market:'KOSPI', marketCap:2.2e13, stooq:'006400.kw', logo:'samsungsdi.com'},
+  {symbol:'086790',name:'하나금융지주',   market:'KOSPI', marketCap:1.9e13, stooq:'086790.kw', logo:'hanafn.com'},
+  {symbol:'028260',name:'삼성물산',       market:'KOSPI', marketCap:1.9e13, stooq:'028260.kw', logo:'samsungcnt.com'},
+  {symbol:'012330',name:'현대모비스',     market:'KOSPI', marketCap:1.8e13, stooq:'012330.kw', logo:'mobis.co.kr'},
+  {symbol:'066570',name:'LG전자',         market:'KOSPI', marketCap:1.7e13, stooq:'066570.kw', logo:'lg.com'},
+  {symbol:'096770',name:'SK이노베이션',   market:'KOSPI', marketCap:1.6e13, stooq:'096770.kw', logo:'skinnovation.com'},
+  {symbol:'035720',name:'카카오',         market:'KOSPI', marketCap:1.5e13, stooq:'035720.kw', logo:'kakao.com'},
+  {symbol:'017670',name:'SK텔레콤',       market:'KOSPI', marketCap:1.3e13, stooq:'017670.kw', logo:'sktelecom.com'},
+  {symbol:'009540',name:'한국조선해양',   market:'KOSPI', marketCap:1.3e13, stooq:'009540.kw', logo:'hhi.co.kr'},
+  {symbol:'329180',name:'현대중공업',     market:'KOSPI', marketCap:1.2e13, stooq:'329180.kw', logo:'hhi.co.kr'},
+  {symbol:'000810',name:'삼성화재',       market:'KOSPI', marketCap:1.2e13, stooq:'000810.kw', logo:'samsungfire.com'},
+  {symbol:'030200',name:'KT',             market:'KOSPI', marketCap:1.1e13, stooq:'030200.kw', logo:'kt.com'},
+  {symbol:'032830',name:'삼성생명',       market:'KOSPI', marketCap:1.1e13, stooq:'032830.kw', logo:'samsunglife.com'},
+  {symbol:'247540',name:'에코프로비엠',   market:'KOSDAQ',marketCap:9.0e12, stooq:'247540.kq', logo:'ecoprobm.com'},
+  {symbol:'086520',name:'에코프로',       market:'KOSDAQ',marketCap:7.0e12, stooq:'086520.kq', logo:'ecopro.co.kr'},
+  {symbol:'196170',name:'알테오젠',       market:'KOSDAQ',marketCap:6.0e12, stooq:'196170.kq', logo:'alteogen.com'},
+  {symbol:'091990',name:'셀트리온헬스케어',market:'KOSDAQ',marketCap:5.5e12,stooq:'091990.kq', logo:'celltrionhc.com'},
+  {symbol:'058470',name:'리노공업',       market:'KOSDAQ',marketCap:4.0e12, stooq:'058470.kq', logo:'leeno.com'},
 ];
 
 // 미국 시가총액 상위 (순위·시가총액은 2025년 상반기 기준 내장값, USD)
 const US_BASE = [
-  {symbol:'AAPL',  name:'Apple',              marketCap:3.2e12, stooq:'aapl.us'},
-  {symbol:'MSFT',  name:'Microsoft',           marketCap:3.0e12, stooq:'msft.us'},
-  {symbol:'NVDA',  name:'NVIDIA',              marketCap:2.9e12, stooq:'nvda.us'},
-  {symbol:'AMZN',  name:'Amazon',              marketCap:2.1e12, stooq:'amzn.us'},
-  {symbol:'GOOGL', name:'Alphabet',            marketCap:2.0e12, stooq:'googl.us'},
-  {symbol:'META',  name:'Meta Platforms',      marketCap:1.5e12, stooq:'meta.us'},
-  {symbol:'TSLA',  name:'Tesla',               marketCap:1.0e12, stooq:'tsla.us'},
-  {symbol:'BRK-B', name:'Berkshire Hathaway',  marketCap:1.1e12, stooq:'brk-b.us'},
-  {symbol:'AVGO',  name:'Broadcom',            marketCap:9.0e11, stooq:'avgo.us'},
-  {symbol:'JPM',   name:'JPMorgan Chase',      marketCap:8.0e11, stooq:'jpm.us'},
-  {symbol:'LLY',   name:'Eli Lilly',           marketCap:7.5e11, stooq:'lly.us'},
-  {symbol:'WMT',   name:'Walmart',             marketCap:7.0e11, stooq:'wmt.us'},
-  {symbol:'V',     name:'Visa',                marketCap:6.5e11, stooq:'v.us'},
-  {symbol:'UNH',   name:'UnitedHealth',        marketCap:5.5e11, stooq:'unh.us'},
-  {symbol:'XOM',   name:'ExxonMobil',          marketCap:5.3e11, stooq:'xom.us'},
-  {symbol:'MA',    name:'Mastercard',          marketCap:5.0e11, stooq:'ma.us'},
-  {symbol:'COST',  name:'Costco',              marketCap:4.5e11, stooq:'cost.us'},
-  {symbol:'NFLX',  name:'Netflix',             marketCap:4.0e11, stooq:'nflx.us'},
-  {symbol:'HD',    name:'Home Depot',          marketCap:3.8e11, stooq:'hd.us'},
-  {symbol:'PG',    name:'Procter & Gamble',    marketCap:3.7e11, stooq:'pg.us'},
-  {symbol:'ABBV',  name:'AbbVie',              marketCap:3.3e11, stooq:'abbv.us'},
-  {symbol:'BAC',   name:'Bank of America',     marketCap:3.2e11, stooq:'bac.us'},
-  {symbol:'CRM',   name:'Salesforce',          marketCap:3.0e11, stooq:'crm.us'},
-  {symbol:'MRK',   name:'Merck',               marketCap:2.8e11, stooq:'mrk.us'},
-  {symbol:'AMD',   name:'AMD',                 marketCap:2.6e11, stooq:'amd.us'},
-  {symbol:'ORCL',  name:'Oracle',              marketCap:2.5e11, stooq:'orcl.us'},
-  {symbol:'CVX',   name:'Chevron',             marketCap:2.5e11, stooq:'cvx.us'},
-  {symbol:'KO',    name:'Coca-Cola',           marketCap:2.4e11, stooq:'ko.us'},
-  {symbol:'INTU',  name:'Intuit',              marketCap:2.3e11, stooq:'intu.us'},
-  {symbol:'QCOM',  name:'Qualcomm',            marketCap:2.2e11, stooq:'qcom.us'},
+  {symbol:'AAPL',  name:'Apple',             marketCap:3.2e12, stooq:'aapl.us',   logo:'apple.com'},
+  {symbol:'MSFT',  name:'Microsoft',          marketCap:3.0e12, stooq:'msft.us',   logo:'microsoft.com'},
+  {symbol:'NVDA',  name:'NVIDIA',             marketCap:2.9e12, stooq:'nvda.us',   logo:'nvidia.com'},
+  {symbol:'AMZN',  name:'Amazon',             marketCap:2.1e12, stooq:'amzn.us',   logo:'amazon.com'},
+  {symbol:'GOOGL', name:'Alphabet',           marketCap:2.0e12, stooq:'googl.us',  logo:'abc.xyz'},
+  {symbol:'META',  name:'Meta Platforms',     marketCap:1.5e12, stooq:'meta.us',   logo:'meta.com'},
+  {symbol:'TSLA',  name:'Tesla',              marketCap:1.0e12, stooq:'tsla.us',   logo:'tesla.com'},
+  {symbol:'BRK-B', name:'Berkshire Hathaway', marketCap:1.1e12, stooq:'brk-b.us',  logo:'berkshirehathaway.com'},
+  {symbol:'AVGO',  name:'Broadcom',           marketCap:9.0e11, stooq:'avgo.us',   logo:'broadcom.com'},
+  {symbol:'JPM',   name:'JPMorgan Chase',     marketCap:8.0e11, stooq:'jpm.us',    logo:'jpmorganchase.com'},
+  {symbol:'LLY',   name:'Eli Lilly',          marketCap:7.5e11, stooq:'lly.us',    logo:'lilly.com'},
+  {symbol:'WMT',   name:'Walmart',            marketCap:7.0e11, stooq:'wmt.us',    logo:'walmart.com'},
+  {symbol:'V',     name:'Visa',               marketCap:6.5e11, stooq:'v.us',      logo:'visa.com'},
+  {symbol:'UNH',   name:'UnitedHealth',       marketCap:5.5e11, stooq:'unh.us',    logo:'unitedhealthgroup.com'},
+  {symbol:'XOM',   name:'ExxonMobil',         marketCap:5.3e11, stooq:'xom.us',    logo:'exxonmobil.com'},
+  {symbol:'MA',    name:'Mastercard',         marketCap:5.0e11, stooq:'ma.us',     logo:'mastercard.com'},
+  {symbol:'COST',  name:'Costco',             marketCap:4.5e11, stooq:'cost.us',   logo:'costco.com'},
+  {symbol:'NFLX',  name:'Netflix',            marketCap:4.0e11, stooq:'nflx.us',   logo:'netflix.com'},
+  {symbol:'HD',    name:'Home Depot',         marketCap:3.8e11, stooq:'hd.us',     logo:'homedepot.com'},
+  {symbol:'PG',    name:'Procter & Gamble',   marketCap:3.7e11, stooq:'pg.us',     logo:'pg.com'},
+  {symbol:'ABBV',  name:'AbbVie',             marketCap:3.3e11, stooq:'abbv.us',   logo:'abbvie.com'},
+  {symbol:'BAC',   name:'Bank of America',    marketCap:3.2e11, stooq:'bac.us',    logo:'bankofamerica.com'},
+  {symbol:'CRM',   name:'Salesforce',         marketCap:3.0e11, stooq:'crm.us',    logo:'salesforce.com'},
+  {symbol:'MRK',   name:'Merck',              marketCap:2.8e11, stooq:'mrk.us',    logo:'merck.com'},
+  {symbol:'AMD',   name:'AMD',                marketCap:2.6e11, stooq:'amd.us',    logo:'amd.com'},
+  {symbol:'ORCL',  name:'Oracle',             marketCap:2.5e11, stooq:'orcl.us',   logo:'oracle.com'},
+  {symbol:'CVX',   name:'Chevron',            marketCap:2.5e11, stooq:'cvx.us',    logo:'chevron.com'},
+  {symbol:'KO',    name:'Coca-Cola',          marketCap:2.4e11, stooq:'ko.us',     logo:'coca-cola.com'},
+  {symbol:'INTU',  name:'Intuit',             marketCap:2.3e11, stooq:'intu.us',   logo:'intuit.com'},
+  {symbol:'QCOM',  name:'Qualcomm',           marketCap:2.2e11, stooq:'qcom.us',   logo:'qualcomm.com'},
 ];
 
 function abortFetch(ms) {
@@ -1226,13 +1226,24 @@ function renderMcTable(market, stocks) {
       ? `<td><span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;white-space:nowrap">${s.market}</span></td>`
       : '';
 
+    const logoHtml = s.logo
+      ? `<img src="https://logo.clearbit.com/${s.logo}"
+              style="width:30px;height:30px;border-radius:6px;object-fit:contain;background:#fff;padding:2px;flex-shrink:0"
+              onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'${(s.name||'?')[0]}',style:'width:30px;height:30px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0'}))">`
+      : `<div style="width:30px;height:30px;border-radius:6px;background:var(--border);color:var(--muted);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(s.name||'?')[0]}</div>`;
+
     return `<tr>
       <td style="text-align:center">
         <span class="rank-badge${isTop3 ? ' top3' : ''}">${rank}</span>
       </td>
       <td style="text-align:left;padding-left:14px">
-        <div style="font-weight:600">${s.name || s.companyName || '-'}</div>
-        <div style="font-size:11px;color:var(--muted)">${s.symbol || ''}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${logoHtml}
+          <div>
+            <div style="font-weight:600">${s.name || s.companyName || '-'}</div>
+            <div style="font-size:11px;color:var(--muted)">${s.symbol || ''}</div>
+          </div>
+        </div>
       </td>
       ${exchangeCell}
       <td style="text-align:right">${fmtCap(s.marketCap)}</td>
