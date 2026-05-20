@@ -973,38 +973,104 @@ function retryMc(market) {
 // ── 시가총액: 내장 기준 데이터 (순위 고정) + Stooq 실시간 시세 ───────────────
 
 // 한국 시가총액 상위 (순위·시가총액은 2025년 상반기 기준 내장값)
+// KOSPI + KOSDAQ 통합, 시가총액 순 정렬 (2025년 기준 참고값)
 const KR_BASE = [
-  {symbol:'005930',name:'삼성전자',       market:'KOSPI', marketCap:3.3e14, stooq:'005930.kw', logo:'samsung.com'},
-  {symbol:'000660',name:'SK하이닉스',    market:'KOSPI', marketCap:1.2e14, stooq:'000660.kw', logo:'skhynix.com'},
-  {symbol:'373220',name:'LG에너지솔루션',market:'KOSPI', marketCap:6.5e13, stooq:'373220.kw', logo:'lgenergysolution.com'},
-  {symbol:'207940',name:'삼성바이오로직스',market:'KOSPI',marketCap:5.5e13, stooq:'207940.kw', logo:'samsungbiologics.com'},
-  {symbol:'005380',name:'현대차',         market:'KOSPI', marketCap:5.0e13, stooq:'005380.kw', logo:'hyundai.com'},
-  {symbol:'000270',name:'기아',           market:'KOSPI', marketCap:4.0e13, stooq:'000270.kw', logo:'kia.com'},
-  {symbol:'068270',name:'셀트리온',       market:'KOSPI', marketCap:3.2e13, stooq:'068270.kw', logo:'celltrion.com'},
-  {symbol:'105560',name:'KB금융',         market:'KOSPI', marketCap:2.9e13, stooq:'105560.kw', logo:'kbfg.com'},
-  {symbol:'035420',name:'NAVER',          market:'KOSPI', marketCap:2.8e13, stooq:'035420.kw', logo:'naver.com'},
-  {symbol:'055550',name:'신한지주',       market:'KOSPI', marketCap:2.5e13, stooq:'055550.kw', logo:'shinhangroup.com'},
-  {symbol:'003670',name:'POSCO홀딩스',   market:'KOSPI', marketCap:2.4e13, stooq:'003670.kw', logo:'posco.com'},
-  {symbol:'051910',name:'LG화학',         market:'KOSPI', marketCap:2.3e13, stooq:'051910.kw', logo:'lgchem.com'},
-  {symbol:'006400',name:'삼성SDI',        market:'KOSPI', marketCap:2.2e13, stooq:'006400.kw', logo:'samsungsdi.com'},
-  {symbol:'086790',name:'하나금융지주',   market:'KOSPI', marketCap:1.9e13, stooq:'086790.kw', logo:'hanafn.com'},
-  {symbol:'028260',name:'삼성물산',       market:'KOSPI', marketCap:1.9e13, stooq:'028260.kw', logo:'samsungcnt.com'},
-  {symbol:'012330',name:'현대모비스',     market:'KOSPI', marketCap:1.8e13, stooq:'012330.kw', logo:'mobis.co.kr'},
-  {symbol:'066570',name:'LG전자',         market:'KOSPI', marketCap:1.7e13, stooq:'066570.kw', logo:'lg.com'},
-  {symbol:'096770',name:'SK이노베이션',   market:'KOSPI', marketCap:1.6e13, stooq:'096770.kw', logo:'skinnovation.com'},
-  {symbol:'035720',name:'카카오',         market:'KOSPI', marketCap:1.5e13, stooq:'035720.kw', logo:'kakao.com'},
-  {symbol:'017670',name:'SK텔레콤',       market:'KOSPI', marketCap:1.3e13, stooq:'017670.kw', logo:'sktelecom.com'},
-  {symbol:'009540',name:'한국조선해양',   market:'KOSPI', marketCap:1.3e13, stooq:'009540.kw', logo:'hhi.co.kr'},
-  {symbol:'329180',name:'현대중공업',     market:'KOSPI', marketCap:1.2e13, stooq:'329180.kw', logo:'hhi.co.kr'},
-  {symbol:'000810',name:'삼성화재',       market:'KOSPI', marketCap:1.2e13, stooq:'000810.kw', logo:'samsungfire.com'},
-  {symbol:'030200',name:'KT',             market:'KOSPI', marketCap:1.1e13, stooq:'030200.kw', logo:'kt.com'},
-  {symbol:'032830',name:'삼성생명',       market:'KOSPI', marketCap:1.1e13, stooq:'032830.kw', logo:'samsunglife.com'},
-  {symbol:'247540',name:'에코프로비엠',   market:'KOSDAQ',marketCap:9.0e12, stooq:'247540.kq', logo:'ecoprobm.com'},
-  {symbol:'086520',name:'에코프로',       market:'KOSDAQ',marketCap:7.0e12, stooq:'086520.kq', logo:'ecopro.co.kr'},
-  {symbol:'196170',name:'알테오젠',       market:'KOSDAQ',marketCap:6.0e12, stooq:'196170.kq', logo:'alteogen.com'},
-  {symbol:'091990',name:'셀트리온헬스케어',market:'KOSDAQ',marketCap:5.5e12,stooq:'091990.kq', logo:'celltrionhc.com'},
-  {symbol:'058470',name:'리노공업',       market:'KOSDAQ',marketCap:4.0e12, stooq:'058470.kq', logo:'leeno.com'},
-];
+  {symbol:'005930',name:'삼성전자',        market:'KOSPI', marketCap:3.30e14, stooq:'005930.kw', logo:'samsung.com'},
+  {symbol:'000660',name:'SK하이닉스',     market:'KOSPI', marketCap:1.20e14, stooq:'000660.kw', logo:'skhynix.com'},
+  {symbol:'373220',name:'LG에너지솔루션', market:'KOSPI', marketCap:6.50e13, stooq:'373220.kw', logo:'lgenergysolution.com'},
+  {symbol:'207940',name:'삼성바이오로직스',market:'KOSPI', marketCap:5.50e13, stooq:'207940.kw', logo:'samsungbiologics.com'},
+  {symbol:'005380',name:'현대차',          market:'KOSPI', marketCap:5.00e13, stooq:'005380.kw', logo:'hyundai.com'},
+  {symbol:'005935',name:'삼성전자우',      market:'KOSPI', marketCap:4.20e13, stooq:'005935.kw', logo:'samsung.com'},
+  {symbol:'000270',name:'기아',            market:'KOSPI', marketCap:4.00e13, stooq:'000270.kw', logo:'kia.com'},
+  {symbol:'068270',name:'셀트리온',        market:'KOSPI', marketCap:3.20e13, stooq:'068270.kw', logo:'celltrion.com'},
+  {symbol:'105560',name:'KB금융',          market:'KOSPI', marketCap:2.90e13, stooq:'105560.kw', logo:'kbfg.com'},
+  {symbol:'035420',name:'NAVER',           market:'KOSPI', marketCap:2.80e13, stooq:'035420.kw', logo:'naver.com'},
+  {symbol:'055550',name:'신한지주',        market:'KOSPI', marketCap:2.50e13, stooq:'055550.kw', logo:'shinhangroup.com'},
+  {symbol:'005490',name:'POSCO홀딩스',    market:'KOSPI', marketCap:2.40e13, stooq:'005490.kw', logo:'posco.com'},
+  {symbol:'051910',name:'LG화학',          market:'KOSPI', marketCap:2.30e13, stooq:'051910.kw', logo:'lgchem.com'},
+  {symbol:'006400',name:'삼성SDI',         market:'KOSPI', marketCap:2.20e13, stooq:'006400.kw', logo:'samsungsdi.com'},
+  {symbol:'086790',name:'하나금융지주',    market:'KOSPI', marketCap:1.90e13, stooq:'086790.kw', logo:'hanafn.com'},
+  {symbol:'028260',name:'삼성물산',        market:'KOSPI', marketCap:1.90e13, stooq:'028260.kw', logo:'samsungcnt.com'},
+  {symbol:'012330',name:'현대모비스',      market:'KOSPI', marketCap:1.80e13, stooq:'012330.kw', logo:'mobis.co.kr'},
+  {symbol:'066570',name:'LG전자',          market:'KOSPI', marketCap:1.70e13, stooq:'066570.kw', logo:'lg.com'},
+  {symbol:'096770',name:'SK이노베이션',    market:'KOSPI', marketCap:1.60e13, stooq:'096770.kw', logo:'skinnovation.com'},
+  {symbol:'035720',name:'카카오',          market:'KOSPI', marketCap:1.50e13, stooq:'035720.kw', logo:'kakao.com'},
+  {symbol:'017670',name:'SK텔레콤',        market:'KOSPI', marketCap:1.30e13, stooq:'017670.kw', logo:'sktelecom.com'},
+  {symbol:'009540',name:'한국조선해양',    market:'KOSPI', marketCap:1.30e13, stooq:'009540.kw', logo:'ksoe.co.kr'},
+  {symbol:'329180',name:'현대중공업',      market:'KOSPI', marketCap:1.20e13, stooq:'329180.kw', logo:'hhi.co.kr'},
+  {symbol:'000810',name:'삼성화재',        market:'KOSPI', marketCap:1.20e13, stooq:'000810.kw', logo:'samsungfire.com'},
+  {symbol:'030200',name:'KT',              market:'KOSPI', marketCap:1.10e13, stooq:'030200.kw', logo:'kt.com'},
+  {symbol:'032830',name:'삼성생명',        market:'KOSPI', marketCap:1.10e13, stooq:'032830.kw', logo:'samsunglife.com'},
+  {symbol:'247540',name:'에코프로비엠',    market:'KOSDAQ',marketCap:9.00e12, stooq:'247540.kq', logo:'ecoprobm.com'},
+  {symbol:'402340',name:'SK스퀘어',        market:'KOSPI', marketCap:9.00e12, stooq:'402340.kw', logo:'sk.com'},
+  {symbol:'009150',name:'삼성전기',        market:'KOSPI', marketCap:8.50e12, stooq:'009150.kw', logo:'samsem.com'},
+  {symbol:'012450',name:'한화에어로스페이스',market:'KOSPI',marketCap:8.50e12,stooq:'012450.kw', logo:'hanwhaaerospace.com'},
+  {symbol:'267250',name:'HD현대',          market:'KOSPI', marketCap:8.00e12, stooq:'267250.kw', logo:'hd-hyundai.com'},
+  {symbol:'316140',name:'우리금융지주',    market:'KOSPI', marketCap:8.00e12, stooq:'316140.kw', logo:'woorifg.com'},
+  {symbol:'086520',name:'에코프로',        market:'KOSDAQ',marketCap:7.00e12, stooq:'086520.kq', logo:'ecopro.co.kr'},
+  {symbol:'003670',name:'포스코퓨처엠',   market:'KOSPI', marketCap:7.00e12, stooq:'003670.kw', logo:'posco.com'},
+  {symbol:'024110',name:'기업은행',        market:'KOSPI', marketCap:7.00e12, stooq:'024110.kw', logo:'ibk.co.kr'},
+  {symbol:'196170',name:'알테오젠',        market:'KOSDAQ',marketCap:6.50e12, stooq:'196170.kq', logo:'alteogen.com'},
+  {symbol:'086280',name:'현대글로비스',    market:'KOSPI', marketCap:6.50e12, stooq:'086280.kw', logo:'glovis.net'},
+  {symbol:'010130',name:'고려아연',        market:'KOSPI', marketCap:6.50e12, stooq:'010130.kw', logo:'koreazinc.co.kr'},
+  {symbol:'011070',name:'LG이노텍',        market:'KOSPI', marketCap:6.00e12, stooq:'011070.kw', logo:'lginnotek.com'},
+  {symbol:'054540',name:'한미반도체',      market:'KOSDAQ',marketCap:6.00e12, stooq:'054540.kq', logo:'hmsemi.com'},
+  {symbol:'034020',name:'두산에너빌리티', market:'KOSPI', marketCap:6.00e12, stooq:'034020.kw', logo:'doosan.com'},
+  {symbol:'042660',name:'한화오션',        market:'KOSPI', marketCap:5.50e12, stooq:'042660.kw', logo:'hanwhaocean.com'},
+  {symbol:'091990',name:'셀트리온헬스케어',market:'KOSDAQ',marketCap:5.50e12, stooq:'091990.kq', logo:'celltrionhc.com'},
+  {symbol:'047050',name:'포스코인터내셔널',market:'KOSPI',marketCap:5.00e12, stooq:'047050.kw', logo:'poscointl.com'},
+  {symbol:'051900',name:'LG생활건강',     market:'KOSPI', marketCap:5.00e12, stooq:'051900.kw', logo:'lgcare.com'},
+  {symbol:'004020',name:'현대제철',        market:'KOSPI', marketCap:5.00e12, stooq:'004020.kw', logo:'hyundai-steel.com'},
+  {symbol:'047810',name:'한국항공우주',    market:'KOSPI', marketCap:5.00e12, stooq:'047810.kw', logo:'koreaaero.com'},
+  {symbol:'033780',name:'KT&G',           market:'KOSPI', marketCap:5.00e12, stooq:'033780.kw', logo:'ktng.com'},
+  {symbol:'403870',name:'HPSP',           market:'KOSDAQ',marketCap:4.50e12, stooq:'403870.kq', logo:'hpsp.co.kr'},
+  {symbol:'058470',name:'리노공업',        market:'KOSDAQ',marketCap:4.50e12, stooq:'058470.kq', logo:'leeno.com'},
+  {symbol:'010950',name:'S-Oil',          market:'KOSPI', marketCap:4.00e12, stooq:'010950.kw', logo:'s-oil.com'},
+  {symbol:'066970',name:'엘앤에프',        market:'KOSDAQ',marketCap:4.00e12, stooq:'066970.kq', logo:'ln-f.co.kr'},
+  {symbol:'357780',name:'솔브레인홀딩스', market:'KOSDAQ',marketCap:4.00e12, stooq:'357780.kq', logo:'soulbrain.co.kr'},
+  {symbol:'088350',name:'한화생명',        market:'KOSPI', marketCap:3.80e12, stooq:'088350.kw', logo:'hanwhalife.com'},
+  {symbol:'010140',name:'삼성중공업',      market:'KOSPI', marketCap:3.80e12, stooq:'010140.kw', logo:'shi.samsung.co.kr'},
+  {symbol:'090430',name:'아모레퍼시픽',   market:'KOSPI', marketCap:3.80e12, stooq:'090430.kw', logo:'amorepacific.com'},
+  {symbol:'000100',name:'유한양행',        market:'KOSPI', marketCap:3.70e12, stooq:'000100.kw', logo:'yuhan.co.kr'},
+  {symbol:'016360',name:'삼성증권',        market:'KOSPI', marketCap:3.50e12, stooq:'016360.kw', logo:'samsungpop.com'},
+  {symbol:'006800',name:'미래에셋증권',   market:'KOSPI', marketCap:3.50e12, stooq:'006800.kw', logo:'miraeasset.com'},
+  {symbol:'003230',name:'삼양식품',        market:'KOSPI', marketCap:3.50e12, stooq:'003230.kw', logo:'samyangfood.com'},
+  {symbol:'161390',name:'한국타이어앤테크',market:'KOSPI',marketCap:3.50e12, stooq:'161390.kw', logo:'hankooktire.com'},
+  {symbol:'015760',name:'한국전력',        market:'KOSPI', marketCap:3.50e12, stooq:'015760.kw', logo:'kepco.co.kr'},
+  {symbol:'222080',name:'오스템임플란트', market:'KOSDAQ',marketCap:3.20e12, stooq:'222080.kq', logo:'osstem.com'},
+  {symbol:'071050',name:'한국금융지주',    market:'KOSPI', marketCap:3.20e12, stooq:'071050.kw', logo:'koreainvestment.com'},
+  {symbol:'000720',name:'현대건설',        market:'KOSPI', marketCap:3.00e12, stooq:'000720.kw', logo:'hdec.co.kr'},
+  {symbol:'021240',name:'코웨이',          market:'KOSPI', marketCap:3.00e12, stooq:'021240.kw', logo:'coway.co.kr'},
+  {symbol:'001040',name:'CJ',             market:'KOSPI', marketCap:3.00e12, stooq:'001040.kw', logo:'cj.net'},
+  {symbol:'139480',name:'이마트',          market:'KOSPI', marketCap:2.80e12, stooq:'139480.kw', logo:'emart.com'},
+  {symbol:'011780',name:'금호석유',        market:'KOSPI', marketCap:2.80e12, stooq:'011780.kw', logo:'kkpc.com'},
+  {symbol:'000120',name:'CJ대한통운',     market:'KOSPI', marketCap:2.80e12, stooq:'000120.kw', logo:'cjlogistics.com'},
+  {symbol:'041510',name:'에스엠',          market:'KOSDAQ',marketCap:2.50e12, stooq:'041510.kq', logo:'smtown.com'},
+  {symbol:'263750',name:'펄어비스',        market:'KOSDAQ',marketCap:2.50e12, stooq:'263750.kq', logo:'pearlabyss.com'},
+  {symbol:'293490',name:'카카오게임즈',   market:'KOSDAQ',marketCap:2.50e12, stooq:'293490.kq', logo:'kakaogames.com'},
+  {symbol:'035760',name:'CJ ENM',         market:'KOSDAQ',marketCap:2.50e12, stooq:'035760.kq', logo:'cjenm.com'},
+  {symbol:'002790',name:'아모레G',         market:'KOSPI', marketCap:2.50e12, stooq:'002790.kw', logo:'amorepacific.com'},
+  {symbol:'145020',name:'휴젤',            market:'KOSDAQ',marketCap:2.50e12, stooq:'145020.kq', logo:'hugel.co.kr'},
+  {symbol:'004990',name:'롯데지주',        market:'KOSPI', marketCap:2.50e12, stooq:'004990.kw', logo:'lotte.com'},
+  {symbol:'950130',name:'에코프로에이치엔',market:'KOSDAQ',marketCap:2.20e12,stooq:'950130.kq', logo:'ecopro.co.kr'},
+  {symbol:'240810',name:'원익IPS',         market:'KOSDAQ',marketCap:2.20e12, stooq:'240810.kq', logo:'wonikips.com'},
+  {symbol:'214150',name:'클래시스',        market:'KOSDAQ',marketCap:2.20e12, stooq:'214150.kq', logo:'classys.com'},
+  {symbol:'023530',name:'롯데쇼핑',        market:'KOSPI', marketCap:2.20e12, stooq:'023530.kw', logo:'lotteshopping.com'},
+  {symbol:'007070',name:'GS리테일',        market:'KOSPI', marketCap:2.00e12, stooq:'007070.kw', logo:'gsretail.com'},
+  {symbol:'039030',name:'이오테크닉스',   market:'KOSDAQ',marketCap:2.00e12, stooq:'039030.kq', logo:'eotech.co.kr'},
+  {symbol:'000150',name:'두산',            market:'KOSPI', marketCap:2.00e12, stooq:'000150.kw', logo:'doosan.com'},
+  {symbol:'096530',name:'씨젠',            market:'KOSDAQ',marketCap:2.00e12, stooq:'096530.kq', logo:'seegene.com'},
+  {symbol:'253450',name:'스튜디오드래곤', market:'KOSDAQ',marketCap:1.80e12, stooq:'253450.kq', logo:'studiodragen.com'},
+  {symbol:'008770',name:'호텔신라',        market:'KOSPI', marketCap:1.80e12, stooq:'008770.kw', logo:'shilla.net'},
+  {symbol:'000080',name:'하이트진로',      market:'KOSPI', marketCap:1.80e12, stooq:'000080.kw', logo:'hitejinro.com'},
+  {symbol:'001800',name:'오리온홀딩스',   market:'KOSPI', marketCap:1.70e12, stooq:'001800.kw', logo:'orionworld.com'},
+  {symbol:'112040',name:'위메이드',        market:'KOSDAQ',marketCap:1.70e12, stooq:'112040.kq', logo:'wemade.com'},
+  {symbol:'078340',name:'컴투스',          market:'KOSDAQ',marketCap:1.60e12, stooq:'078340.kq', logo:'com2us.com'},
+  {symbol:'089030',name:'테크윙',          market:'KOSDAQ',marketCap:1.60e12, stooq:'089030.kq', logo:'techwing.co.kr'},
+  {symbol:'003410',name:'쌍용씨앤이',     market:'KOSPI', marketCap:1.50e12, stooq:'003410.kw', logo:'sscnc.co.kr'},
+  {symbol:'238120',name:'SFA반도체',      market:'KOSDAQ',marketCap:1.50e12, stooq:'238120.kq', logo:'sfasemi.com'},
+  {symbol:'064760',name:'티씨케이',        market:'KOSDAQ',marketCap:1.50e12, stooq:'064760.kq', logo:'tck.co.kr'},
+].sort((a, b) => b.marketCap - a.marketCap);
 
 // 미국 시가총액 상위 (순위·시가총액은 2025년 상반기 기준 내장값, USD)
 const US_BASE = [
@@ -1123,7 +1189,7 @@ async function loadMarketCap(market) {
       };
     }).sort((a, b) => b.marketCap - a.marketCap);
 
-    renderMcTable(market, finalData);
+    renderMcTable(market, finalData.slice(0, 100));
     const now = new Date().toLocaleTimeString('ko-KR');
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 실시간 &nbsp;|&nbsp; ${now} 기준</div>`;
   } else {
@@ -1137,7 +1203,7 @@ async function loadMarketCap(market) {
         change: 0,
       };
     });
-    renderMcTable(market, finalData);
+    renderMcTable(market, finalData.slice(0, 100));
     const now = new Date().toLocaleTimeString('ko-KR');
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 시가총액: 2025년 기준 (참고값) &nbsp;|&nbsp; 시세: ${now} 조회</div>`;
   }
@@ -1205,13 +1271,12 @@ function renderMcTable(market, stocks) {
   const fmtCap = cap => {
     if (!cap || cap === 0) return '-';
     if (isKR) {
-      const jo     = Math.floor(cap / 1e12);
-      const chonUk = Math.floor((cap % 1e12) / 1e11);
-      if (jo > 0 && chonUk > 0) return `${jo}조 ${chonUk}천억원`;
-      if (jo > 0)                return `${jo}조`;
-      if (chonUk > 0)            return `${chonUk}천억원`;
-      const uk = Math.round(cap / 1e8);
-      return uk > 0 ? `${uk}억원` : '-';
+      const jo = Math.floor(cap / 1e12);
+      const uk = Math.round((cap % 1e12) / 1e8);
+      if (jo > 0 && uk > 0) return `${jo}조 ${uk}억원`;
+      if (jo > 0)           return `${jo}조`;
+      if (uk > 0)           return `${uk}억원`;
+      return '-';
     } else {
       if (cap >= 1e12) return '$' + (cap / 1e12).toFixed(2) + 'T';
       if (cap >= 1e9)  return '$' + (cap / 1e9).toFixed(1) + 'B';
