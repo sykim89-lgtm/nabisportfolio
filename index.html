@@ -1322,13 +1322,94 @@ async function loadMarketCap(market) {
   statusEl.style.display = '';
 }
 
+// ── Naver Finance 단일 종목 상세 데이터 (파두 대시보드용 fallback) ──────────────
+async function fetchNaverStockDetail(code) {
+  const out = { price: null, change: null, changePct: null, marketCap: null, volume: null, prevClose: null, high52: null, low52: null, per: null };
+
+  // 1차: polling.finance.naver.com — 실시간 가격·거래량
+  try {
+    const url = `https://polling.finance.naver.com/api/realtime/domestic/stock/${code}`;
+    for (const proxy of [
+      `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    ]) {
+      try {
+        const res = await fetch(proxy, { signal: abortFetch(8000) });
+        if (!res.ok) continue;
+        const json = await res.json();
+        const d = json?.areas?.[0]?.datas?.[0];
+        if (d?.closePrice) {
+          out.price     = d.closePrice;
+          out.change    = d.compareToPreviousClosePrice ?? null;
+          out.changePct = d.fluctuationsRatio ?? null;
+          out.volume    = d.accumulatedTradingVolume ?? null;
+          out.marketCap = d.marketValue ?? null;
+          out.prevClose = d.previousClosePrice ??
+            (out.price != null && out.change != null ? out.price - out.change : null);
+          break;
+        }
+      } catch (_) {}
+    }
+  } catch (_) {}
+
+  // 2차: m.stock.naver.com/api/stock/{code}/basic — 52주 고저·PER 및 보완
+  try {
+    const url = `https://m.stock.naver.com/api/stock/${code}/basic`;
+    for (const proxy of [
+      `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    ]) {
+      try {
+        const res = await fetch(proxy, { signal: abortFetch(8000) });
+        if (!res.ok) continue;
+        const json = await res.json();
+        if (!json) continue;
+
+        // 가격 보완 (1차에서 못 받은 경우)
+        if (out.price == null && json.closePrice)
+          out.price = parseFloat(String(json.closePrice).replace(/,/g, '')) || null;
+        if (out.changePct == null && json.fluctuationsRatio)
+          out.changePct = parseFloat(String(json.fluctuationsRatio).replace(/[+%]/g, '')) || null;
+        if (out.change == null && json.compareToPreviousClosePrice)
+          out.change = parseFloat(String(json.compareToPreviousClosePrice).replace(/,/g, '')) || null;
+        if (out.volume == null && json.volume)
+          out.volume = parseInt(String(json.volume).replace(/,/g, '')) || null;
+
+        // 시가총액 문자열 파싱 (예: "1,301억", "2조 3,450억")
+        if (out.marketCap == null && json.marketValue) {
+          const mv = String(json.marketValue).replace(/,/g, '');
+          const jm = mv.match(/(\d+)조/), um = mv.match(/(\d+)억/);
+          const cap = (jm ? +jm[1] * 1e12 : 0) + (um ? +um[1] * 1e8 : 0);
+          if (cap > 0) out.marketCap = cap;
+        }
+
+        // totalInfos / stockItemTotalInfos 에서 52주 고저·PER 추출
+        const infos = json.totalInfos || json.stockItemTotalInfos || [];
+        for (const info of infos) {
+          const c   = String(info.code  || '');
+          const nm  = String(info.name  || '');
+          const raw = String(info.value || '').replace(/,/g, '').replace(/\s/g, '');
+          const num = parseFloat(raw.replace(/[^\d.]/g, '')) || null;
+          if (c === 'PER'            || nm.includes('PER'))        out.per    = num;
+          if (c.includes('52W_HIGH') || nm.includes('52주 최고')) out.high52 = num;
+          if (c.includes('52W_LOW')  || nm.includes('52주 최저')) out.low52  = num;
+        }
+        break;
+      } catch (_) {}
+    }
+  } catch (_) {}
+
+  return out;
+}
+
 // ── 파두 대시보드 ─────────────────────────────────────────────────────────────
 async function loadFaduDashboard() {
   const SYMBOL   = '440110.KQ';
+  const CODE     = '440110';
   const AVG_COST = 98115;
   const QTY      = 1300;
 
-  const fmtKrw = v => v ? Math.round(v).toLocaleString('ko-KR') + '원' : '-';
+  const fmtKrw = v => (v != null && v > 0) ? Math.round(v).toLocaleString('ko-KR') + '원' : '-';
   const fmtCap = cap => {
     if (!cap) return '-';
     const jo = Math.floor(cap / 1e12);
@@ -1338,26 +1419,37 @@ async function loadFaduDashboard() {
     if (uk > 0) return `${uk}억원`;
     return '-';
   };
+  const applyPrice = (price, diff, changePct, label) => {
+    const sign = (changePct || 0) >= 0 ? '+' : '';
+    document.getElementById('fadu-cur-price').textContent = Math.round(price).toLocaleString('ko-KR') + '원';
+    document.getElementById('fadu-market-state').textContent = label;
+    const chgEl = document.getElementById('fadu-change');
+    chgEl.textContent = `${sign}${Math.round(diff || 0).toLocaleString('ko-KR')}원 (${sign}${(changePct || 0).toFixed(2)}%)`;
+    chgEl.style.color = (changePct || 0) >= 0 ? 'var(--green)' : 'var(--red)';
+  };
+  const applyMyPos = price => {
+    const evalVal = Math.round(price * QTY);
+    const pnl     = Math.round((price - AVG_COST) * QTY);
+    const pnlRate = ((price - AVG_COST) / AVG_COST * 100).toFixed(1);
+    document.getElementById('fp-value').textContent = evalVal.toLocaleString('ko-KR') + '원';
+    const sign2 = pnl >= 0 ? '+' : '';
+    document.getElementById('fp-pnl').innerHTML =
+      `<span style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${sign2}${pnl.toLocaleString('ko-KR')}원 (${sign2}${pnlRate}%)</span>`;
+  };
 
-  // Yahoo Finance 실시간 시세
+  // ── 1단계: Yahoo Finance ───────────────────────────────────────────────────
+  let yahooOk = false;
   try {
     const quotes = await fetchYahooMarketCap([SYMBOL]);
     const q = quotes[0];
-    if (q) {
+    if (q && q.regularMarketPrice) {
       const best  = getBestYahooPrice(q);
       const price = best.price;
       const change = best.change;
       const prev  = q.regularMarketPreviousClose || 0;
       const diff  = prev ? price - prev : 0;
-      const sign  = change >= 0 ? '+' : '';
 
-      document.getElementById('fadu-cur-price').textContent = Math.round(price).toLocaleString('ko-KR') + '원';
-      document.getElementById('fadu-market-state').textContent = best.label;
-
-      const chgEl = document.getElementById('fadu-change');
-      chgEl.textContent = `${sign}${Math.round(diff).toLocaleString('ko-KR')}원 (${sign}${change.toFixed(2)}%)`;
-      chgEl.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
-
+      applyPrice(price, diff, change, best.label);
       document.getElementById('fs-mktcap').textContent  = fmtCap(q.marketCap);
       document.getElementById('fs-vol').textContent     = q.regularMarketVolume
         ? Math.round(q.regularMarketVolume / 1000).toLocaleString('ko-KR') + '천주' : '-';
@@ -1365,21 +1457,37 @@ async function loadFaduDashboard() {
       document.getElementById('fs-high52').textContent  = fmtKrw(q.fiftyTwoWeekHigh);
       document.getElementById('fs-low52').textContent   = fmtKrw(q.fiftyTwoWeekLow);
       document.getElementById('fs-per').textContent     = q.trailingPE ? q.trailingPE.toFixed(1) + 'x' : 'N/A';
-
-      // 내 포지션
-      const evalVal = Math.round(price * QTY);
-      const pnl     = Math.round((price - AVG_COST) * QTY);
-      const pnlRate = ((price - AVG_COST) / AVG_COST * 100).toFixed(1);
-      document.getElementById('fp-value').textContent = evalVal.toLocaleString('ko-KR') + '원';
-      const pnlEl = document.getElementById('fp-pnl');
-      const sign2 = pnl >= 0 ? '+' : '';
-      pnlEl.innerHTML = `<span style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${sign2}${pnl.toLocaleString('ko-KR')}원 (${sign2}${pnlRate}%)</span>`;
+      applyMyPos(price);
 
       const now = new Date().toLocaleTimeString('ko-KR');
       document.getElementById('fadu-status').textContent = `🔴 Yahoo Finance 실시간 | ${now} 기준`;
+      yahooOk = true;
     }
-  } catch (_) {
-    document.getElementById('fadu-status').textContent = '❌ 시세 로드 실패';
+  } catch (_) {}
+
+  // ── 2단계: Yahoo 실패 → Naver Finance fallback ────────────────────────────
+  if (!yahooOk) {
+    try {
+      const naver = await fetchNaverStockDetail(CODE);
+      if (naver.price) {
+        applyPrice(naver.price, naver.change, naver.changePct, '네이버 실시간');
+        document.getElementById('fs-mktcap').textContent  = fmtCap(naver.marketCap);
+        document.getElementById('fs-vol').textContent     = naver.volume
+          ? Math.round(naver.volume / 1000).toLocaleString('ko-KR') + '천주' : '-';
+        document.getElementById('fs-prev').textContent    = fmtKrw(naver.prevClose);
+        document.getElementById('fs-high52').textContent  = fmtKrw(naver.high52);
+        document.getElementById('fs-low52').textContent   = fmtKrw(naver.low52);
+        document.getElementById('fs-per').textContent     = naver.per != null ? naver.per.toFixed(1) + 'x' : '-';
+        applyMyPos(naver.price);
+
+        const now = new Date().toLocaleTimeString('ko-KR');
+        document.getElementById('fadu-status').textContent = `🟡 네이버 금융 실시간 | ${now} 기준`;
+      } else {
+        document.getElementById('fadu-status').textContent = '❌ 시세 로드 실패';
+      }
+    } catch (e) {
+      document.getElementById('fadu-status').textContent = '❌ 시세 로드 실패';
+    }
   }
 
   // 순위 계산 + 차트 (병렬)
