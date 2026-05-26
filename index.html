@@ -1266,38 +1266,17 @@ async function fetchStooqHistory(stooqSymbol, days = 90) {
   } catch (_) { return null; }
 }
 
-// Yahoo Finance crumb 캐시
-let _yahooCrumb = null;
-async function getYahooCrumb() {
-  if (_yahooCrumb) return _yahooCrumb;
-  try {
-    const res = await fetch('https://query2.finance.yahoo.com/v1/test/getcrumb', {
-      credentials: 'include', signal: abortFetch(5000)
-    });
-    if (res.ok) {
-      const t = (await res.text()).trim();
-      if (t && t.length < 30 && !t.includes('<')) { _yahooCrumb = t; return t; }
-    }
-  } catch (_) {}
-  return '';
-}
-
-// Yahoo Finance에서 시가총액 포함 전체 데이터 조회 (프리/애프터/종가 모두 포함)
+// Yahoo Finance에서 시가총액 포함 전체 데이터 조회 (CORS 프록시 경유)
+// ※ GitHub Pages에서 yahoo.com 직접 호출은 CORS 차단 → 프록시만 사용
 async function fetchYahooMarketCap(yahooSymbols) {
   const sym    = yahooSymbols.join(',');
   const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState,regularMarketVolume,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,trailingPE,52WeekChange';
-  const crumb  = await getYahooCrumb();
-
-  const makeUrl = (host, withCrumb) =>
-    `https://${host}/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false${withCrumb && crumb ? '&crumb=' + encodeURIComponent(crumb) : ''}`;
-
+  const baseUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false`;
   const attempts = [
-    () => fetch(makeUrl('query1.finance.yahoo.com', true),  { credentials: 'include', signal: abortFetch(8000) }),
-    () => fetch(makeUrl('query2.finance.yahoo.com', true),  { credentials: 'include', signal: abortFetch(8000) }),
-    () => fetch(`https://corsproxy.io/?${encodeURIComponent(makeUrl('query1.finance.yahoo.com', true))}`,  { signal: abortFetch(8000) }),
-    () => fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(makeUrl('query1.finance.yahoo.com', false))}`, { signal: abortFetch(8000) }),
-    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(makeUrl('query1.finance.yahoo.com', false))}`, { signal: abortFetch(8000) }),
-    () => fetch(`https://thingproxy.freeboard.io/fetch/${makeUrl('query1.finance.yahoo.com', false)}`, { signal: abortFetch(8000) }),
+    () => fetch(`https://corsproxy.io/?${encodeURIComponent(baseUrl)}`,  { signal: abortFetch(8000) }),
+    () => fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(baseUrl)}`, { signal: abortFetch(8000) }),
+    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(baseUrl)}`, { signal: abortFetch(8000) }),
+    () => fetch(`https://thingproxy.freeboard.io/fetch/${baseUrl}`, { signal: abortFetch(8000) }),
   ];
 
   for (const attempt of attempts) {
@@ -1559,10 +1538,11 @@ async function loadFaduDashboard() {
 }
 
 async function loadFaduChart() {
+  // GitHub Pages에서 yahoo.com 직접 호출은 CORS로 100% 차단됨 → 프록시만 시도
   const url = 'https://query1.finance.yahoo.com/v8/finance/chart/440110.KQ?interval=1d&range=3mo';
   const tries = [
-    url,
     `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   ];
 
@@ -1724,9 +1704,9 @@ async function loadNebiusDashboard() {
 }
 
 async function loadNbisChart() {
+  // GitHub Pages에서 yahoo.com 직접 호출은 CORS로 100% 차단됨 → 프록시만 시도
   const url = 'https://query1.finance.yahoo.com/v8/finance/chart/NBIS?interval=1d&range=3mo';
   const tries = [
-    url,
     `https://corsproxy.io/?${encodeURIComponent(url)}`,
     `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
