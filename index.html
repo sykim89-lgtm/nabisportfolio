@@ -451,6 +451,7 @@
               <th>시가총액</th>
               <th>현재가</th>
               <th>등락률</th>
+              <th>YoY</th>
             </tr>
           </thead>
           <tbody id="mc-kr-tbody"></tbody>
@@ -474,6 +475,7 @@
               <th>시가총액</th>
               <th>현재가</th>
               <th>등락률</th>
+              <th>YoY</th>
             </tr>
           </thead>
           <tbody id="mc-us-tbody"></tbody>
@@ -1222,7 +1224,7 @@ async function getYahooCrumb() {
 // Yahoo Finance에서 시가총액 포함 전체 데이터 조회 (프리/애프터/종가 모두 포함)
 async function fetchYahooMarketCap(yahooSymbols) {
   const sym    = yahooSymbols.join(',');
-  const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState,regularMarketVolume,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,trailingPE';
+  const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState,regularMarketVolume,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,trailingPE,52WeekChange';
   const crumb  = await getYahooCrumb();
 
   const makeUrl = (host, withCrumb) =>
@@ -1593,6 +1595,7 @@ async function loadUSMarketCap() {
         marketCap: q.marketCap || 0,
         price:     best.price,
         change:    best.change,
+        yoy:       q['52WeekChange'] != null ? q['52WeekChange'] * 100 : null,
       };
     }).filter(s => s.marketCap > 0)
       .sort((a, b) => b.marketCap - a.marketCap);
@@ -1679,7 +1682,7 @@ async function loadKoreaMarketCap() {
     const kospiPool  = [...kp1, ...kp2, ...kp3, ...kp4, ...kp5].filter(s => !isKrETF(s.name));
     const kosdaqPool = [...kd1, ...kd2].filter(s => !isKrETF(s.name));
     const allSorted  = [...kospiPool, ...kosdaqPool].sort((a, b) => b.marketCap - a.marketCap);
-    const allStocks  = allSorted.slice(0, 200);
+    const allStocks  = allSorted.slice(0, 200).map(s => ({ ...s, yoy: null }));
     if (allStocks.length === 0) throw new Error('데이터 없음');
 
     // 파두 순위: slice 전 전체 기준 (ETF 필터 적용, 표와 동일 데이터)
@@ -1697,11 +1700,35 @@ async function loadKoreaMarketCap() {
     const krCount = allStocks.filter(s => s.market === 'KOSPI').length;
     const kdCount = allStocks.filter(s => s.market === 'KOSDAQ').length;
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; 시총 상위 200개 (KOSPI ${krCount}개 + KOSDAQ ${kdCount}개)</div>`;
+
+    // 백그라운드: Yahoo Finance에서 YoY(52주 수익률) 보강
+    enrichKrYoY(allStocks);
   } catch (e) {
     statusEl.innerHTML = `<div style="color:var(--red)">❌ 네이버 금융 데이터 조회 실패: ${e.message}</div>
       <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
     statusEl.style.display = '';
   }
+}
+
+// ── 한국 종목 YoY 보강 (Yahoo Finance 백그라운드) ────────────────────────────
+async function enrichKrYoY(stocks) {
+  const symbols = stocks.map(s => s.market === 'KOSDAQ' ? s.symbol + '.KQ' : s.symbol + '.KS');
+  const BATCH = 50;
+  let updated = false;
+  for (let i = 0; i < symbols.length; i += BATCH) {
+    try {
+      const results = await fetchYahooMarketCap(symbols.slice(i, i + BATCH));
+      results.forEach(q => {
+        const idx = symbols.findIndex(s => s.toUpperCase() === (q.symbol || '').toUpperCase());
+        if (idx >= 0 && q['52WeekChange'] != null) {
+          stocks[idx].yoy = q['52WeekChange'] * 100;
+          updated = true;
+        }
+      });
+    } catch (_) {}
+    if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 400));
+  }
+  if (updated) renderMcTable('kr', stocks);
 }
 
 // ── 시가총액 테이블 렌더링 ─────────────────────────────────────────────────────
@@ -1757,6 +1784,7 @@ function renderMcTable(market, stocks) {
       <td style="text-align:right">${fmtCap(s.marketCap)}</td>
       <td style="text-align:right">${price}</td>
       <td style="text-align:right" class="${cls(chg)}">${fmtPct(chg)}</td>
+      <td style="text-align:right" class="${s.yoy != null ? cls(s.yoy) : 'neu'}">${s.yoy != null ? fmtPct(s.yoy) : '-'}</td>
     </tr>`;
   }).join('');
 }
