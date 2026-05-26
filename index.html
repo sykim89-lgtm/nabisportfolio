@@ -552,7 +552,7 @@ const FX_USD_KRW = 1471.32; // USD → KRW 환율
 const HOLDINGS = [
   { name: 'MU',          sub: 'Micron Technology Inc',              currency: 'USD', avgCost: 223.98,  qty: 220,  currentPrice: 724.09  },
   { name: 'SNDK',        sub: 'Sandisk Corp',                       currency: 'USD', avgCost: 266.47,  qty: 100,  currentPrice: 1407    },
-  { name: 'NBIS',        sub: 'Nebius Group NV',                    currency: 'USD', avgCost: 132.14,  qty: 385,  currentPrice: 219.89  },
+  { name: 'NBIS',        sub: 'Nebius Group NV',                    currency: 'USD', avgCost: 134.60,  qty: 400,  currentPrice: 219.89  },
   { name: '파두',         sub: '440110',                             currency: 'KRW', avgCost: 98115,   qty: 1300, currentPrice: 100100  },
   { name: '원화',         sub: 'KRW',                               currency: 'KRW', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 71261764 },
   { name: '두산에너빌리티', sub: '034020',                           currency: 'KRW', avgCost: 70306,   qty: 500,  currentPrice: 110800  },
@@ -1881,8 +1881,8 @@ async function loadFaduChart() {
 // ── Nebius Group 대시보드 ──────────────────────────────────────────────────────
 async function loadNebiusDashboard() {
   const SYMBOL   = 'NBIS';
-  const AVG_COST = 132.14;
-  const QTY      = 385;
+  const AVG_COST = 134.60;
+  const QTY      = 400;
 
   const fmtUSD = v => (v != null && v !== 0) ? '$' + (+v).toFixed(2) : '-';
   const fmtCap = cap => {
