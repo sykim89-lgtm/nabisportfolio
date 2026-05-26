@@ -420,8 +420,8 @@
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-          <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">95,000원</div></div>
-          <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">1,000주</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">98,115원</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">1,300주</div></div>
           <div class="fadu-stat"><div class="fadu-stat-label">평가금액</div><div class="fadu-stat-val" id="fp-value">-</div></div>
           <div class="fadu-stat"><div class="fadu-stat-label">평가손익</div><div class="fadu-stat-val" id="fp-pnl">-</div></div>
         </div>
@@ -496,7 +496,7 @@ const HOLDINGS = [
   { name: 'MU',          sub: 'Micron Technology Inc',              currency: 'USD', avgCost: 223.98,  qty: 220,  currentPrice: 724.09  },
   { name: 'SNDK',        sub: 'Sandisk Corp',                       currency: 'USD', avgCost: 266.47,  qty: 100,  currentPrice: 1407    },
   { name: 'NBIS',        sub: 'Nebius Group NV',                    currency: 'USD', avgCost: 132.14,  qty: 385,  currentPrice: 219.89  },
-  { name: '파두',         sub: '440110',                             currency: 'KRW', avgCost: 95000,   qty: 1000, currentPrice: 100100  },
+  { name: '파두',         sub: '440110',                             currency: 'KRW', avgCost: 98115,   qty: 1300, currentPrice: 100100  },
   { name: '원화',         sub: 'KRW',                               currency: 'KRW', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 71261764 },
   { name: '두산에너빌리티', sub: '034020',                           currency: 'KRW', avgCost: 70306,   qty: 500,  currentPrice: 110800  },
   { name: 'KODEX 미국나스닥100', sub: '379810',                     currency: 'KRW', avgCost: 20684,   qty: 1005, currentPrice: 29075   },
@@ -1325,8 +1325,8 @@ async function loadMarketCap(market) {
 // ── 파두 대시보드 ─────────────────────────────────────────────────────────────
 async function loadFaduDashboard() {
   const SYMBOL   = '440110.KQ';
-  const AVG_COST = 95000;
-  const QTY      = 1000;
+  const AVG_COST = 98115;
+  const QTY      = 1300;
 
   const fmtKrw = v => v ? Math.round(v).toLocaleString('ko-KR') + '원' : '-';
   const fmtCap = cap => {
