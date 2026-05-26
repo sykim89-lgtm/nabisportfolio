@@ -518,6 +518,7 @@
             <tr>
               <th style="text-align:center;width:50px">순위</th>
               <th style="text-align:left;padding-left:14px;width:200px">종목명</th>
+              <th style="text-align:left;width:90px">거래소</th>
               <th>시가총액</th>
               <th>현재가</th>
               <th>등락률</th>
@@ -1588,6 +1589,8 @@ async function loadMarketCap(market) {
   if (allYahoo.length > 0) {
     const yahooMap = {};
     allYahoo.forEach(q => { yahooMap[q.symbol] = q; });
+    const exMap = { 'NMS':'NASDAQ','NGM':'NASDAQ','NCM':'NASDAQ','NasdaqGS':'NASDAQ','NasdaqCM':'NASDAQ','NasdaqNM':'NASDAQ',
+                    'NYQ':'NYSE','NYSE':'NYSE','PCX':'NYSE Arca','ARCA':'NYSE Arca','ASE':'NYSE American','AMEX':'NYSE American' };
     finalData = base.map((s, i) => {
       const ySym = yahooSymbols[i];
       const q = yahooMap[ySym];
@@ -1597,6 +1600,8 @@ async function loadMarketCap(market) {
         marketCap: (!isKR && q?.marketCap) ? q.marketCap : s.marketCap,
         price:     q?.regularMarketPrice || 0,
         change:    q?.regularMarketChangePercent || 0,
+        // 미국 거래소 코드 → 읽기 쉬운 이름 (NMS→NASDAQ, NYQ→NYSE 등)
+        exchange:  !isKR && q?.exchange ? (exMap[q.exchange] || s.exchange || '') : s.exchange,
       };
     }).sort((a, b) => b.marketCap - a.marketCap);
 
@@ -2183,9 +2188,10 @@ function renderMcTable(market, stocks) {
     const isTop3 = rank <= 3;
     const price  = isKR ? `₩${fmt(s.price || 0)}` : `$${(s.price || 0).toFixed(2)}`;
     const chg    = s.change ?? 0;
-    const exchangeCell = isKR && s.market
-      ? `<td><span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;white-space:nowrap">${s.market}</span></td>`
-      : '';
+    const exLabel = isKR ? s.market : s.exchange;
+    const exchangeCell = exLabel
+      ? `<td><span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;white-space:nowrap">${exLabel}</span></td>`
+      : '<td></td>';
 
     const logoHtml = s.logo
       ? `<img src="https://www.google.com/s2/favicons?domain=${s.logo}&sz=64"
