@@ -231,6 +231,15 @@
     }
     .mc-table th { font-size: 12px; }
     .mc-table td { font-size: 13px; }
+    /* ── 파두 대시보드 ──────────────────────────────── */
+    .fadu-stat { background:var(--border);border-radius:8px;padding:10px 12px; }
+    .fadu-stat-label { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
+    .fadu-stat-val { font-size:14px;font-weight:600; }
+    .fadu-rank-box { flex:1;background:var(--border);border-radius:10px;padding:14px;text-align:center; }
+    .fadu-rank-title { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px; }
+    .fadu-rank-num { font-size:30px;font-weight:800;color:var(--accent);line-height:1; }
+    .fadu-rank-sub { font-size:11px;color:var(--muted);margin-top:4px; }
+
     .rank-badge {
       display: inline-block;
       min-width: 28px;
@@ -362,6 +371,72 @@
 
   <!-- 한국 -->
   <div id="mc-kr">
+
+    <!-- 파두 대시보드 -->
+    <div id="fadu-dashboard" class="chart-card" style="margin-bottom:16px">
+      <!-- 헤더: 로고 + 종목명 + 실시간 가격 -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <img src="https://www.google.com/s2/favicons?domain=fadusemi.com&sz=64"
+             style="width:44px;height:44px;border-radius:10px;background:#fff;padding:4px;flex-shrink:0;object-fit:contain"
+             onerror="this.outerHTML='<div style=&quot;width:44px;height:44px;border-radius:10px;background:var(--accent);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0&quot;>파</div>'">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:6px">
+            파두
+            <span id="fadu-market-state" style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">440110 · KOSDAQ</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div id="fadu-cur-price" style="font-size:26px;font-weight:700;line-height:1.1">-</div>
+          <div id="fadu-change" style="font-size:13px;margin-top:4px;color:var(--muted)">-</div>
+        </div>
+      </div>
+
+      <!-- 순위 배지 -->
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <div class="fadu-rank-box">
+          <div class="fadu-rank-title">전체 시총 순위</div>
+          <div class="fadu-rank-num" id="fadu-rank-overall">-</div>
+          <div class="fadu-rank-sub">KOSPI + KOSDAQ</div>
+        </div>
+        <div class="fadu-rank-box">
+          <div class="fadu-rank-title">코스닥 시총 순위</div>
+          <div class="fadu-rank-num" id="fadu-rank-kosdaq">-</div>
+          <div class="fadu-rank-sub">KOSDAQ</div>
+        </div>
+      </div>
+
+      <!-- 주요 지표 -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+        <div class="fadu-stat"><div class="fadu-stat-label">시가총액</div><div class="fadu-stat-val" id="fs-mktcap">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">거래량</div><div class="fadu-stat-val" id="fs-vol">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">전일종가</div><div class="fadu-stat-val" id="fs-prev">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">52주 최고</div><div class="fadu-stat-val" id="fs-high52">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">52주 최저</div><div class="fadu-stat-val" id="fs-low52">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">PER</div><div class="fadu-stat-val" id="fs-per">-</div></div>
+      </div>
+
+      <!-- 내 포지션 -->
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">95,000원</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">1,000주</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">평가금액</div><div class="fadu-stat-val" id="fp-value">-</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">평가손익</div><div class="fadu-stat-val" id="fp-pnl">-</div></div>
+        </div>
+      </div>
+
+      <!-- 3개월 차트 -->
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
+        <div style="position:relative;height:120px"><canvas id="fadu-chart"></canvas></div>
+      </div>
+
+      <div id="fadu-status" style="font-size:11px;color:var(--muted);margin-top:10px;text-align:right"></div>
+    </div>
+    <!-- /파두 대시보드 -->
+
     <div class="chart-card">
       <div class="chart-title">한국 시가총액 순위</div>
       <div class="chart-subtitle">KOSPI + KOSDAQ 통합 — 시가총액 기준 정렬</div>
@@ -769,6 +844,7 @@ function switchTab(tab) {
   if (tab === 'marketcap' && !mcTabLoaded.kr) {
     mcTabLoaded.kr = true;
     loadKoreaMarketCap();
+    loadFaduDashboard();
   }
 }
 
@@ -968,6 +1044,7 @@ function switchMcTab(market) {
 function retryMc(market) {
   mcTabLoaded[market] = false;
   switchMcTab(market);
+  if (market === 'kr') loadFaduDashboard();
 }
 
 // ── 시가총액: 내장 기준 데이터 (순위 고정) + Stooq 실시간 시세 ───────────────
@@ -1145,7 +1222,7 @@ async function getYahooCrumb() {
 // Yahoo Finance에서 시가총액 포함 전체 데이터 조회 (프리/애프터/종가 모두 포함)
 async function fetchYahooMarketCap(yahooSymbols) {
   const sym    = yahooSymbols.join(',');
-  const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState';
+  const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState,regularMarketVolume,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,trailingPE';
   const crumb  = await getYahooCrumb();
 
   const makeUrl = (host, withCrumb) =>
@@ -1243,6 +1320,165 @@ async function loadMarketCap(market) {
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 시가총액: 2025년 기준 (참고값) &nbsp;|&nbsp; 시세: ${now} 조회</div>`;
   }
   statusEl.style.display = '';
+}
+
+// ── 파두 대시보드 ─────────────────────────────────────────────────────────────
+async function loadFaduDashboard() {
+  const SYMBOL   = '440110.KQ';
+  const AVG_COST = 95000;
+  const QTY      = 1000;
+
+  const fmtKrw = v => v ? Math.round(v).toLocaleString('ko-KR') + '원' : '-';
+  const fmtCap = cap => {
+    if (!cap) return '-';
+    const jo = Math.floor(cap / 1e12);
+    const uk = Math.round((cap % 1e12) / 1e8);
+    if (jo > 0 && uk > 0) return `${jo}조 ${uk}억원`;
+    if (jo > 0) return `${jo}조`;
+    if (uk > 0) return `${uk}억원`;
+    return '-';
+  };
+
+  // Yahoo Finance 실시간 시세
+  try {
+    const quotes = await fetchYahooMarketCap([SYMBOL]);
+    const q = quotes[0];
+    if (q) {
+      const best  = getBestYahooPrice(q);
+      const price = best.price;
+      const change = best.change;
+      const prev  = q.regularMarketPreviousClose || 0;
+      const diff  = prev ? price - prev : 0;
+      const sign  = change >= 0 ? '+' : '';
+
+      document.getElementById('fadu-cur-price').textContent = Math.round(price).toLocaleString('ko-KR') + '원';
+      document.getElementById('fadu-market-state').textContent = best.label;
+
+      const chgEl = document.getElementById('fadu-change');
+      chgEl.textContent = `${sign}${Math.round(diff).toLocaleString('ko-KR')}원 (${sign}${change.toFixed(2)}%)`;
+      chgEl.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+
+      document.getElementById('fs-mktcap').textContent  = fmtCap(q.marketCap);
+      document.getElementById('fs-vol').textContent     = q.regularMarketVolume
+        ? Math.round(q.regularMarketVolume / 1000).toLocaleString('ko-KR') + '천주' : '-';
+      document.getElementById('fs-prev').textContent    = fmtKrw(q.regularMarketPreviousClose);
+      document.getElementById('fs-high52').textContent  = fmtKrw(q.fiftyTwoWeekHigh);
+      document.getElementById('fs-low52').textContent   = fmtKrw(q.fiftyTwoWeekLow);
+      document.getElementById('fs-per').textContent     = q.trailingPE ? q.trailingPE.toFixed(1) + 'x' : 'N/A';
+
+      // 내 포지션
+      const evalVal = Math.round(price * QTY);
+      const pnl     = Math.round((price - AVG_COST) * QTY);
+      const pnlRate = ((price - AVG_COST) / AVG_COST * 100).toFixed(1);
+      document.getElementById('fp-value').textContent = evalVal.toLocaleString('ko-KR') + '원';
+      const pnlEl = document.getElementById('fp-pnl');
+      const sign2 = pnl >= 0 ? '+' : '';
+      pnlEl.innerHTML = `<span style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${sign2}${pnl.toLocaleString('ko-KR')}원 (${sign2}${pnlRate}%)</span>`;
+
+      const now = new Date().toLocaleTimeString('ko-KR');
+      document.getElementById('fadu-status').textContent = `🔴 Yahoo Finance 실시간 | ${now} 기준`;
+    }
+  } catch (_) {
+    document.getElementById('fadu-status').textContent = '❌ 시세 로드 실패';
+  }
+
+  // 순위 계산 + 차트 (병렬)
+  loadFaduRanks();
+  loadFaduChart();
+}
+
+async function loadFaduRanks() {
+  try {
+    const [r_kospi, r_kd1, r_kd2, r_kd3] = await Promise.allSettled([
+      fetchNaverMarketCap(0, 1),
+      fetchNaverMarketCap(1, 1),
+      fetchNaverMarketCap(1, 2),
+      fetchNaverMarketCap(1, 3),
+    ]);
+    const kospiList  = r_kospi.status === 'fulfilled' ? r_kospi.value : [];
+    const kosdaqList = [
+      ...(r_kd1.status === 'fulfilled' ? r_kd1.value : []),
+      ...(r_kd2.status === 'fulfilled' ? r_kd2.value : []),
+      ...(r_kd3.status === 'fulfilled' ? r_kd3.value : []),
+    ];
+
+    const kdIdx = kosdaqList.findIndex(s => s.symbol === '440110');
+    if (kdIdx < 0) return; // 상위 150위 밖
+
+    const kosdaqRank   = kdIdx + 1;
+    const faduCap      = kosdaqList[kdIdx].marketCap;
+    const kospiAbove   = kospiList.filter(s => s.marketCap > faduCap).length;
+    const overallRank  = kospiAbove + kosdaqRank;
+
+    document.getElementById('fadu-rank-kosdaq').textContent  = `#${kosdaqRank}`;
+    document.getElementById('fadu-rank-overall').textContent = `#${overallRank}`;
+  } catch (_) {}
+}
+
+async function loadFaduChart() {
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/440110.KQ?interval=1d&range=3mo';
+  const tries = [
+    url,
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  ];
+
+  let pts = null;
+  for (const u of tries) {
+    try {
+      const res = await fetch(u, { signal: abortFetch(10000) });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const r = json.chart?.result?.[0];
+      if (!r) continue;
+      const ts = r.timestamp;
+      const cl = r.indicators?.quote?.[0]?.close;
+      if (ts && cl) {
+        pts = ts.map((t, i) => ({ x: new Date(t * 1000), y: cl[i] })).filter(d => d.y != null);
+        break;
+      }
+    } catch (_) {}
+  }
+  if (!pts || pts.length === 0) return;
+
+  const ctx = document.getElementById('fadu-chart').getContext('2d');
+  if (window._faduChart) window._faduChart.destroy();
+
+  const color = pts[pts.length - 1].y >= pts[0].y ? '#10b981' : '#ef4444';
+  window._faduChart = new Chart(ctx, {
+    type: 'line',
+    data: { datasets: [{
+      data: pts,
+      borderColor: color,
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: true,
+      backgroundColor: ctx2 => {
+        const g = ctx2.chart.ctx.createLinearGradient(0, 0, 0, 120);
+        g.addColorStop(0, color + '50');
+        g.addColorStop(1, color + '00');
+        return g;
+      },
+      tension: 0.3
+    }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => Math.round(c.parsed.y).toLocaleString('ko-KR') + '원' } }
+      },
+      scales: {
+        x: { type: 'time', display: false },
+        y: {
+          display: true, position: 'right',
+          ticks: { color: '#8892a4', font: { size: 10 }, callback: v => v.toLocaleString('ko-KR') },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          border: { display: false }
+        }
+      }
+    }
+  });
 }
 
 async function loadUSMarketCap() {
