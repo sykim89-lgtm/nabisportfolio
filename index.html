@@ -462,6 +462,52 @@
 
   <!-- 미국 -->
   <div id="mc-us" style="display:none">
+
+    <!-- Nebius Group 대시보드 -->
+    <div id="nbis-dashboard" class="chart-card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <img src="https://www.google.com/s2/favicons?domain=nebius.com&sz=64"
+             style="width:44px;height:44px;border-radius:10px;background:#fff;padding:4px;flex-shrink:0;object-fit:contain"
+             onerror="this.outerHTML='<div style=&quot;width:44px;height:44px;border-radius:10px;background:var(--accent);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0&quot;>N</div>'">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:6px">
+            Nebius Group
+            <span id="nbis-market-state" style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">NBIS · NASDAQ</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div id="nbis-cur-price" style="font-size:26px;font-weight:700;line-height:1.1">-</div>
+          <div id="nbis-change" style="font-size:13px;margin-top:4px;color:var(--muted)">-</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+        <div class="fadu-stat"><div class="fadu-stat-label">시가총액</div><div class="fadu-stat-val" id="ns-mktcap">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">거래량</div><div class="fadu-stat-val" id="ns-vol">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">전일종가</div><div class="fadu-stat-val" id="ns-prev">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">52주 최고</div><div class="fadu-stat-val" id="ns-high52">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">52주 최저</div><div class="fadu-stat-val" id="ns-low52">-</div></div>
+        <div class="fadu-stat"><div class="fadu-stat-label">PER</div><div class="fadu-stat-val" id="ns-per">-</div></div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">$132.14</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">385주</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">평가금액</div><div class="fadu-stat-val" id="np-value">-</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">평가손익</div><div class="fadu-stat-val" id="np-pnl">-</div></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
+        <div style="position:relative;height:120px"><canvas id="nbis-chart"></canvas></div>
+      </div>
+      <div id="nbis-status" style="font-size:11px;color:var(--muted);margin-top:10px;text-align:right"></div>
+    </div>
+
     <div class="chart-card">
       <div class="chart-title">미국 시가총액 순위</div>
       <div class="chart-subtitle">S&amp;P500 + NASDAQ100 구성종목 — 시가총액 기준 정렬</div>
@@ -1039,7 +1085,8 @@ function switchMcTab(market) {
   });
   if (!mcTabLoaded[market]) {
     mcTabLoaded[market] = true;
-    market === 'us' ? loadUSMarketCap() : loadKoreaMarketCap();
+    if (market === 'us') { loadUSMarketCap(); loadNebiusDashboard(); }
+    else { loadKoreaMarketCap(); }
   }
 }
 
@@ -1562,58 +1609,193 @@ async function loadFaduChart() {
   });
 }
 
+// ── Nebius Group 대시보드 ──────────────────────────────────────────────────────
+async function loadNebiusDashboard() {
+  const SYMBOL   = 'NBIS';
+  const AVG_COST = 132.14;
+  const QTY      = 385;
+
+  const fmtUSD = v => v != null ? '$' + (+v).toFixed(2) : '-';
+  const fmtCap = cap => {
+    if (!cap) return '-';
+    if (cap >= 1e12) return '$' + (cap / 1e12).toFixed(2) + 'T';
+    if (cap >= 1e9)  return '$' + (cap / 1e9).toFixed(1) + 'B';
+    return '$' + Math.round(cap / 1e6) + 'M';
+  };
+  const fmtVol = v => {
+    if (!v) return '-';
+    if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M주';
+    if (v >= 1e3) return Math.round(v / 1e3) + 'K주';
+    return v + '주';
+  };
+  const applyMyPos = price => {
+    const evalVal = price * QTY;
+    const pnl     = (price - AVG_COST) * QTY;
+    const pnlRate = ((price - AVG_COST) / AVG_COST * 100).toFixed(1);
+    document.getElementById('np-value').textContent =
+      '$' + evalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const sign = pnl >= 0 ? '+' : '';
+    document.getElementById('np-pnl').innerHTML =
+      `<span style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${sign}$${Math.abs(pnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${sign}${pnlRate}%)</span>`;
+  };
+
+  try {
+    const quotes = await fetchYahooMarketCap([SYMBOL]);
+    const q = quotes[0];
+    if (q && q.regularMarketPrice) {
+      const best   = getBestYahooPrice(q);
+      const price  = best.price;
+      const change = best.change;
+      const prev   = q.regularMarketPreviousClose || 0;
+      const diff   = prev ? price - prev : 0;
+      const sign   = change >= 0 ? '+' : '';
+
+      document.getElementById('nbis-cur-price').textContent = '$' + price.toFixed(2);
+      document.getElementById('nbis-market-state').textContent = best.label;
+
+      const chgEl = document.getElementById('nbis-change');
+      chgEl.textContent = `${sign}$${Math.abs(diff).toFixed(2)} (${sign}${change.toFixed(2)}%)`;
+      chgEl.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+
+      document.getElementById('ns-mktcap').textContent  = fmtCap(q.marketCap);
+      document.getElementById('ns-vol').textContent     = fmtVol(q.regularMarketVolume);
+      document.getElementById('ns-prev').textContent    = fmtUSD(q.regularMarketPreviousClose);
+      document.getElementById('ns-high52').textContent  = fmtUSD(q.fiftyTwoWeekHigh);
+      document.getElementById('ns-low52').textContent   = fmtUSD(q.fiftyTwoWeekLow);
+      document.getElementById('ns-per').textContent     = q.trailingPE ? q.trailingPE.toFixed(1) + 'x' : 'N/A';
+
+      applyMyPos(price);
+
+      const now = new Date().toLocaleTimeString('ko-KR');
+      document.getElementById('nbis-status').textContent = `🔴 Yahoo Finance 실시간 | ${now} 기준`;
+    }
+  } catch (_) {
+    document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
+  }
+
+  loadNbisChart();
+}
+
+async function loadNbisChart() {
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/NBIS?interval=1d&range=3mo';
+  const tries = [
+    url,
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  ];
+
+  let pts = null;
+  for (const u of tries) {
+    try {
+      const res = await fetch(u, { signal: abortFetch(10000) });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const r = json.chart?.result?.[0];
+      if (!r) continue;
+      const ts = r.timestamp;
+      const cl = r.indicators?.quote?.[0]?.close;
+      if (ts && cl) {
+        pts = ts.map((t, i) => ({ x: new Date(t * 1000), y: cl[i] })).filter(d => d.y != null);
+        break;
+      }
+    } catch (_) {}
+  }
+  if (!pts || pts.length === 0) return;
+
+  const ctx = document.getElementById('nbis-chart').getContext('2d');
+  if (window._nbisChart) window._nbisChart.destroy();
+
+  const color = pts[pts.length - 1].y >= pts[0].y ? '#10b981' : '#ef4444';
+  window._nbisChart = new Chart(ctx, {
+    type: 'line',
+    data: { datasets: [{
+      data: pts,
+      borderColor: color,
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: true,
+      backgroundColor: ctx2 => {
+        const g = ctx2.chart.ctx.createLinearGradient(0, 0, 0, 120);
+        g.addColorStop(0, color + '50');
+        g.addColorStop(1, color + '00');
+        return g;
+      },
+      tension: 0.3
+    }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => '$' + c.parsed.y.toFixed(2) } }
+      },
+      scales: {
+        x: { type: 'time', display: false },
+        y: {
+          display: true, position: 'right',
+          ticks: { color: '#8892a4', font: { size: 10 }, callback: v => '$' + v.toFixed(0) },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          border: { display: false }
+        }
+      }
+    }
+  });
+}
+
 async function loadUSMarketCap() {
   const statusEl = document.getElementById('mc-us-status');
   const tableEl  = document.getElementById('mc-us-table');
   statusEl.style.display = '';
-  statusEl.innerHTML = '⏳ Yahoo Finance에서 데이터 조회 중...';
+  statusEl.innerHTML = '⏳ 데이터 조회 중...';
   tableEl.style.display = 'none';
 
-  try {
-    const symbols = US_BASE.map(s => s.symbol);
-    const allResults = [];
-    const BATCH = 50;
-    for (let i = 0; i < symbols.length; i += BATCH) {
+  // 내장 기준 데이터로 즉시 표시 (한국과 동일 방식)
+  const baseStocks = US_BASE.map(s => ({ ...s, price: 0, change: 0, yoy: null }));
+  renderMcTable('us', baseStocks);
+  tableEl.style.display = '';
+  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Yahoo Finance에서 최신 시세 업데이트 중...</div>';
+
+  // Yahoo Finance 배치 조회 (실패해도 기준 데이터는 이미 표시됨)
+  const symbols = US_BASE.map(s => s.symbol);
+  const allResults = [];
+  const BATCH = 50;
+  for (let i = 0; i < symbols.length; i += BATCH) {
+    try {
       const results = await fetchYahooMarketCap(symbols.slice(i, i + BATCH));
       allResults.push(...results);
-      if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 300));
-    }
+    } catch (_) {}
+    if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 300));
+  }
 
-    if (allResults.length === 0) throw new Error('데이터를 가져올 수 없습니다');
-
+  if (allResults.length > 0) {
     const yahooMap = {};
     allResults.forEach(q => { yahooMap[q.symbol] = q; });
 
     const marketLabels = new Set();
     const stocks = US_BASE.map(s => {
       const q = yahooMap[s.symbol];
-      if (!q) return { ...s, marketCap: 0, price: 0, change: 0 };
+      if (!q) return { ...s, price: 0, change: 0, yoy: null };
       const best = getBestYahooPrice(q);
       marketLabels.add(best.label);
       return {
         ...s,
-        marketCap: q.marketCap || 0,
+        marketCap: q.marketCap || s.marketCap,
         price:     best.price,
         change:    best.change,
         yoy:       q['52WeekChange'] != null ? q['52WeekChange'] * 100 : null,
       };
-    }).filter(s => s.marketCap > 0)
-      .sort((a, b) => b.marketCap - a.marketCap);
-
-    if (stocks.length === 0) throw new Error('시가총액 데이터 없음');
+    }).sort((a, b) => b.marketCap - a.marketCap);
 
     renderMcTable('us', stocks);
-    tableEl.style.display = '';
     const now = new Date().toLocaleTimeString('ko-KR');
     const labelText = [...marketLabels].join('/') || '종가';
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 (${labelText}) &nbsp;|&nbsp; ${now} 기준</div>`;
-    statusEl.style.display = '';
-
-  } catch (e) {
-    statusEl.innerHTML = `<div style="color:var(--red)">❌ Yahoo Finance 데이터 조회 실패: ${e.message}</div>
-      <button onclick="retryMc('us')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
-    statusEl.style.display = '';
+  } else {
+    const now = new Date().toLocaleTimeString('ko-KR');
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 시가총액: 2025년 기준값 &nbsp;|&nbsp; Yahoo Finance 연결 실패 &nbsp;
+      <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
   }
+  statusEl.style.display = '';
 }
 // 네이버 금융 시가총액 순위 페이지 파싱
 async function fetchNaverMarketCap(sosok, page) {
