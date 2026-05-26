@@ -1490,37 +1490,8 @@ async function loadFaduDashboard() {
     }
   }
 
-  // 순위 계산 + 차트 (병렬)
-  loadFaduRanks();
+  // 차트 로드 (순위는 loadKoreaMarketCap에서 동일 데이터 기준으로 계산)
   loadFaduChart();
-}
-
-async function loadFaduRanks() {
-  try {
-    const [r_kospi, r_kd1, r_kd2, r_kd3] = await Promise.allSettled([
-      fetchNaverMarketCap(0, 1),
-      fetchNaverMarketCap(1, 1),
-      fetchNaverMarketCap(1, 2),
-      fetchNaverMarketCap(1, 3),
-    ]);
-    const kospiList  = r_kospi.status === 'fulfilled' ? r_kospi.value : [];
-    const kosdaqList = [
-      ...(r_kd1.status === 'fulfilled' ? r_kd1.value : []),
-      ...(r_kd2.status === 'fulfilled' ? r_kd2.value : []),
-      ...(r_kd3.status === 'fulfilled' ? r_kd3.value : []),
-    ];
-
-    const kdIdx = kosdaqList.findIndex(s => s.symbol === '440110');
-    if (kdIdx < 0) return; // 상위 150위 밖
-
-    const kosdaqRank   = kdIdx + 1;
-    const faduCap      = kosdaqList[kdIdx].marketCap;
-    const kospiAbove   = kospiList.filter(s => s.marketCap > faduCap).length;
-    const overallRank  = kospiAbove + kosdaqRank;
-
-    document.getElementById('fadu-rank-kosdaq').textContent  = `#${kosdaqRank}`;
-    document.getElementById('fadu-rank-overall').textContent = `#${overallRank}`;
-  } catch (_) {}
 }
 
 async function loadFaduChart() {
@@ -1707,10 +1678,19 @@ async function loadKoreaMarketCap() {
     ]);
     const kospiPool  = [...kp1, ...kp2, ...kp3, ...kp4, ...kp5].filter(s => !isKrETF(s.name));
     const kosdaqPool = [...kd1, ...kd2].filter(s => !isKrETF(s.name));
-    const allStocks  = [...kospiPool, ...kosdaqPool]
-      .sort((a, b) => b.marketCap - a.marketCap)
-      .slice(0, 200);
+    const allSorted  = [...kospiPool, ...kosdaqPool].sort((a, b) => b.marketCap - a.marketCap);
+    const allStocks  = allSorted.slice(0, 200);
     if (allStocks.length === 0) throw new Error('데이터 없음');
+
+    // 파두 순위: slice 전 전체 기준 (ETF 필터 적용, 표와 동일 데이터)
+    const faduAllIdx = allSorted.findIndex(s => s.symbol === '440110');
+    if (faduAllIdx >= 0) {
+      document.getElementById('fadu-rank-overall').textContent = `#${faduAllIdx + 1}`;
+      const kdOnly   = allSorted.filter(s => s.market === 'KOSDAQ');
+      const faduKdIdx = kdOnly.findIndex(s => s.symbol === '440110');
+      if (faduKdIdx >= 0) document.getElementById('fadu-rank-kosdaq').textContent = `#${faduKdIdx + 1}`;
+    }
+
     renderMcTable('kr', allStocks);
     tableEl.style.display = '';
     const now = new Date().toLocaleTimeString('ko-KR');
