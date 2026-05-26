@@ -369,7 +369,7 @@
     <div id="fadu-dashboard" class="chart-card" style="margin-bottom:16px">
       <!-- 헤더: 로고 + 종목명 + 실시간 가격 -->
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-        <img src="https://www.google.com/s2/favicons?domain=fadusemi.com&sz=64"
+        <img src="https://ssl.pstatic.net/imgstock/fn/real/logo/png/stock/Stock440110.png"
              style="width:44px;height:44px;border-radius:10px;background:#fff;padding:4px;flex-shrink:0;object-fit:contain"
              onerror="this.outerHTML='<div style=&quot;width:44px;height:44px;border-radius:10px;background:var(--accent);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0&quot;>파</div>'">
         <div style="flex:1;min-width:0">
@@ -2220,8 +2220,11 @@ function renderMcTable(market, stocks) {
       ? `<td><span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;white-space:nowrap">${exLabel}</span></td>`
       : '<td></td>';
 
-    const logoHtml = s.logo
-      ? `<img src="https://www.google.com/s2/favicons?domain=${s.logo}&sz=64"
+    const logoSrc = s.symbol === '440110'
+      ? 'https://ssl.pstatic.net/imgstock/fn/real/logo/png/stock/Stock440110.png'
+      : s.logo ? `https://www.google.com/s2/favicons?domain=${s.logo}&sz=64` : null;
+    const logoHtml = logoSrc
+      ? `<img src="${logoSrc}"
               style="width:30px;height:30px;border-radius:6px;object-fit:contain;background:#fff;padding:3px;flex-shrink:0"
               onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'${(s.name||'?')[0]}',style:'width:30px;height:30px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0'}))">`
       : `<div style="width:30px;height:30px;border-radius:6px;background:var(--border);color:var(--muted);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(s.name||'?')[0]}</div>`;
