@@ -1388,7 +1388,7 @@ async function loadMarketCap(market) {
       };
     }).sort((a, b) => b.marketCap - a.marketCap);
 
-    renderMcTable(market, finalData.slice(0, 100));
+    renderMcTable(market, finalData.slice(0, 300));
     const now = new Date().toLocaleTimeString('ko-KR');
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 실시간 &nbsp;|&nbsp; ${now} 기준</div>`;
   } else {
@@ -1402,7 +1402,7 @@ async function loadMarketCap(market) {
         change: 0,
       };
     });
-    renderMcTable(market, finalData.slice(0, 100));
+    renderMcTable(market, finalData.slice(0, 300));
     const now = new Date().toLocaleTimeString('ko-KR');
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 시가총액: 2025년 기준 (참고값) &nbsp;|&nbsp; 시세: ${now} 조회</div>`;
   }
