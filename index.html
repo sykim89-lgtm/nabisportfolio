@@ -2211,6 +2211,10 @@ function renderMcTable(market, stocks) {
     const isTop3 = rank <= 3;
     const price  = isKR ? `₩${fmt(s.price || 0)}` : `$${(s.price || 0).toFixed(2)}`;
     const chg    = s.change ?? 0;
+    const isMyStock = (isKR && s.symbol === '440110') || (!isKR && s.symbol === 'NBIS');
+    const rowStyle = isMyStock
+      ? 'background:rgba(167,139,250,0.08);border-top:1px solid rgba(167,139,250,0.4);border-bottom:1px solid rgba(167,139,250,0.4);'
+      : '';
     const exLabel = isKR ? s.market : s.exchange;
     const exchangeCell = exLabel
       ? `<td><span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;white-space:nowrap">${exLabel}</span></td>`
@@ -2222,7 +2226,7 @@ function renderMcTable(market, stocks) {
               onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'${(s.name||'?')[0]}',style:'width:30px;height:30px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0'}))">`
       : `<div style="width:30px;height:30px;border-radius:6px;background:var(--border);color:var(--muted);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(s.name||'?')[0]}</div>`;
 
-    return `<tr>
+    return `<tr style="${rowStyle}">
       <td style="text-align:center">
         <span class="rank-badge${isTop3 ? ' top3' : ''}">${rank}</span>
       </td>
