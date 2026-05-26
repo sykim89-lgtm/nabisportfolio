@@ -1239,18 +1239,31 @@ function abortFetch(ms) {
   return ctrl.signal;
 }
 
-// Stooq에서 시세·시가총액 조회
+// Stooq에서 OHLCV 시세 조회 (CORS 없이 직접 호출 가능)
 async function fetchStooqPrices(items) {
   const symbols = items.map(s => s.stooq).join(',');
-  const url = `https://stooq.com/q/l/?s=${symbols}&f=sd2op&h&e=json`;
+  const url = `https://stooq.com/q/l/?s=${symbols}&f=sd2t2ohlcv&h&e=json`;
   try {
-    const res = await fetch(url, { signal: abortFetch(10000) });
+    const res = await fetch(url, { signal: abortFetch(12000) });
     if (!res.ok) return {};
     const json = await res.json();
     const map = {};
     (json.symbols || []).forEach(s => { map[s.Symbol?.toLowerCase()] = s; });
     return map;
   } catch (_) { return {}; }
+}
+
+// Stooq에서 종목별 일봉 히스토리 조회 (차트용)
+async function fetchStooqHistory(stooqSymbol, days = 90) {
+  const url = `https://stooq.com/q/d/l/?s=${stooqSymbol}&i=d&e=json`;
+  try {
+    const res = await fetch(url, { signal: abortFetch(12000) });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const rows = (json.symbols || []).slice(-days);
+    const pts = rows.map(r => ({ x: new Date(r.Date), y: parseFloat(r.Close) })).filter(d => !isNaN(d.y));
+    return pts.length > 0 ? pts : null;
+  } catch (_) { return null; }
 }
 
 // Yahoo Finance crumb 캐시
@@ -1279,11 +1292,12 @@ async function fetchYahooMarketCap(yahooSymbols) {
     `https://${host}/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false${withCrumb && crumb ? '&crumb=' + encodeURIComponent(crumb) : ''}`;
 
   const attempts = [
-    () => fetch(makeUrl('query1.finance.yahoo.com', true),  { credentials: 'include', signal: abortFetch(10000) }),
-    () => fetch(makeUrl('query2.finance.yahoo.com', true),  { credentials: 'include', signal: abortFetch(10000) }),
-    () => fetch(makeUrl('query1.finance.yahoo.com', false), { signal: abortFetch(10000) }),
-    () => fetch(`https://corsproxy.io/?${encodeURIComponent(makeUrl('query1.finance.yahoo.com', true))}`,  { signal: abortFetch(10000) }),
-    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(makeUrl('query1.finance.yahoo.com', false))}`, { signal: abortFetch(10000) }),
+    () => fetch(makeUrl('query1.finance.yahoo.com', true),  { credentials: 'include', signal: abortFetch(8000) }),
+    () => fetch(makeUrl('query2.finance.yahoo.com', true),  { credentials: 'include', signal: abortFetch(8000) }),
+    () => fetch(`https://corsproxy.io/?${encodeURIComponent(makeUrl('query1.finance.yahoo.com', true))}`,  { signal: abortFetch(8000) }),
+    () => fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(makeUrl('query1.finance.yahoo.com', false))}`, { signal: abortFetch(8000) }),
+    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(makeUrl('query1.finance.yahoo.com', false))}`, { signal: abortFetch(8000) }),
+    () => fetch(`https://thingproxy.freeboard.io/fetch/${makeUrl('query1.finance.yahoo.com', false)}`, { signal: abortFetch(8000) }),
   ];
 
   for (const attempt of attempts) {
@@ -1640,6 +1654,7 @@ async function loadNebiusDashboard() {
       `<span style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${sign}$${Math.abs(pnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${sign}${pnlRate}%)</span>`;
   };
 
+  let priceLoaded = false;
   try {
     const quotes = await fetchYahooMarketCap([SYMBOL]);
     const q = quotes[0];
@@ -1666,12 +1681,43 @@ async function loadNebiusDashboard() {
       document.getElementById('ns-per').textContent     = q.trailingPE ? q.trailingPE.toFixed(1) + 'x' : 'N/A';
 
       applyMyPos(price);
-
+      priceLoaded = true;
       const now = new Date().toLocaleTimeString('ko-KR');
       document.getElementById('nbis-status').textContent = `🔴 Yahoo Finance 실시간 | ${now} 기준`;
     }
-  } catch (_) {
-    document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
+  } catch (_) {}
+
+  // Yahoo Finance 실패 시 Stooq 폴백
+  if (!priceLoaded) {
+    try {
+      const stooqMap = await fetchStooqPrices([{ stooq: 'nbis.us' }]);
+      const sq = stooqMap['nbis.us'];
+      if (sq) {
+        const close  = parseFloat(sq.Close)  || 0;
+        const open   = parseFloat(sq.Open)   || close;
+        const vol    = parseFloat(sq.Volume) || 0;
+        const change = (open > 0 && close > 0) ? (close - open) / open * 100 : 0;
+        const diff   = close - open;
+        const sign   = change >= 0 ? '+' : '';
+
+        if (close > 0) {
+          document.getElementById('nbis-cur-price').textContent = '$' + close.toFixed(2);
+          document.getElementById('nbis-market-state').textContent = 'Stooq';
+          const chgEl = document.getElementById('nbis-change');
+          chgEl.textContent = `${sign}$${Math.abs(diff).toFixed(2)} (${sign}${change.toFixed(2)}%) 시초가 대비`;
+          chgEl.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+          if (vol) document.getElementById('ns-vol').textContent = fmtVol(vol);
+          applyMyPos(close);
+          priceLoaded = true;
+          const now = new Date().toLocaleTimeString('ko-KR');
+          document.getElementById('nbis-status').textContent = `📊 Stooq 시세 | ${now} 기준`;
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (!priceLoaded) {
+    document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패 (Yahoo Finance + Stooq)';
   }
 
   loadNbisChart();
@@ -1682,13 +1728,14 @@ async function loadNbisChart() {
   const tries = [
     url,
     `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   ];
 
   let pts = null;
   for (const u of tries) {
     try {
-      const res = await fetch(u, { signal: abortFetch(10000) });
+      const res = await fetch(u, { signal: abortFetch(8000) });
       if (!res.ok) continue;
       const json = await res.json();
       const r = json.chart?.result?.[0];
@@ -1700,6 +1747,11 @@ async function loadNbisChart() {
         break;
       }
     } catch (_) {}
+  }
+
+  // Yahoo Finance 차트 실패 → Stooq 히스토리 폴백
+  if (!pts || pts.length === 0) {
+    pts = await fetchStooqHistory('nbis.us', 90);
   }
   if (!pts || pts.length === 0) return;
 
@@ -1792,9 +1844,26 @@ async function loadUSMarketCap() {
     const labelText = [...marketLabels].join('/') || '종가';
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 (${labelText}) &nbsp;|&nbsp; ${now} 기준</div>`;
   } else {
+    // Yahoo Finance 실패 → Stooq 폴백
+    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Stooq에서 시세 조회 중...</div>';
+    const stooqMap = await fetchStooqPrices(US_BASE);
     const now = new Date().toLocaleTimeString('ko-KR');
-    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 시가총액: 2025년 기준값 &nbsp;|&nbsp; Yahoo Finance 연결 실패 &nbsp;
-      <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
+    if (Object.keys(stooqMap).length > 0) {
+      const stocks = US_BASE.map(s => {
+        const sq = stooqMap[s.stooq.toLowerCase()];
+        if (!sq) return { ...s, price: 0, change: 0, yoy: null };
+        const close  = parseFloat(sq.Close)  || 0;
+        const open   = parseFloat(sq.Open)   || close;
+        const change = (open > 0 && close > 0) ? (close - open) / open * 100 : 0;
+        return { ...s, price: close, change, yoy: null };
+      }).sort((a, b) => b.marketCap - a.marketCap);
+      renderMcTable('us', stocks);
+      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📊 Stooq 시세 (등락률: 시초가 대비) &nbsp;|&nbsp; ${now} 기준 &nbsp;
+        <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
+    } else {
+      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 기준값 표시 중 (시세 연결 실패) &nbsp;
+        <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
+    }
   }
   statusEl.style.display = '';
 }
