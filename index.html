@@ -475,6 +475,20 @@
         </div>
       </div>
 
+      <!-- 순위 배지 -->
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <div class="fadu-rank-box">
+          <div class="fadu-rank-title">전체 시총 순위</div>
+          <div class="fadu-rank-num" id="nbis-rank-overall">-</div>
+          <div class="fadu-rank-sub">NYSE + NASDAQ</div>
+        </div>
+        <div class="fadu-rank-box">
+          <div class="fadu-rank-title">나스닥 시총 순위</div>
+          <div class="fadu-rank-num" id="nbis-rank-nasdaq">-</div>
+          <div class="fadu-rank-sub">NASDAQ</div>
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
         <div class="fadu-stat"><div class="fadu-stat-label">시가총액</div><div class="fadu-stat-val" id="ns-mktcap">-</div></div>
         <div class="fadu-stat"><div class="fadu-stat-label">거래량</div><div class="fadu-stat-val" id="ns-vol">-</div></div>
@@ -1999,6 +2013,8 @@ async function loadUSMarketCap() {
   if (results.length > 0) {
     const yahooMap = {};
     results.forEach(q => { yahooMap[q.symbol] = q; });
+    const exMap = { 'NMS':'NASDAQ','NGM':'NASDAQ','NCM':'NASDAQ','NasdaqGS':'NASDAQ','NasdaqCM':'NASDAQ','NasdaqNM':'NASDAQ',
+                    'NYQ':'NYSE','NYSE':'NYSE','PCX':'NYSE Arca','ARCA':'NYSE Arca','ASE':'NYSE American','AMEX':'NYSE American' };
     const finalStocks = US_BASE.map(s => {
       const q = yahooMap[s.symbol];
       if (!q) return { ...s, price: 0, change: 0, yoy: null };
@@ -2009,8 +2025,19 @@ async function loadUSMarketCap() {
         price:     best.price,
         change:    best.change,
         yoy:       q['52WeekChange'] != null ? q['52WeekChange'] * 100 : null,
+        exchange:  q.exchange ? (exMap[q.exchange] || s.exchange || '') : (s.exchange || ''),
       };
     }).sort((a, b) => b.marketCap - a.marketCap);
+
+    // NBIS 순위 계산
+    const nbisAllIdx = finalStocks.findIndex(s => s.symbol === 'NBIS');
+    if (nbisAllIdx >= 0) {
+      document.getElementById('nbis-rank-overall').textContent = `${nbisAllIdx + 1}위`;
+      const nasdaqOnly = finalStocks.filter(s => s.exchange === 'NASDAQ');
+      const nbisNdIdx  = nasdaqOnly.findIndex(s => s.symbol === 'NBIS');
+      if (nbisNdIdx >= 0) document.getElementById('nbis-rank-nasdaq').textContent = `${nbisNdIdx + 1}위`;
+    }
+
     renderMcTable('us', finalStocks);
     const now = new Date().toLocaleTimeString('ko-KR');
     const label = [...new Set(results.map(q => getBestYahooPrice(q).label))].join('/') || '종가';
@@ -2235,4 +2262,3 @@ document.addEventListener('visibilitychange', () => {
 </script>
 </body>
 </html>
- 
