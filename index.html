@@ -269,7 +269,8 @@
 <div class="tabs">
   <button class="tab-btn active" id="btn-analysis" onclick="switchTab('analysis')">📈 수익률 분석</button>
   <button class="tab-btn" id="btn-portfolio" onclick="switchTab('portfolio')">💼 내 포트폴리오</button>
-  <button class="tab-btn" id="btn-marketcap" onclick="switchTab('marketcap')">📊 시가총액 순위</button>
+  <button class="tab-btn" id="btn-mc-kr" onclick="switchTab('mc-kr')">🇰🇷 한국 시가총액 순위</button>
+  <button class="tab-btn" id="btn-mc-us" onclick="switchTab('mc-us')">🇺🇸 미국 시가총액 순위</button>
 </div>
 
 <div id="tab-analysis">
@@ -361,16 +362,8 @@
   </div>
 </div><!-- /tab-portfolio -->
 
-<!-- ── 시가총액 순위 탭 ────────────────────────────── -->
-<div id="tab-marketcap" style="display:none">
-
-  <div class="mc-sub-tabs">
-    <button class="mc-sub-btn active" id="btn-mc-kr" onclick="switchMcTab('kr')">🇰🇷 한국 (KOSPI+KOSDAQ)</button>
-    <button class="mc-sub-btn" id="btn-mc-us" onclick="switchMcTab('us')">🇺🇸 미국 (NYSE+NASDAQ)</button>
-  </div>
-
-  <!-- 한국 -->
-  <div id="mc-kr">
+<!-- ── 한국 시가총액 순위 탭 ──────────────────────────── -->
+<div id="mc-kr" style="display:none">
 
     <!-- 파두 대시보드 -->
     <div id="fadu-dashboard" class="chart-card" style="margin-bottom:16px">
@@ -460,8 +453,8 @@
     </div>
   </div>
 
-  <!-- 미국 -->
-  <div id="mc-us" style="display:none">
+<!-- ── 미국 시가총액 순위 탭 ──────────────────────────── -->
+<div id="mc-us" style="display:none">
 
     <!-- Nebius Group 대시보드 -->
     <div id="nbis-dashboard" class="chart-card" style="margin-bottom:16px">
@@ -531,7 +524,7 @@
     </div>
   </div>
 
-</div><!-- /tab-marketcap -->
+</div><!-- /mc-us -->
 
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -886,15 +879,26 @@ function renderYearly(yearlyData, sp500, nasdaq, monthly) {
 
 // ─── 탭 전환 ──────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['analysis', 'portfolio', 'marketcap'].forEach(t => {
-    document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none';
-    document.getElementById(`btn-${t}`).classList.toggle('active', t === tab);
+  const tabMap = {
+    'analysis':  { div: 'tab-analysis',  btn: 'btn-analysis'  },
+    'portfolio': { div: 'tab-portfolio', btn: 'btn-portfolio' },
+    'mc-kr':     { div: 'mc-kr',         btn: 'btn-mc-kr'     },
+    'mc-us':     { div: 'mc-us',         btn: 'btn-mc-us'     },
+  };
+  Object.entries(tabMap).forEach(([t, { div, btn }]) => {
+    document.getElementById(div).style.display = t === tab ? '' : 'none';
+    document.getElementById(btn).classList.toggle('active', t === tab);
   });
   // 시가총액 탭 최초 진입 시 자동 로드
-  if (tab === 'marketcap' && !mcTabLoaded.kr) {
+  if (tab === 'mc-kr' && !mcTabLoaded.kr) {
     mcTabLoaded.kr = true;
     loadKoreaMarketCap();
     loadFaduDashboard();
+  }
+  if (tab === 'mc-us' && !mcTabLoaded.us) {
+    mcTabLoaded.us = true;
+    loadUSMarketCap();
+    loadNebiusDashboard();
   }
 }
 
@@ -1081,15 +1085,7 @@ function toggleTheme() {
 const mcTabLoaded = { kr: false, us: false };
 
 function switchMcTab(market) {
-  ['kr', 'us'].forEach(m => {
-    document.getElementById(`mc-${m}`).style.display     = m === market ? '' : 'none';
-    document.getElementById(`btn-mc-${m}`).classList.toggle('active', m === market);
-  });
-  if (!mcTabLoaded[market]) {
-    mcTabLoaded[market] = true;
-    if (market === 'us') { loadUSMarketCap(); loadNebiusDashboard(); }
-    else { loadKoreaMarketCap(); }
-  }
+  switchTab(`mc-${market}`);
 }
 
 function retryMc(market) {
