@@ -1573,10 +1573,15 @@ async function loadKoreaMarketCap() {
   statusEl.innerHTML = '⏳ 네이버 금융에서 데이터 조회 중...';
   tableEl.style.display = 'none';
   try {
-    const [kospi, kosdaq] = await Promise.all([
+    // KOSPI 3페이지(~150개) + KOSDAQ 1페이지(~50개) 병렬 조회
+    const [kp1, kp2, kp3, kd1] = await Promise.all([
       fetchNaverMarketCap(0, 1),
+      fetchNaverMarketCap(0, 2),
+      fetchNaverMarketCap(0, 3),
       fetchNaverMarketCap(1, 1),
     ]);
+    const kospi  = [...kp1, ...kp2, ...kp3];
+    const kosdaq = [...kd1];
     const allStocks = [...kospi, ...kosdaq].sort((a, b) => b.marketCap - a.marketCap);
     if (allStocks.length === 0) throw new Error('데이터 없음');
     renderMcTable('kr', allStocks);
