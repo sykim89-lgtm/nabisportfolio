@@ -1751,9 +1751,6 @@ async function drawNbisChart() {
   if (!pts?.length) pts = await fetchStooqHistory('nbis.us', 90);
   if (!pts?.length) return;
 
-function drawNbisChart(pts) {
-  if (!pts || pts.length === 0) return;
-
   const ctx = document.getElementById('nbis-chart').getContext('2d');
   if (window._nbisChart) window._nbisChart.destroy();
 
@@ -1869,6 +1866,7 @@ async function loadUSMarketCap() {
           <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
       }
       statusEl.style.display = '';
+    }
   }
 }
 
