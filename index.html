@@ -1586,24 +1586,29 @@ async function loadKoreaMarketCap() {
   statusEl.innerHTML = '⏳ 네이버 금융에서 데이터 조회 중...';
   tableEl.style.display = 'none';
   try {
-    // KOSPI 5페이지(~250개 원본) + KOSDAQ 1페이지 병렬 조회
-    // ETF 제거 후에도 KOSPI 150개 확보되도록 넉넉히 수집
-    const [kp1, kp2, kp3, kp4, kp5, kd1] = await Promise.all([
+    // KOSPI 5페이지(~250개) + KOSDAQ 2페이지(~100개) 병렬 조회 후
+    // ETF 제거하고 시가총액 기준으로 합산 정렬 → 상위 200개
+    const [kp1, kp2, kp3, kp4, kp5, kd1, kd2] = await Promise.all([
       fetchNaverMarketCap(0, 1),
       fetchNaverMarketCap(0, 2),
       fetchNaverMarketCap(0, 3),
       fetchNaverMarketCap(0, 4),
       fetchNaverMarketCap(0, 5),
       fetchNaverMarketCap(1, 1),
+      fetchNaverMarketCap(1, 2),
     ]);
-    const kospi  = [...kp1, ...kp2, ...kp3, ...kp4, ...kp5].filter(s => !isKrETF(s.name)).slice(0, 150);
-    const kosdaq = [...kd1].filter(s => !isKrETF(s.name));
-    const allStocks = [...kospi, ...kosdaq].sort((a, b) => b.marketCap - a.marketCap);
+    const kospiPool  = [...kp1, ...kp2, ...kp3, ...kp4, ...kp5].filter(s => !isKrETF(s.name));
+    const kosdaqPool = [...kd1, ...kd2].filter(s => !isKrETF(s.name));
+    const allStocks  = [...kospiPool, ...kosdaqPool]
+      .sort((a, b) => b.marketCap - a.marketCap)
+      .slice(0, 200);
     if (allStocks.length === 0) throw new Error('데이터 없음');
     renderMcTable('kr', allStocks);
     tableEl.style.display = '';
     const now = new Date().toLocaleTimeString('ko-KR');
-    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${kospi.length}개 + KOSDAQ ${kosdaq.length}개</div>`;
+    const krCount = allStocks.filter(s => s.market === 'KOSPI').length;
+    const kdCount = allStocks.filter(s => s.market === 'KOSDAQ').length;
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; 시총 상위 200개 (KOSPI ${krCount}개 + KOSDAQ ${kdCount}개)</div>`;
   } catch (e) {
     statusEl.innerHTML = `<div style="color:var(--red)">❌ 네이버 금융 데이터 조회 실패: ${e.message}</div>
       <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
