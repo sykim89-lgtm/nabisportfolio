@@ -1542,18 +1542,24 @@ async function fetchStooqHistory(stooqSymbol, days = 90) {
 
 
 // Yahoo Finance 시세 조회 — Cloudflare Worker 경유 (서버사이드 → CORS 무관)
+// 401(세션 만료) 시 최대 2회 재시도
 async function fetchYahooMarketCap(yahooSymbols) {
   const sym    = yahooSymbols.join(',');
   const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState,regularMarketVolume,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,trailingPE,52WeekChange';
-  try {
-    const url = `${WORKER_URL}/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false`;
-    const res = await fetch(url, { signal: abortFetch(10000) });
-    if (res.ok) {
-      const json = await res.json();
-      const result = json.quoteResponse?.result;
-      if (Array.isArray(result) && result.length > 0) return result;
-    }
-  } catch (_) {}
+  const url = `${WORKER_URL}/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false`;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 1500 * attempt)); // 재시도 전 대기
+      const res = await fetch(url, { signal: abortFetch(10000) });
+      if (res.status === 401 || res.status === 403) continue; // 세션 만료 → 재시도
+      if (res.ok) {
+        const json = await res.json();
+        const result = json.quoteResponse?.result;
+        if (Array.isArray(result) && result.length > 0) return result;
+      }
+    } catch (_) {}
+  }
 
   return [];
 }
