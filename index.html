@@ -536,7 +536,6 @@
 // ─── Config ───────────────────────────────────────────────────────────────────
 const API_KEY       = 'AIzaSyAFyyUDcLzM3Q6YOkg61JMzQbv-l9Nwsjg';
 const SHEET_ID      = '1ZPl5NDOI2yzwm7cCAidcfzZz73C6aXcVDzf_HMbaUuo';
-const FINNHUB_TOKEN = 'd8aj8lpr01qna6nhk8kgd8aj8lpr01qna6nhk8l0';
 const WORKER_URL    = 'https://solitary-block-7836.silver1arrow.workers.dev';
 
 // ─── 포트폴리오 데이터 ─────────────────────────────────────────────────────────
@@ -1268,55 +1267,6 @@ async function fetchStooqHistory(stooqSymbol, days = 90) {
   } catch (_) { return null; }
 }
 
-// ── Finnhub API (CORS 허용, 무료 실시간) ─────────────────────────────────────
-// quote: c=현재가, d=변동, dp=변동%, h=고가, l=저가, o=시가, pc=전일종가
-async function fetchFinnhubQuote(symbol) {
-  try {
-    const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_TOKEN}`;
-    const res = await fetch(url, { signal: abortFetch(8000) });
-    if (!res.ok) return null;
-    const d = await res.json();
-    return (d && d.c != null && d.c !== 0) ? d : null;
-  } catch (_) { return null; }
-}
-
-// metrics: 52WeekHigh, 52WeekLow, 52WeekPriceReturnDaily, peBasicExclExtraTTM 등
-async function fetchFinnhubMetrics(symbol) {
-  try {
-    const url = `https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${FINNHUB_TOKEN}`;
-    const res = await fetch(url, { signal: abortFetch(8000) });
-    if (!res.ok) return null;
-    const d = await res.json();
-    return d?.metric || null;
-  } catch (_) { return null; }
-}
-
-// profile2: 시가총액(marketCapitalization, 백만달러 단위)
-async function fetchFinnhubProfile(symbol) {
-  try {
-    const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_TOKEN}`;
-    const res = await fetch(url, { signal: abortFetch(8000) });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (_) { return null; }
-}
-
-// candle: 일봉 OHLCV, pts = [{x:Date, y:close}], lastVolume = 최근 거래량
-async function fetchFinnhubCandle(symbol, days = 90) {
-  try {
-    const to   = Math.floor(Date.now() / 1000);
-    const from = to - days * 86400;
-    const url  = `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${from}&to=${to}&token=${FINNHUB_TOKEN}`;
-    const res  = await fetch(url, { signal: abortFetch(8000) });
-    if (!res.ok) return null;
-    const d = await res.json();
-    if (d?.s !== 'ok' || !d.t?.length) return null;
-    return {
-      pts:        d.t.map((t, i) => ({ x: new Date(t * 1000), y: d.c[i] })).filter(p => p.y != null),
-      lastVolume: d.v?.[d.v.length - 1] ?? null,
-    };
-  } catch (_) { return null; }
-}
 
 // Yahoo Finance 시세 조회 — Cloudflare Worker 경유 (서버사이드 → CORS 무관)
 async function fetchYahooMarketCap(yahooSymbols) {
@@ -1704,32 +1654,7 @@ async function loadNebiusDashboard() {
     applyMyPos(price);
     document.getElementById('nbis-status').textContent = `🔴 Yahoo Finance | ${new Date().toLocaleTimeString('ko-KR')} 기준`;
   } else {
-    // 2순위: Finnhub 폴백
-    const [fq, metrics, profile, candle] = await Promise.all([
-      fetchFinnhubQuote(SYMBOL), fetchFinnhubMetrics(SYMBOL),
-      fetchFinnhubProfile(SYMBOL), fetchFinnhubCandle(SYMBOL, 90),
-    ]);
-    if (fq && fq.c) {
-      const price = fq.c; const change = fq.dp ?? 0; const diff = fq.d ?? 0; const sign = change >= 0 ? '+' : '';
-      document.getElementById('nbis-cur-price').textContent = '$' + price.toFixed(2);
-      document.getElementById('nbis-market-state').textContent = 'Finnhub';
-      const chgEl = document.getElementById('nbis-change');
-      chgEl.textContent = `${sign}$${Math.abs(diff).toFixed(2)} (${sign}${change.toFixed(2)}%)`;
-      chgEl.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
-      document.getElementById('ns-prev').textContent = fmtUSD(fq.pc);
-      if (profile?.marketCapitalization) document.getElementById('ns-mktcap').textContent = fmtCap(profile.marketCapitalization * 1e6);
-      if (metrics) {
-        document.getElementById('ns-high52').textContent = fmtUSD(metrics['52WeekHigh']);
-        document.getElementById('ns-low52').textContent  = fmtUSD(metrics['52WeekLow']);
-        const pe = metrics.peBasicExclExtraTTM ?? metrics.peNormalizedAnnual ?? null;
-        document.getElementById('ns-per').textContent = pe ? pe.toFixed(1) + 'x' : 'N/A';
-      }
-      if (candle?.lastVolume) document.getElementById('ns-vol').textContent = fmtVol(candle.lastVolume);
-      applyMyPos(price);
-      document.getElementById('nbis-status').textContent = `🔴 Finnhub | ${new Date().toLocaleTimeString('ko-KR')} 기준`;
-    } else {
-      document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
-    }
+    document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
   }
 
   drawNbisChart();
@@ -1829,48 +1754,31 @@ async function loadUSMarketCap() {
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 (${label}) &nbsp;|&nbsp; ${now} 기준</div>`;
     statusEl.style.display = '';
   } else {
-    // 2순위: Finnhub 병렬 조회
-    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Finnhub 조회 중...</div>';
-    const quoteResults = await Promise.allSettled(US_BASE.map(s => fetchFinnhubQuote(s.symbol)));
-    const successCount = quoteResults.filter(r => r.status === 'fulfilled' && r.value).length;
-    if (successCount > 0) {
-      quoteResults.forEach((r, i) => {
-        const q = r.status === 'fulfilled' ? r.value : null;
-        if (q) { stocks[i].price = q.c; stocks[i].change = q.dp; }
+    // 2순위: Stooq 폴백
+    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Stooq 조회 중...</div>';
+    const stooqMap = await fetchStooqPrices(US_BASE);
+    const now = new Date().toLocaleTimeString('ko-KR');
+    if (Object.keys(stooqMap).length > 0) {
+      US_BASE.forEach((s, i) => {
+        const sq = stooqMap[s.stooq.toLowerCase()];
+        if (!sq) return;
+        const close = parseFloat(sq.Close) || 0;
+        const open  = parseFloat(sq.Open)  || close;
+        stocks[i].price  = close;
+        stocks[i].change = (open > 0 && close > 0) ? (close - open) / open * 100 : 0;
       });
       stocks.sort((a, b) => b.marketCap - a.marketCap);
       renderMcTable('us', stocks);
-      const now = new Date().toLocaleTimeString('ko-KR');
-      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Finnhub 실시간 &nbsp;|&nbsp; ${now} 기준</div>`;
-      statusEl.style.display = '';
+      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📊 Stooq 시세 &nbsp;|&nbsp; ${now} 기준 &nbsp;
+        <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
     } else {
-      // 3순위: Stooq 폴백
-      statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Stooq 조회 중...</div>';
-      const stooqMap = await fetchStooqPrices(US_BASE);
-      const now = new Date().toLocaleTimeString('ko-KR');
-      if (Object.keys(stooqMap).length > 0) {
-        US_BASE.forEach((s, i) => {
-          const sq = stooqMap[s.stooq.toLowerCase()];
-          if (!sq) return;
-          const close = parseFloat(sq.Close) || 0;
-          const open  = parseFloat(sq.Open)  || close;
-          stocks[i].price  = close;
-          stocks[i].change = (open > 0 && close > 0) ? (close - open) / open * 100 : 0;
-        });
-        stocks.sort((a, b) => b.marketCap - a.marketCap);
-        renderMcTable('us', stocks);
-        statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📊 Stooq 시세 &nbsp;|&nbsp; ${now} 기준 &nbsp;
-          <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
-      } else {
-        statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 기준값 표시 중 &nbsp;
-          <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
-      }
-      statusEl.style.display = '';
+      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 기준값 표시 중 &nbsp;
+        <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
     }
+    statusEl.style.display = '';
   }
 }
 
-// YoY(52주 수익률) 백그라운드 보강 - Finnhub metric
 // 네이버 금융 시가총액 순위 페이지 파싱
 async function fetchNaverMarketCap(sosok, page) {
   const url = `https://finance.naver.com/sise/sise_market_sum.naver?sosok=${sosok}&page=${page}`;
