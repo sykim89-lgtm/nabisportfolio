@@ -1634,11 +1634,10 @@ async function fetchStooqHistory(stooqSymbol, days = 90) {
 
 
 // Yahoo Finance 시세 조회 — Cloudflare Worker 경유 (서버사이드 → CORS 무관)
-// 401(세션 만료) 시 최대 2회 재시도
+// Yahoo Finance v7 quote (fields 필터 없이 → 52WeekChange 포함 전 필드 반환)
 async function fetchYahooMarketCap(yahooSymbols) {
-  const sym    = yahooSymbols.join(',');
-  const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState,regularMarketVolume,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,trailingPE,52WeekChange';
-  const url = `${WORKER_URL}/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false`;
+  const sym = yahooSymbols.join(',');
+  const url = `${WORKER_URL}/v7/finance/quote?symbols=${sym}&formatted=false`;
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -2104,9 +2103,16 @@ async function loadUSMarketCap() {
   tableEl.style.display = '';
   statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Yahoo Finance 조회 중...</div>';
 
-  // 1순위: Cloudflare Worker → Yahoo Finance (배치 1회 호출)
+  // 1순위: Cloudflare Worker → Yahoo Finance (50개씩 배치)
   const symbols = US_BASE.map(s => s.symbol);
-  const results = await fetchYahooMarketCap(symbols);
+  const BATCH = 50;
+  const allResults = [];
+  for (let i = 0; i < symbols.length; i += BATCH) {
+    const batch = await fetchYahooMarketCap(symbols.slice(i, i + BATCH));
+    allResults.push(...batch);
+    if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 200));
+  }
+  const results = allResults;
 
   if (results.length > 0) {
     const yahooMap = {};
@@ -2122,7 +2128,8 @@ async function loadUSMarketCap() {
         marketCap: q.marketCap || s.marketCap,
         price:     best.price,
         change:    best.change,
-        yoy:       q['52WeekChange'] != null ? q['52WeekChange'] * 100 : null,
+        yoy:       (q['52WeekChange'] ?? q['fiftyTwoWeekChange']) != null
+                     ? (q['52WeekChange'] ?? q['fiftyTwoWeekChange']) * 100 : null,
         exchange:  q.exchange ? (exMap[q.exchange] || s.exchange || '') : (s.exchange || ''),
       };
     }).sort((a, b) => b.marketCap - a.marketCap);
@@ -2141,9 +2148,6 @@ async function loadUSMarketCap() {
     const label = [...new Set(results.map(q => getBestYahooPrice(q).label))].join('/') || '종가';
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 (${label}) &nbsp;|&nbsp; ${now} 기준</div>`;
     statusEl.style.display = '';
-
-    // 백그라운드: YoY(52주 수익률) 보강
-    enrichUSYoY(finalStocks);
   } else {
     // 2순위: Stooq 폴백
     statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Stooq 조회 중...</div>';
@@ -2280,28 +2284,6 @@ async function loadKoreaMarketCap() {
   }
 }
 
-// ── 미국 종목 YoY 보강 (Yahoo Finance 백그라운드) ────────────────────────────
-async function enrichUSYoY(stocks) {
-  const symbols = stocks.map(s => s.symbol);
-  const BATCH = 50;
-  let updated = false;
-  for (let i = 0; i < symbols.length; i += BATCH) {
-    try {
-      const results = await fetchYahooMarketCap(symbols.slice(i, i + BATCH));
-      results.forEach(q => {
-        const idx = stocks.findIndex(s => s.symbol === q.symbol);
-        const val = q['52WeekChange'] ?? q['fiftyTwoWeekChange'];
-        if (idx >= 0 && val != null) {
-          stocks[idx].yoy = val * 100;
-          updated = true;
-        }
-      });
-    } catch (_) {}
-    if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 400));
-  }
-  if (updated) renderMcTable('us', stocks);
-}
-
 // ── 한국 종목 YoY 보강 (Yahoo Finance 백그라운드) ────────────────────────────
 async function enrichKrYoY(stocks) {
   const symbols = stocks.map(s => s.market === 'KOSDAQ' ? s.symbol + '.KQ' : s.symbol + '.KS');
@@ -2312,8 +2294,9 @@ async function enrichKrYoY(stocks) {
       const results = await fetchYahooMarketCap(symbols.slice(i, i + BATCH));
       results.forEach(q => {
         const idx = symbols.findIndex(s => s.toUpperCase() === (q.symbol || '').toUpperCase());
-        if (idx >= 0 && q['52WeekChange'] != null) {
-          stocks[idx].yoy = q['52WeekChange'] * 100;
+        const val = q['52WeekChange'] ?? q['fiftyTwoWeekChange'];
+        if (idx >= 0 && val != null) {
+          stocks[idx].yoy = val * 100;
           updated = true;
         }
       });
