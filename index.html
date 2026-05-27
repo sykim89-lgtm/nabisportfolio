@@ -494,8 +494,8 @@
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-          <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">$132.14</div></div>
-          <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">385주</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">$134.60</div></div>
+          <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">400주</div></div>
           <div class="fadu-stat"><div class="fadu-stat-label">평가금액</div><div class="fadu-stat-val" id="np-value">-</div></div>
           <div class="fadu-stat"><div class="fadu-stat-label">평가손익</div><div class="fadu-stat-val" id="np-pnl">-</div></div>
         </div>
@@ -543,18 +543,21 @@ const WORKER_URL    = 'https://solitary-block-7836.silver1arrow.workers.dev';
 const FX_USD_KRW = 1471.32; // USD → KRW 환율
 
 const HOLDINGS = [
-  { name: 'MU',          sub: 'Micron Technology Inc',              currency: 'USD', avgCost: 223.98,  qty: 220,  currentPrice: 724.09  },
-  { name: 'SNDK',        sub: 'Sandisk Corp',                       currency: 'USD', avgCost: 266.47,  qty: 100,  currentPrice: 1407    },
-  { name: 'NBIS',        sub: 'Nebius Group NV',                    currency: 'USD', avgCost: 132.14,  qty: 385,  currentPrice: 219.89  },
-  { name: '파두',         sub: '440110',                             currency: 'KRW', avgCost: 98115,   qty: 1300, currentPrice: 100100  },
-  { name: '원화',         sub: 'KRW',                               currency: 'KRW', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 71261764 },
-  { name: '두산에너빌리티', sub: '034020',                           currency: 'KRW', avgCost: 70306,   qty: 500,  currentPrice: 110800  },
-  { name: 'KODEX 미국나스닥100', sub: '379810',                     currency: 'KRW', avgCost: 20684,   qty: 1005, currentPrice: 29075   },
-  { name: 'KODEX 미국S&P500',   sub: '379800',                     currency: 'KRW', avgCost: 19480,   qty: 1005, currentPrice: 25280   },
-  { name: 'TIGER 구리실물',      sub: '160580',                     currency: 'KRW', avgCost: 16320,   qty: 1060, currentPrice: 16580   },
-  { name: 'PLUS 글로벌원자력밸류체인', sub: '0007G0',               currency: 'KRW', avgCost: 17907,   qty: 1000, currentPrice: 16460   },
-  { name: 'ACE KRX금현물',       sub: '411060',                     currency: 'KRW', avgCost: 26610,   qty: 434,  currentPrice: 30495   },
-  { name: 'TIME 미국나스닥100채권혼합50액티브', sub: '0019K0',      currency: 'KRW', avgCost: 11823,   qty: 190,  currentPrice: 13975   },
+  { name: 'MU',          sub: 'Micron Technology Inc',              currency: 'USD', avgCost: 223.98,  qty: 220,  currentPrice: 896.26  },
+  { name: 'SNDK',        sub: 'Sandisk Corp',                       currency: 'USD', avgCost: 266.47,  qty: 100,  currentPrice: 1589    },
+  { name: 'NBIS',        sub: 'Nebius Group NV',                    currency: 'USD', avgCost: 134.60,  qty: 400,  currentPrice: 207.89  },
+  { name: '파두',         sub: '440110',                             currency: 'KRW', avgCost: 98115,   qty: 1300, currentPrice: 115600  },
+  { name: 'KODEX AI전력핵심설비', sub: '487240',                    currency: 'KRW', avgCost: 52123,   qty: 800,  currentPrice: 52005   },
+  { name: '두산에너빌리티', sub: '034020',                           currency: 'KRW', avgCost: 69014,   qty: 300,  currentPrice: 109700  },
+  { name: 'KODEX 미국나스닥100', sub: '379810',                     currency: 'KRW', avgCost: 20684,   qty: 1005, currentPrice: 29950   },
+  { name: 'KODEX 미국S&P500',   sub: '379800',                     currency: 'KRW', avgCost: 19480,   qty: 1005, currentPrice: 25575   },
+  { name: 'SOL AI반도체TOP2플러스', sub: '0167A0',                  currency: 'KRW', avgCost: 23726,   qty: 1000, currentPrice: 23480   },
+  { name: 'TIGER 구리실물',      sub: '160580',                     currency: 'KRW', avgCost: 16341,   qty: 1045, currentPrice: 16895   },
+  { name: 'ACE KRX금현물',       sub: '411060',                     currency: 'KRW', avgCost: 26610,   qty: 434,  currentPrice: 29805   },
+  { name: '산일전기',             sub: '062040',                     currency: 'KRW', avgCost: 260000,  qty: 20,   currentPrice: 267500  },
+  { name: 'TIME 미국나스닥100채권혼합50액티브', sub: '0019K0',      currency: 'KRW', avgCost: 11823,   qty: 190,  currentPrice: 14390   },
+  { name: '인텔리안테크',         sub: '189300',                     currency: 'KRW', avgCost: 150000,  qty: 10,   currentPrice: 147000  },
+  { name: '원화',         sub: 'KRW',                               currency: 'KRW', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 527923 },
   { name: '달러',         sub: 'USD',                               currency: 'USD', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 106.35 },
 ];
 
@@ -1648,8 +1651,8 @@ async function loadFaduChart() {
 // ── Nebius Group 대시보드 ──────────────────────────────────────────────────────
 async function loadNebiusDashboard() {
   const SYMBOL   = 'NBIS';
-  const AVG_COST = 132.14;
-  const QTY      = 385;
+  const AVG_COST = 134.60;
+  const QTY      = 400;
 
   const fmtUSD = v => (v != null && v !== 0) ? '$' + (+v).toFixed(2) : '-';
   const fmtCap = cap => {
