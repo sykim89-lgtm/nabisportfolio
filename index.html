@@ -235,7 +235,7 @@
     /* ── 파두 대시보드 ──────────────────────────────── */
     .fadu-stat { background:var(--border);border-radius:8px;padding:10px 12px; }
     .fadu-stat-label { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
-    .fadu-stat-val { font-size:14px;font-weight:600; }
+    .fadu-stat-val { font-size:15px;font-weight:600; }
     .fadu-rank-box { flex:1;background:var(--border);border-radius:10px;padding:7px 14px;text-align:center; }
     .fadu-rank-title { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px; }
     .fadu-rank-num { font-size:22px;font-weight:400;color:var(--text);line-height:1; }
@@ -2353,15 +2353,15 @@ function renderMcTable(market, stocks) {
         <div style="display:flex;align-items:center;gap:10px;white-space:nowrap">
           ${logoHtml}
           <div>
-            <div style="font-size:14px;font-weight:600">${s.name || s.companyName || '-'}</div>
-            <div style="font-size:12px;color:var(--muted)">${s.symbol || ''}</div>
+            <div style="font-size:15px;font-weight:600">${s.name || s.companyName || '-'}</div>
+            <div style="font-size:13px;color:var(--muted)">${s.symbol || ''}</div>
           </div>
         </div>
       </td>
       ${exchangeCell}
-      <td style="text-align:right;font-size:14px;font-weight:600">${fmtCap(s.marketCap)}</td>
-      <td style="text-align:right;font-size:14px;font-weight:600">${price}</td>
-      <td style="text-align:right;font-size:14px;font-weight:600" class="${cls(chg)}">${fmtPct(chg)}</td>
+      <td style="text-align:right;font-size:15px;font-weight:600">${fmtCap(s.marketCap)}</td>
+      <td style="text-align:right;font-size:15px;font-weight:600">${price}</td>
+      <td style="text-align:right;font-size:15px;font-weight:600" class="${cls(chg)}">${fmtPct(chg)}</td>
     </tr>`;
   }).join('');
 }
