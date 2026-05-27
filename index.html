@@ -2278,6 +2278,20 @@ async function loadKoreaMarketCap() {
   }
 }
 
+// ── 전일대비 순위 변동 화살표 (localStorage 기반) ──────────────────────────────
+function getRankArrow(key, currentRank) {
+  const stored = JSON.parse(localStorage.getItem(`rank_${key}`) || 'null');
+  const today  = new Date().toDateString();
+  // 오늘 순위 저장 (다음날 비교용)
+  localStorage.setItem(`rank_${key}`, JSON.stringify({ rank: currentRank, date: today }));
+  if (!stored) return '';                  // 기록 없음 (첫 방문)
+  if (stored.date === today) return '';    // 당일 재로드는 표시 안 함
+  const delta = stored.rank - currentRank; // 양수 = 순위 상승 (숫자 감소)
+  if (delta > 0) return `<div style="color:#10b981;font-size:11px;font-weight:800;line-height:1.1;margin-top:3px">▲${delta}</div>`;
+  if (delta < 0) return `<div style="color:#ef4444;font-size:11px;font-weight:800;line-height:1.1;margin-top:3px">▼${Math.abs(delta)}</div>`;
+  return `<div style="color:var(--muted);font-size:11px;line-height:1.1;margin-top:3px">—</div>`;
+}
+
 // ── 시가총액 테이블 렌더링 ─────────────────────────────────────────────────────
 function renderMcTable(market, stocks) {
   const isKR = market === 'kr';
@@ -2305,6 +2319,7 @@ function renderMcTable(market, stocks) {
     const price  = isKR ? `₩${fmt(s.price || 0)}` : `$${(s.price || 0).toFixed(2)}`;
     const chg    = s.change ?? 0;
     const isMyStock = (isKR && s.symbol === '440110') || (!isKR && s.symbol === 'NBIS');
+    const rankArrow = isMyStock ? getRankArrow(isKR ? 'fadu_kr' : 'nbis_us', rank) : '';
     const rowStyle = isMyStock
       ? 'background:rgba(139,92,246,0.18);border-top:2px solid rgba(139,92,246,0.7);border-bottom:2px solid rgba(139,92,246,0.7);'
       : '';
@@ -2325,6 +2340,7 @@ function renderMcTable(market, stocks) {
     return `<tr style="${rowStyle}">
       <td style="text-align:center">
         <span class="rank-badge${isTop3 ? ' top3' : ''}">${rank}</span>
+        ${rankArrow}
       </td>
       <td style="text-align:left;padding-left:14px">
         <div style="display:flex;align-items:center;gap:10px;white-space:nowrap">
