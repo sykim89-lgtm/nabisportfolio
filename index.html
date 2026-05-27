@@ -234,12 +234,12 @@
     .mc-table td { font-size: 13px; }
     /* ── 파두 대시보드 ──────────────────────────────── */
     .fadu-stat { background:var(--border);border-radius:8px;padding:10px 12px; }
-    .fadu-stat-label { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
-    .fadu-stat-val { font-size:15px;font-weight:600; }
+    .fadu-stat-label { font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
+    .fadu-stat-val { font-size:17px;font-weight:600; }
     .fadu-rank-box { flex:1;background:var(--border);border-radius:10px;padding:7px 14px;text-align:center; }
-    .fadu-rank-title { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px; }
-    .fadu-rank-num { font-size:22px;font-weight:400;color:var(--text);line-height:1; }
-    .fadu-rank-sub { font-size:11px;color:var(--muted);margin-top:4px; }
+    .fadu-rank-title { font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px; }
+    .fadu-rank-num { font-size:24px;font-weight:400;color:var(--text);line-height:1; }
+    .fadu-rank-sub { font-size:13px;color:var(--muted);margin-top:4px; }
 
     .rank-badge {
       display: inline-block;
@@ -383,15 +383,15 @@
              style="width:44px;height:44px;border-radius:10px;background:#fff;padding:4px;flex-shrink:0;object-fit:contain"
              onerror="this.outerHTML='<div style=&quot;width:44px;height:44px;border-radius:10px;background:var(--accent);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0&quot;>파</div>'">
         <div style="flex:1;min-width:0">
-          <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:6px">
+          <div style="font-size:19px;font-weight:700;display:flex;align-items:center;gap:6px">
             파두
-            <span id="fadu-market-state" style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
+            <span id="fadu-market-state" style="font-size:13px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">440110 · KOSDAQ</div>
+          <div style="font-size:14px;color:var(--muted);margin-top:2px">440110 · KOSDAQ</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div id="fadu-cur-price" style="font-size:26px;font-weight:700;line-height:1.1">-</div>
-          <div id="fadu-change" style="font-size:13px;margin-top:4px;color:var(--muted)">-</div>
+          <div id="fadu-cur-price" style="font-size:28px;font-weight:700;line-height:1.1">-</div>
+          <div id="fadu-change" style="font-size:15px;margin-top:4px;color:var(--muted)">-</div>
         </div>
       </div>
 
@@ -421,7 +421,7 @@
 
       <!-- 내 포지션 -->
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
           <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">98,115원</div></div>
           <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">1,300주</div></div>
@@ -432,11 +432,11 @@
 
       <!-- 3개월 차트 -->
       <div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
         <div style="position:relative;height:120px"><canvas id="fadu-chart"></canvas></div>
       </div>
 
-      <div id="fadu-status" style="font-size:11px;color:var(--muted);margin-top:10px;text-align:right"></div>
+      <div id="fadu-status" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:right"></div>
     </div>
     <!-- /파두 대시보드 -->
 
@@ -472,15 +472,15 @@
              style="width:44px;height:44px;border-radius:10px;background:#fff;padding:4px;flex-shrink:0;object-fit:contain"
              onerror="this.outerHTML='<div style=&quot;width:44px;height:44px;border-radius:10px;background:var(--accent);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0&quot;>N</div>'">
         <div style="flex:1;min-width:0">
-          <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:6px">
+          <div style="font-size:19px;font-weight:700;display:flex;align-items:center;gap:6px">
             Nebius Group
-            <span id="nbis-market-state" style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
+            <span id="nbis-market-state" style="font-size:13px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">NBIS · NASDAQ</div>
+          <div style="font-size:14px;color:var(--muted);margin-top:2px">NBIS · NASDAQ</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div id="nbis-cur-price" style="font-size:26px;font-weight:700;line-height:1.1">-</div>
-          <div id="nbis-change" style="font-size:13px;margin-top:4px;color:var(--muted)">-</div>
+          <div id="nbis-cur-price" style="font-size:28px;font-weight:700;line-height:1.1">-</div>
+          <div id="nbis-change" style="font-size:15px;margin-top:4px;color:var(--muted)">-</div>
         </div>
       </div>
 
@@ -508,7 +508,7 @@
       </div>
 
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
           <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">$134.60</div></div>
           <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">400주</div></div>
@@ -518,10 +518,10 @@
       </div>
 
       <div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
         <div style="position:relative;height:120px"><canvas id="nbis-chart"></canvas></div>
       </div>
-      <div id="nbis-status" style="font-size:11px;color:var(--muted);margin-top:10px;text-align:right"></div>
+      <div id="nbis-status" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:right"></div>
     </div>
 
     <div class="chart-card">
