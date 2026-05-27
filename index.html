@@ -399,11 +399,13 @@
         <div class="fadu-rank-box">
           <div class="fadu-rank-title">전체 시총 순위</div>
           <div class="fadu-rank-num" id="fadu-rank-overall">-</div>
+          <div id="fadu-rank-overall-arrow"></div>
           <div class="fadu-rank-sub">KOSPI + KOSDAQ</div>
         </div>
         <div class="fadu-rank-box">
           <div class="fadu-rank-title">코스닥 시총 순위</div>
           <div class="fadu-rank-num" id="fadu-rank-kosdaq">-</div>
+          <div id="fadu-rank-kosdaq-arrow"></div>
           <div class="fadu-rank-sub">KOSDAQ</div>
         </div>
       </div>
@@ -488,11 +490,13 @@
         <div class="fadu-rank-box">
           <div class="fadu-rank-title">전체 시총 순위</div>
           <div class="fadu-rank-num" id="nbis-rank-overall">-</div>
+          <div id="nbis-rank-overall-arrow"></div>
           <div class="fadu-rank-sub">NYSE + NASDAQ</div>
         </div>
         <div class="fadu-rank-box">
           <div class="fadu-rank-title">나스닥 시총 순위</div>
           <div class="fadu-rank-num" id="nbis-rank-nasdaq">-</div>
+          <div id="nbis-rank-nasdaq-arrow"></div>
           <div class="fadu-rank-sub">NASDAQ</div>
         </div>
       </div>
@@ -2133,10 +2137,16 @@ async function loadUSMarketCap() {
     // NBIS 순위 계산
     const nbisAllIdx = finalStocks.findIndex(s => s.symbol === 'NBIS');
     if (nbisAllIdx >= 0) {
-      document.getElementById('nbis-rank-overall').textContent = `${nbisAllIdx + 1}위`;
+      const nbisAllRank = nbisAllIdx + 1;
+      document.getElementById('nbis-rank-overall').textContent = `${nbisAllRank}위`;
+      document.getElementById('nbis-rank-overall-arrow').innerHTML = getRankArrow('nbis_us_overall', nbisAllRank);
       const nasdaqOnly = finalStocks.filter(s => s.exchange === 'NASDAQ');
       const nbisNdIdx  = nasdaqOnly.findIndex(s => s.symbol === 'NBIS');
-      if (nbisNdIdx >= 0) document.getElementById('nbis-rank-nasdaq').textContent = `${nbisNdIdx + 1}위`;
+      if (nbisNdIdx >= 0) {
+        const nbisNdRank = nbisNdIdx + 1;
+        document.getElementById('nbis-rank-nasdaq').textContent = `${nbisNdRank}위`;
+        document.getElementById('nbis-rank-nasdaq-arrow').innerHTML = getRankArrow('nbis_us_nasdaq', nbisNdRank);
+      }
     }
 
     renderMcTable('us', finalStocks);
@@ -2254,10 +2264,16 @@ async function loadKoreaMarketCap() {
     // 파두 순위: slice 전 전체 기준 (ETF 필터 적용, 표와 동일 데이터)
     const faduAllIdx = allSorted.findIndex(s => s.symbol === '440110');
     if (faduAllIdx >= 0) {
-      document.getElementById('fadu-rank-overall').textContent = `${faduAllIdx + 1}위`;
-      const kdOnly   = allSorted.filter(s => s.market === 'KOSDAQ');
+      const faduAllRank = faduAllIdx + 1;
+      document.getElementById('fadu-rank-overall').textContent = `${faduAllRank}위`;
+      document.getElementById('fadu-rank-overall-arrow').innerHTML = getRankArrow('fadu_kr_overall', faduAllRank);
+      const kdOnly    = allSorted.filter(s => s.market === 'KOSDAQ');
       const faduKdIdx = kdOnly.findIndex(s => s.symbol === '440110');
-      if (faduKdIdx >= 0) document.getElementById('fadu-rank-kosdaq').textContent = `${faduKdIdx + 1}위`;
+      if (faduKdIdx >= 0) {
+        const faduKdRank = faduKdIdx + 1;
+        document.getElementById('fadu-rank-kosdaq').textContent = `${faduKdRank}위`;
+        document.getElementById('fadu-rank-kosdaq-arrow').innerHTML = getRankArrow('fadu_kr_kosdaq', faduKdRank);
+      }
     }
 
     renderMcTable('kr', allStocks);
