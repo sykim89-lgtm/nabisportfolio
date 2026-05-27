@@ -342,8 +342,17 @@
 <div id="tab-portfolio" style="display:none">
 
   <div class="chart-card">
-    <div class="chart-title">보유 종목</div>
-    <div class="chart-subtitle">평가금액 기준 정렬</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div>
+        <div class="chart-title">보유 종목</div>
+        <div class="chart-subtitle">평가금액 기준 정렬</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span id="port-status" style="font-size:11px;color:var(--muted)"></span>
+        <button class="btn" id="port-refresh-btn" onclick="loadPortfolioPrices()"
+          style="padding:6px 14px;font-size:12px;background:var(--card);color:var(--text);border:1px solid var(--border)">시세 갱신</button>
+      </div>
+    </div>
     <table id="t-portfolio" class="port-table">
       <thead>
         <tr>
@@ -894,6 +903,57 @@ function renderYearly(yearlyData, sp500, nasdaq, monthly) {
   tbody.innerHTML = rows;
 }
 
+// ─── 포트폴리오 실시간 시세 로드 ──────────────────────────────────────────────
+async function loadPortfolioPrices() {
+  const btn      = document.getElementById('port-refresh-btn');
+  const statusEl = document.getElementById('port-status');
+  if (btn) { btn.disabled = true; btn.textContent = '조회 중...'; }
+  if (statusEl) statusEl.textContent = '⏳ 시세 조회 중...';
+
+  // 한국 종목: Naver Finance 병렬 조회
+  const krItems = HOLDINGS.filter(h => h.currency === 'KRW' && h.qty != null);
+  const krPromises = krItems.map(async h => {
+    try {
+      const d = await fetchNaverStockDetail(h.sub);
+      if (d.price != null) _portPrices[h.name] = d.price;
+    } catch (_) {}
+  });
+
+  // 미국 종목: Worker → Yahoo Finance 배치, Finnhub 폴백
+  const usItems   = HOLDINGS.filter(h => h.currency === 'USD' && h.qty != null);
+  const usSymbols = usItems.map(h => h.name);
+  const usPromise = (async () => {
+    if (!usSymbols.length) return;
+    try {
+      const quotes = await fetchYahooMarketCap(usSymbols);
+      quotes.forEach(q => {
+        const best = getBestYahooPrice(q);
+        if (best.price) _portPrices[q.symbol] = best.price;
+      });
+    } catch (_) {}
+    // Finnhub 폴백 (Yahoo 실패 종목)
+    const missing = usItems.filter(h => _portPrices[h.name] == null);
+    if (missing.length) {
+      const results = await Promise.allSettled(missing.map(h => fetchFinnhubQuote(h.name)));
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled' && r.value?.c) _portPrices[missing[i].name] = r.value.c;
+      });
+    }
+  })();
+
+  await Promise.allSettled([...krPromises, usPromise]);
+
+  _portLoaded = true;
+  renderPortfolio();
+
+  const now = new Date().toLocaleTimeString('ko-KR');
+  const srcs = [];
+  if (krItems.length)  srcs.push('네이버');
+  if (usItems.length)  srcs.push('Yahoo/Finnhub');
+  if (statusEl) statusEl.textContent = `🔴 ${srcs.join('+')} 실시간 | ${now} 기준`;
+  if (btn) { btn.disabled = false; btn.textContent = '시세 갱신'; }
+}
+
 // ─── 탭 전환 ──────────────────────────────────────────────────────────────────
 function switchTab(tab) {
   const tabMap = {
@@ -906,6 +966,8 @@ function switchTab(tab) {
     document.getElementById(div).style.display = t === tab ? '' : 'none';
     document.getElementById(btn).classList.toggle('active', t === tab);
   });
+  // 포트폴리오 탭 최초 진입 시 실시간 시세 로드
+  if (tab === 'portfolio' && !_portLoaded) loadPortfolioPrices();
   // 시가총액 탭 최초 진입 시 자동 로드
   if (tab === 'mc-kr' && !mcTabLoaded.kr) {
     mcTabLoaded.kr = true;
@@ -919,12 +981,17 @@ function switchTab(tab) {
   }
 }
 
+// ─── 포트폴리오 실시간 시세 캐시 ─────────────────────────────────────────────
+const _portPrices  = {};   // name → 실시간 현재가
+let   _portLoaded  = false;
+
 // ─── 포트폴리오 렌더링 ────────────────────────────────────────────────────────
 function renderPortfolio() {
   const fx = FX_USD_KRW;
 
-  // 원화 환산 평가금액 계산
+  // 원화 환산 평가금액 계산 (실시간 시세 우선, 없으면 기준값)
   const enriched = HOLDINGS.map(h => {
+    const cp = (_portPrices[h.name] != null) ? _portPrices[h.name] : h.currentPrice;
     let valueKRW, value, gain, gainPct;
 
     if (h.fixedValue != null) {
@@ -933,12 +1000,12 @@ function renderPortfolio() {
       gain     = null;
       gainPct  = null;
     } else {
-      value    = h.qty * h.currentPrice;
+      value    = h.qty * cp;
       valueKRW = h.currency === 'USD' ? value * fx : value;
-      gain     = (h.currentPrice - h.avgCost) * h.qty;
-      gainPct  = ((h.currentPrice - h.avgCost) / h.avgCost) * 100;
+      gain     = (cp - h.avgCost) * h.qty;
+      gainPct  = ((cp - h.avgCost) / h.avgCost) * 100;
     }
-    return { ...h, value, valueKRW, gain, gainPct };
+    return { ...h, currentPrice: cp, value, valueKRW, gain, gainPct };
   });
 
   const totalKRW   = enriched.reduce((s, h) => s + h.valueKRW, 0);
