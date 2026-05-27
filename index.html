@@ -903,6 +903,32 @@ function renderYearly(yearlyData, sp500, nasdaq, monthly) {
   tbody.innerHTML = rows;
 }
 
+// ─── 실시간 USD/KRW 환율 조회 ────────────────────────────────────────────────
+async function fetchLiveFxRate() {
+  // 1순위: Yahoo Finance via Worker (KRW=X)
+  try {
+    const res = await fetch(
+      `${WORKER_URL}/v7/finance/quote?symbols=KRW%3DX&fields=regularMarketPrice&formatted=false`,
+      { signal: abortFetch(6000) }
+    );
+    if (res.ok) {
+      const json = await res.json();
+      const rate = json.quoteResponse?.result?.[0]?.regularMarketPrice;
+      if (rate > 100) return rate;
+    }
+  } catch (_) {}
+  // 2순위: Frankfurter (ECB, CORS 허용)
+  try {
+    const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW', { signal: abortFetch(6000) });
+    if (res.ok) {
+      const j = await res.json();
+      if (j.rates?.KRW > 100) return j.rates.KRW;
+    }
+  } catch (_) {}
+  // 폴백: 하드코딩
+  return FX_USD_KRW;
+}
+
 // ─── 포트폴리오 실시간 시세 로드 ──────────────────────────────────────────────
 async function loadPortfolioPrices() {
   const btn      = document.getElementById('port-refresh-btn');
@@ -941,7 +967,10 @@ async function loadPortfolioPrices() {
     }
   })();
 
-  await Promise.allSettled([...krPromises, usPromise]);
+  // 환율도 병렬 조회
+  const fxPromise = fetchLiveFxRate().then(r => { _liveFxRate = r; });
+
+  await Promise.allSettled([...krPromises, usPromise, fxPromise]);
 
   _portLoaded = true;
   renderPortfolio();
@@ -950,7 +979,7 @@ async function loadPortfolioPrices() {
   const srcs = [];
   if (krItems.length)  srcs.push('네이버');
   if (usItems.length)  srcs.push('Yahoo/Finnhub');
-  if (statusEl) statusEl.textContent = `🔴 ${srcs.join('+')} 실시간 | ${now} 기준`;
+  if (statusEl) statusEl.textContent = `🔴 ${srcs.join('+')} 실시간 | $1 = ₩${fmt(Math.round(_liveFxRate))} | ${now} 기준`;
   if (btn) { btn.disabled = false; btn.textContent = '시세 갱신'; }
 }
 
@@ -984,10 +1013,11 @@ function switchTab(tab) {
 // ─── 포트폴리오 실시간 시세 캐시 ─────────────────────────────────────────────
 const _portPrices  = {};   // name → 실시간 현재가
 let   _portLoaded  = false;
+let   _liveFxRate  = FX_USD_KRW; // 실시간 환율 (폴백: 하드코딩)
 
 // ─── 포트폴리오 렌더링 ────────────────────────────────────────────────────────
 function renderPortfolio() {
-  const fx = FX_USD_KRW;
+  const fx = _liveFxRate;
 
   // 원화 환산 평가금액 계산 (실시간 시세 우선, 없으면 기준값)
   const enriched = HOLDINGS.map(h => {
