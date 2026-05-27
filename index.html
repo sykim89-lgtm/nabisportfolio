@@ -144,6 +144,7 @@
       padding: 9px 14px;
       color: var(--muted);
       font-weight: 500;
+      font-size: 15px;
       border-bottom: 1px solid var(--border);
     }
     th:first-child { text-align: left; }
@@ -2358,9 +2359,9 @@ function renderMcTable(market, stocks) {
         </div>
       </td>
       ${exchangeCell}
-      <td style="text-align:right">${fmtCap(s.marketCap)}</td>
-      <td style="text-align:right">${price}</td>
-      <td style="text-align:right" class="${cls(chg)}">${fmtPct(chg)}</td>
+      <td style="text-align:right;font-weight:600">${fmtCap(s.marketCap)}</td>
+      <td style="text-align:right;font-weight:600">${price}</td>
+      <td style="text-align:right;font-weight:600" class="${cls(chg)}">${fmtPct(chg)}</td>
     </tr>`;
   }).join('');
 }
