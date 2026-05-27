@@ -945,7 +945,7 @@ async function loadPortfolioPrices() {
     } catch (_) {}
   });
 
-  // 미국 종목: Worker → Yahoo Finance 배치, Finnhub 폴백
+  // 미국 종목: Cloudflare Worker → Yahoo Finance 배치 조회
   const usItems   = HOLDINGS.filter(h => h.currency === 'USD' && h.qty != null);
   const usSymbols = usItems.map(h => h.name);
   const usPromise = (async () => {
@@ -957,14 +957,6 @@ async function loadPortfolioPrices() {
         if (best.price) _portPrices[q.symbol] = best.price;
       });
     } catch (_) {}
-    // Finnhub 폴백 (Yahoo 실패 종목)
-    const missing = usItems.filter(h => _portPrices[h.name] == null);
-    if (missing.length) {
-      const results = await Promise.allSettled(missing.map(h => fetchFinnhubQuote(h.name)));
-      results.forEach((r, i) => {
-        if (r.status === 'fulfilled' && r.value?.c) _portPrices[missing[i].name] = r.value.c;
-      });
-    }
   })();
 
   // 환율도 병렬 조회
@@ -978,7 +970,7 @@ async function loadPortfolioPrices() {
   const now = new Date().toLocaleTimeString('ko-KR');
   const srcs = [];
   if (krItems.length)  srcs.push('네이버');
-  if (usItems.length)  srcs.push('Yahoo/Finnhub');
+  if (usItems.length)  srcs.push('Yahoo');
   if (statusEl) statusEl.textContent = `🔴 ${srcs.join('+')} 실시간 | $1 = ₩${fmt(Math.round(_liveFxRate))} | ${now} 기준`;
   if (btn) { btn.disabled = false; btn.textContent = '시세 갱신'; }
 }
