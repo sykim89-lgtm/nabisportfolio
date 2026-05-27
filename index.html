@@ -2178,36 +2178,44 @@ async function loadUSMarketCap() {
   }
 }
 
-// 네이버 금융 시가총액 순위 페이지 파싱
+// 네이버 금융 시가총액 순위 페이지 파싱 (이중 프록시, 실패시 빈 배열)
 async function fetchNaverMarketCap(sosok, page) {
   const url = `https://finance.naver.com/sise/sise_market_sum.naver?sosok=${sosok}&page=${page}`;
-  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-  const res = await fetch(proxyUrl, { signal: abortFetch(10000) });
-  if (!res.ok) throw new Error('Naver API error: ' + res.status);
-  const buf = await res.arrayBuffer();
-  const html = new TextDecoder('euc-kr').decode(buf);
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  const rows = doc.querySelectorAll('table.type_2 tbody tr');
-  const stocks = [];
-  rows.forEach(tr => {
-    const tds = tr.querySelectorAll('td');
-    if (tds.length < 7) return;
-    const rank = tds[0]?.textContent?.trim();
-    if (!rank || isNaN(parseInt(rank))) return;
-    const nameEl = tds[1]?.querySelector('a');
-    const name = nameEl?.textContent?.trim();
-    const code = nameEl?.href?.match(/code=(\d+)/)?.[1] || '';
-    const price = parseInt((tds[2]?.textContent || '').replace(/,/g, '')) || 0;
-    const changeRate = parseFloat((tds[4]?.textContent || '').replace('%', '')) || 0;
-    const marketCapUk = parseInt((tds[6]?.textContent || '').replace(/,/g, '')) || 0;
-    const marketCap = marketCapUk * 1e8; // 네이버는 억원 단위
-    const market = sosok === 0 ? 'KOSPI' : 'KOSDAQ';
-    if (name && code) {
-      const base = KR_BASE.find(b => b.symbol === code);
-      stocks.push({ symbol: code, name, market, marketCap, price, change: changeRate, logo: base?.logo });
-    }
-  });
-  return stocks;
+  const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  ];
+  for (const proxyUrl of proxies) {
+    try {
+      const res = await fetch(proxyUrl, { signal: abortFetch(10000) });
+      if (!res.ok) continue;
+      const buf  = await res.arrayBuffer();
+      const html = new TextDecoder('euc-kr').decode(buf);
+      const doc  = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('table.type_2 tbody tr');
+      const stocks = [];
+      rows.forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        if (tds.length < 7) return;
+        const rank = tds[0]?.textContent?.trim();
+        if (!rank || isNaN(parseInt(rank))) return;
+        const nameEl = tds[1]?.querySelector('a');
+        const name = nameEl?.textContent?.trim();
+        const code = nameEl?.href?.match(/code=(\d+)/)?.[1] || '';
+        const price = parseInt((tds[2]?.textContent || '').replace(/,/g, '')) || 0;
+        const changeRate = parseFloat((tds[4]?.textContent || '').replace('%', '')) || 0;
+        const marketCapUk = parseInt((tds[6]?.textContent || '').replace(/,/g, '')) || 0;
+        const marketCap = marketCapUk * 1e8; // 네이버는 억원 단위
+        const market = sosok === 0 ? 'KOSPI' : 'KOSDAQ';
+        if (name && code) {
+          const base = KR_BASE.find(b => b.symbol === code);
+          stocks.push({ symbol: code, name, market, marketCap, price, change: changeRate, logo: base?.logo });
+        }
+      });
+      if (stocks.length > 0) return stocks; // 성공
+    } catch (_) {}
+  }
+  return []; // 모든 프록시 실패 → 빈 배열 (throw 안 함)
 }
 
 // 한국 시가총액 - 네이버 금융 실시간 시세
@@ -2233,7 +2241,8 @@ async function loadKoreaMarketCap() {
   try {
     // KOSPI 5페이지(~250개) + KOSDAQ 2페이지(~100개) 병렬 조회 후
     // ETF 제거하고 시가총액 기준으로 합산 정렬 → 상위 200개
-    const [kp1, kp2, kp3, kp4, kp5, kd1, kd2] = await Promise.all([
+    // Promise.allSettled: 일부 페이지 실패해도 성공 데이터로 렌더링
+    const settled = await Promise.allSettled([
       fetchNaverMarketCap(0, 1),
       fetchNaverMarketCap(0, 2),
       fetchNaverMarketCap(0, 3),
@@ -2242,10 +2251,12 @@ async function loadKoreaMarketCap() {
       fetchNaverMarketCap(1, 1),
       fetchNaverMarketCap(1, 2),
     ]);
+    const [kp1, kp2, kp3, kp4, kp5, kd1, kd2] = settled.map(r => r.status === 'fulfilled' ? r.value : []);
     const kospiPool  = [...kp1, ...kp2, ...kp3, ...kp4, ...kp5].filter(s => !isKrETF(s.name));
     const kosdaqPool = [...kd1, ...kd2].filter(s => !isKrETF(s.name));
     const allSorted  = [...kospiPool, ...kosdaqPool].sort((a, b) => b.marketCap - a.marketCap);
     const allStocks  = allSorted.slice(0, 200).map(s => ({ ...s, yoy: null }));
+    const failedCount = settled.filter(r => r.status === 'rejected' || (r.value && r.value.length === 0)).length;
     if (allStocks.length === 0) throw new Error('데이터 없음');
 
     // 파두 순위: slice 전 전체 기준 (ETF 필터 적용, 표와 동일 데이터)
@@ -2262,7 +2273,11 @@ async function loadKoreaMarketCap() {
     const now = new Date().toLocaleTimeString('ko-KR');
     const krCount = allStocks.filter(s => s.market === 'KOSPI').length;
     const kdCount = allStocks.filter(s => s.market === 'KOSDAQ').length;
-    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; 시총 상위 200개 (KOSPI ${krCount}개 + KOSDAQ ${kdCount}개)</div>`;
+    const warnHtml = failedCount > 0
+      ? ` &nbsp;<span style="color:var(--orange)">⚠ ${failedCount}개 페이지 미로드</span>
+          <button onclick="retryMc('kr')" style="margin-left:6px;padding:2px 8px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px">재시도</button>`
+      : '';
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개${warnHtml}</div>`;
 
     // 백그라운드: Yahoo Finance에서 YoY(52주 수익률) 보강
     enrichKrYoY(allStocks);
