@@ -190,8 +190,9 @@
       gap: 14px;
       margin-bottom: 22px;
     }
+    .port-table { font-size: 15px; }
     .port-table td:first-child { font-weight: 500; }
-    .port-table .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .port-table .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
     .weight-bar {
       height: 4px;
       background: var(--border);
@@ -349,22 +350,22 @@
         <div class="chart-subtitle">평가금액 기준 정렬</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span id="port-status" style="font-size:11px;color:var(--muted)"></span>
+        <span id="port-status" style="font-size:13px;color:var(--muted)"></span>
         <button class="btn" id="port-refresh-btn" onclick="loadPortfolioPrices()"
-          style="padding:6px 14px;font-size:12px;background:var(--card);color:var(--text);border:1px solid var(--border)">시세 갱신</button>
+          style="padding:6px 14px;font-size:14px;background:var(--card);color:var(--text);border:1px solid var(--border)">시세 갱신</button>
       </div>
     </div>
     <table id="t-portfolio" class="port-table">
       <thead>
         <tr>
-          <th style="text-align:left">종목명</th>
-          <th>평단가</th>
-          <th>보유수량</th>
-          <th>현재가</th>
-          <th>평가금액</th>
-          <th>보유비중</th>
-          <th>평가손익</th>
-          <th>평가수익률</th>
+          <th style="text-align:left;font-size:15px;font-weight:600;color:var(--text)">종목명</th>
+          <th style="font-size:15px;font-weight:600;color:var(--text)">평단가</th>
+          <th style="font-size:15px;font-weight:600;color:var(--text)">보유수량</th>
+          <th style="font-size:15px;font-weight:600;color:var(--text)">현재가</th>
+          <th style="font-size:15px;font-weight:600;color:var(--text)">평가금액</th>
+          <th style="font-size:15px;font-weight:600;color:var(--text)">보유비중</th>
+          <th style="font-size:15px;font-weight:600;color:var(--text)">평가손익</th>
+          <th style="font-size:15px;font-weight:600;color:var(--text)">평가수익률</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -1071,7 +1072,7 @@ function renderPortfolio() {
       <td class="${h.gainPct != null ? cls(h.gainPct) : 'neu'}">${h.gainPct != null ? fmtPct(h.gainPct) : '-'}</td>
     </tr>`;
   }).join('') + `
-  <tr style="border-top:2px solid var(--border);font-weight:700;font-size:14px">
+  <tr style="border-top:2px solid var(--border);font-weight:700;font-size:16px">
     <td>합계</td>
     <td>-</td>
     <td>-</td>
