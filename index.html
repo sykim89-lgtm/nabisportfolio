@@ -235,9 +235,9 @@
     .fadu-stat { background:var(--border);border-radius:8px;padding:10px 12px; }
     .fadu-stat-label { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
     .fadu-stat-val { font-size:14px;font-weight:600; }
-    .fadu-rank-box { flex:1;background:var(--border);border-radius:10px;padding:14px;text-align:center; }
+    .fadu-rank-box { flex:1;background:var(--border);border-radius:10px;padding:7px 14px;text-align:center; }
     .fadu-rank-title { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px; }
-    .fadu-rank-num { font-size:30px;font-weight:800;color:var(--accent);line-height:1; }
+    .fadu-rank-num { font-size:22px;font-weight:400;color:var(--text);line-height:1; }
     .fadu-rank-sub { font-size:11px;color:var(--muted);margin-top:4px; }
 
     .rank-badge {
@@ -269,7 +269,8 @@
 <div class="tabs">
   <button class="tab-btn active" id="btn-analysis" onclick="switchTab('analysis')">📈 수익률 분석</button>
   <button class="tab-btn" id="btn-portfolio" onclick="switchTab('portfolio')">💼 내 포트폴리오</button>
-  <button class="tab-btn" id="btn-marketcap" onclick="switchTab('marketcap')">📊 시가총액 순위</button>
+  <button class="tab-btn" id="btn-mc-kr" onclick="switchTab('mc-kr')">🇰🇷 한국 시가총액 순위</button>
+  <button class="tab-btn" id="btn-mc-us" onclick="switchTab('mc-us')">🇺🇸 미국 시가총액 순위</button>
 </div>
 
 <div id="tab-analysis">
@@ -361,22 +362,14 @@
   </div>
 </div><!-- /tab-portfolio -->
 
-<!-- ── 시가총액 순위 탭 ────────────────────────────── -->
-<div id="tab-marketcap" style="display:none">
-
-  <div class="mc-sub-tabs">
-    <button class="mc-sub-btn active" id="btn-mc-kr" onclick="switchMcTab('kr')">🇰🇷 한국 (KOSPI+KOSDAQ)</button>
-    <button class="mc-sub-btn" id="btn-mc-us" onclick="switchMcTab('us')">🇺🇸 미국 (NYSE+NASDAQ)</button>
-  </div>
-
-  <!-- 한국 -->
-  <div id="mc-kr">
+<!-- ── 한국 시가총액 순위 탭 ──────────────────────────── -->
+<div id="mc-kr" style="display:none">
 
     <!-- 파두 대시보드 -->
     <div id="fadu-dashboard" class="chart-card" style="margin-bottom:16px">
       <!-- 헤더: 로고 + 종목명 + 실시간 가격 -->
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-        <img src="https://www.google.com/s2/favicons?domain=fadusemi.com&sz=64"
+        <img src="https://ssl.pstatic.net/imgstock/fn/real/logo/png/stock/Stock440110.png"
              style="width:44px;height:44px;border-radius:10px;background:#fff;padding:4px;flex-shrink:0;object-fit:contain"
              onerror="this.outerHTML='<div style=&quot;width:44px;height:44px;border-radius:10px;background:var(--accent);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0&quot;>파</div>'">
         <div style="flex:1;min-width:0">
@@ -460,8 +453,8 @@
     </div>
   </div>
 
-  <!-- 미국 -->
-  <div id="mc-us" style="display:none">
+<!-- ── 미국 시가총액 순위 탭 ──────────────────────────── -->
+<div id="mc-us" style="display:none">
 
     <!-- Nebius Group 대시보드 -->
     <div id="nbis-dashboard" class="chart-card" style="margin-bottom:16px">
@@ -479,6 +472,20 @@
         <div style="text-align:right;flex-shrink:0">
           <div id="nbis-cur-price" style="font-size:26px;font-weight:700;line-height:1.1">-</div>
           <div id="nbis-change" style="font-size:13px;margin-top:4px;color:var(--muted)">-</div>
+        </div>
+      </div>
+
+      <!-- 순위 배지 -->
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <div class="fadu-rank-box">
+          <div class="fadu-rank-title">전체 시총 순위</div>
+          <div class="fadu-rank-num" id="nbis-rank-overall">-</div>
+          <div class="fadu-rank-sub">NYSE + NASDAQ</div>
+        </div>
+        <div class="fadu-rank-box">
+          <div class="fadu-rank-title">나스닥 시총 순위</div>
+          <div class="fadu-rank-num" id="nbis-rank-nasdaq">-</div>
+          <div class="fadu-rank-sub">NASDAQ</div>
         </div>
       </div>
 
@@ -518,6 +525,7 @@
             <tr>
               <th style="text-align:center;width:50px">순위</th>
               <th style="text-align:left;padding-left:14px;width:200px">종목명</th>
+              <th style="text-align:left;width:90px">거래소</th>
               <th>시가총액</th>
               <th>현재가</th>
               <th>등락률</th>
@@ -530,13 +538,12 @@
     </div>
   </div>
 
-</div><!-- /tab-marketcap -->
+</div><!-- /mc-us -->
 
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
 const API_KEY       = 'AIzaSyAFyyUDcLzM3Q6YOkg61JMzQbv-l9Nwsjg';
 const SHEET_ID      = '1ZPl5NDOI2yzwm7cCAidcfzZz73C6aXcVDzf_HMbaUuo';
-const FINNHUB_TOKEN = 'd8aj8lpr01qna6nhk8kgd8aj8lpr01qna6nhk8l0';
 const WORKER_URL    = 'https://solitary-block-7836.silver1arrow.workers.dev';
 
 // ─── 포트폴리오 데이터 ─────────────────────────────────────────────────────────
@@ -889,15 +896,26 @@ function renderYearly(yearlyData, sp500, nasdaq, monthly) {
 
 // ─── 탭 전환 ──────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['analysis', 'portfolio', 'marketcap'].forEach(t => {
-    document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none';
-    document.getElementById(`btn-${t}`).classList.toggle('active', t === tab);
+  const tabMap = {
+    'analysis':  { div: 'tab-analysis',  btn: 'btn-analysis'  },
+    'portfolio': { div: 'tab-portfolio', btn: 'btn-portfolio' },
+    'mc-kr':     { div: 'mc-kr',         btn: 'btn-mc-kr'     },
+    'mc-us':     { div: 'mc-us',         btn: 'btn-mc-us'     },
+  };
+  Object.entries(tabMap).forEach(([t, { div, btn }]) => {
+    document.getElementById(div).style.display = t === tab ? '' : 'none';
+    document.getElementById(btn).classList.toggle('active', t === tab);
   });
   // 시가총액 탭 최초 진입 시 자동 로드
-  if (tab === 'marketcap' && !mcTabLoaded.kr) {
+  if (tab === 'mc-kr' && !mcTabLoaded.kr) {
     mcTabLoaded.kr = true;
     loadKoreaMarketCap();
     loadFaduDashboard();
+  }
+  if (tab === 'mc-us' && !mcTabLoaded.us) {
+    mcTabLoaded.us = true;
+    loadUSMarketCap();
+    loadNebiusDashboard();
   }
 }
 
@@ -1084,15 +1102,7 @@ function toggleTheme() {
 const mcTabLoaded = { kr: false, us: false };
 
 function switchMcTab(market) {
-  ['kr', 'us'].forEach(m => {
-    document.getElementById(`mc-${m}`).style.display     = m === market ? '' : 'none';
-    document.getElementById(`btn-mc-${m}`).classList.toggle('active', m === market);
-  });
-  if (!mcTabLoaded[market]) {
-    mcTabLoaded[market] = true;
-    if (market === 'us') { loadUSMarketCap(); loadNebiusDashboard(); }
-    else { loadKoreaMarketCap(); }
-  }
+  switchTab(`mc-${market}`);
 }
 
 function retryMc(market) {
@@ -1205,37 +1215,299 @@ const KR_BASE = [
 
 // 미국 시가총액 상위 (순위·시가총액은 2025년 상반기 기준 내장값, USD)
 const US_BASE = [
-  {symbol:'AAPL',  name:'Apple',             marketCap:3.2e12, stooq:'aapl.us',   logo:'apple.com'},
-  {symbol:'MSFT',  name:'Microsoft',          marketCap:3.0e12, stooq:'msft.us',   logo:'microsoft.com'},
-  {symbol:'NVDA',  name:'NVIDIA',             marketCap:2.9e12, stooq:'nvda.us',   logo:'nvidia.com'},
-  {symbol:'AMZN',  name:'Amazon',             marketCap:2.1e12, stooq:'amzn.us',   logo:'amazon.com'},
-  {symbol:'GOOGL', name:'Alphabet',           marketCap:2.0e12, stooq:'googl.us',  logo:'abc.xyz'},
-  {symbol:'META',  name:'Meta Platforms',     marketCap:1.5e12, stooq:'meta.us',   logo:'meta.com'},
-  {symbol:'TSLA',  name:'Tesla',              marketCap:1.0e12, stooq:'tsla.us',   logo:'tesla.com'},
-  {symbol:'BRK-B', name:'Berkshire Hathaway', marketCap:1.1e12, stooq:'brk-b.us',  logo:'berkshirehathaway.com'},
-  {symbol:'AVGO',  name:'Broadcom',           marketCap:9.0e11, stooq:'avgo.us',   logo:'broadcom.com'},
-  {symbol:'JPM',   name:'JPMorgan Chase',     marketCap:8.0e11, stooq:'jpm.us',    logo:'jpmorganchase.com'},
-  {symbol:'LLY',   name:'Eli Lilly',          marketCap:7.5e11, stooq:'lly.us',    logo:'lilly.com'},
-  {symbol:'WMT',   name:'Walmart',            marketCap:7.0e11, stooq:'wmt.us',    logo:'walmart.com'},
-  {symbol:'V',     name:'Visa',               marketCap:6.5e11, stooq:'v.us',      logo:'visa.com'},
-  {symbol:'UNH',   name:'UnitedHealth',       marketCap:5.5e11, stooq:'unh.us',    logo:'unitedhealthgroup.com'},
-  {symbol:'XOM',   name:'ExxonMobil',         marketCap:5.3e11, stooq:'xom.us',    logo:'exxonmobil.com'},
-  {symbol:'MA',    name:'Mastercard',         marketCap:5.0e11, stooq:'ma.us',     logo:'mastercard.com'},
-  {symbol:'COST',  name:'Costco',             marketCap:4.5e11, stooq:'cost.us',   logo:'costco.com'},
-  {symbol:'NFLX',  name:'Netflix',            marketCap:4.0e11, stooq:'nflx.us',   logo:'netflix.com'},
-  {symbol:'HD',    name:'Home Depot',         marketCap:3.8e11, stooq:'hd.us',     logo:'homedepot.com'},
-  {symbol:'PG',    name:'Procter & Gamble',   marketCap:3.7e11, stooq:'pg.us',     logo:'pg.com'},
-  {symbol:'ABBV',  name:'AbbVie',             marketCap:3.3e11, stooq:'abbv.us',   logo:'abbvie.com'},
-  {symbol:'BAC',   name:'Bank of America',    marketCap:3.2e11, stooq:'bac.us',    logo:'bankofamerica.com'},
-  {symbol:'CRM',   name:'Salesforce',         marketCap:3.0e11, stooq:'crm.us',    logo:'salesforce.com'},
-  {symbol:'MRK',   name:'Merck',              marketCap:2.8e11, stooq:'mrk.us',    logo:'merck.com'},
-  {symbol:'AMD',   name:'AMD',                marketCap:2.6e11, stooq:'amd.us',    logo:'amd.com'},
-  {symbol:'ORCL',  name:'Oracle',             marketCap:2.5e11, stooq:'orcl.us',   logo:'oracle.com'},
-  {symbol:'CVX',   name:'Chevron',            marketCap:2.5e11, stooq:'cvx.us',    logo:'chevron.com'},
-  {symbol:'KO',    name:'Coca-Cola',          marketCap:2.4e11, stooq:'ko.us',     logo:'coca-cola.com'},
-  {symbol:'INTU',  name:'Intuit',             marketCap:2.3e11, stooq:'intu.us',   logo:'intuit.com'},
-  {symbol:'QCOM',  name:'Qualcomm',           marketCap:2.2e11, stooq:'qcom.us',   logo:'qualcomm.com'},
-  {symbol:'NBIS',  name:'Nebius Group',        marketCap:1.2e10, stooq:'nbis.us',   logo:'nebius.com'},
+  // ── 메가캡 ──────────────────────────────────────────────────────────────────
+  {symbol:'AAPL',  name:'Apple',                  marketCap:3.2e12, stooq:'aapl.us',  logo:'apple.com',              exchange:'NASDAQ'},
+  {symbol:'MSFT',  name:'Microsoft',              marketCap:3.0e12, stooq:'msft.us',  logo:'microsoft.com',          exchange:'NASDAQ'},
+  {symbol:'NVDA',  name:'NVIDIA',                 marketCap:2.9e12, stooq:'nvda.us',  logo:'nvidia.com',             exchange:'NASDAQ'},
+  {symbol:'AMZN',  name:'Amazon',                 marketCap:2.1e12, stooq:'amzn.us',  logo:'amazon.com',             exchange:'NASDAQ'},
+  {symbol:'GOOGL', name:'Alphabet A',             marketCap:2.0e12, stooq:'googl.us', logo:'abc.xyz',                exchange:'NASDAQ'},
+  {symbol:'META',  name:'Meta Platforms',         marketCap:1.5e12, stooq:'meta.us',  logo:'meta.com',               exchange:'NASDAQ'},
+  {symbol:'BRK-B', name:'Berkshire Hathaway',     marketCap:1.1e12, stooq:'brk-b.us', logo:'berkshirehathaway.com',  exchange:'NYSE'},
+  {symbol:'TSLA',  name:'Tesla',                  marketCap:1.0e12, stooq:'tsla.us',  logo:'tesla.com',              exchange:'NASDAQ'},
+  {symbol:'AVGO',  name:'Broadcom',               marketCap:9.0e11, stooq:'avgo.us',  logo:'broadcom.com',           exchange:'NASDAQ'},
+  // ── 금융 ────────────────────────────────────────────────────────────────────
+  {symbol:'JPM',   name:'JPMorgan Chase',         marketCap:8.0e11, stooq:'jpm.us',   logo:'jpmorganchase.com',      exchange:'NYSE'},
+  {symbol:'V',     name:'Visa',                   marketCap:6.5e11, stooq:'v.us',     logo:'visa.com',               exchange:'NYSE'},
+  {symbol:'MA',    name:'Mastercard',             marketCap:5.0e11, stooq:'ma.us',    logo:'mastercard.com',         exchange:'NYSE'},
+  {symbol:'BAC',   name:'Bank of America',        marketCap:3.2e11, stooq:'bac.us',   logo:'bankofamerica.com',      exchange:'NYSE'},
+  {symbol:'WFC',   name:'Wells Fargo',            marketCap:2.3e11, stooq:'wfc.us',   logo:'wellsfargo.com',         exchange:'NYSE'},
+  {symbol:'GS',    name:'Goldman Sachs',          marketCap:1.7e11, stooq:'gs.us',    logo:'goldmansachs.com',       exchange:'NYSE'},
+  {symbol:'MS',    name:'Morgan Stanley',         marketCap:1.8e11, stooq:'ms.us',    logo:'morganstanley.com',      exchange:'NYSE'},
+  {symbol:'AXP',   name:'American Express',       marketCap:2.2e11, stooq:'axp.us',   logo:'americanexpress.com',    exchange:'NYSE'},
+  {symbol:'SPGI',  name:'S&P Global',             marketCap:1.5e11, stooq:'spgi.us',  logo:'spglobal.com',           exchange:'NYSE'},
+  {symbol:'BLK',   name:'BlackRock',              marketCap:1.5e11, stooq:'blk.us',   logo:'blackrock.com',          exchange:'NYSE'},
+  {symbol:'C',     name:'Citigroup',              marketCap:1.4e11, stooq:'c.us',     logo:'citigroup.com',          exchange:'NYSE'},
+  {symbol:'PGR',   name:'Progressive',            marketCap:1.6e11, stooq:'pgr.us',   logo:'progressive.com',        exchange:'NYSE'},
+  {symbol:'CB',    name:'Chubb',                  marketCap:1.2e11, stooq:'cb.us',    logo:'chubb.com',              exchange:'NYSE'},
+  {symbol:'SCHW',  name:'Charles Schwab',         marketCap:1.2e11, stooq:'schw.us',  logo:'schwab.com',             exchange:'NYSE'},
+  {symbol:'ICE',   name:'ICE',                    marketCap:9.0e10, stooq:'ice.us',   logo:'theice.com',             exchange:'NYSE'},
+  {symbol:'CME',   name:'CME Group',              marketCap:8.0e10, stooq:'cme.us',   logo:'cmegroup.com',           exchange:'NASDAQ'},
+  {symbol:'MCO',   name:"Moody's",                marketCap:8.0e10, stooq:'mco.us',   logo:'moodys.com',             exchange:'NYSE'},
+  {symbol:'AON',   name:'Aon',                    marketCap:7.5e10, stooq:'aon.us',   logo:'aon.com',                exchange:'NYSE'},
+  {symbol:'MMC',   name:'Marsh McLennan',         marketCap:1.0e11, stooq:'mmc.us',   logo:'marshmclennan.com',      exchange:'NYSE'},
+  {symbol:'AFL',   name:'Aflac',                  marketCap:5.5e10, stooq:'afl.us',   logo:'aflac.com',              exchange:'NYSE'},
+  {symbol:'AIG',   name:'AIG',                    marketCap:5.0e10, stooq:'aig.us',   logo:'aig.com',                exchange:'NYSE'},
+  {symbol:'PRU',   name:'Prudential',             marketCap:4.0e10, stooq:'pru.us',   logo:'prudential.com',         exchange:'NYSE'},
+  {symbol:'MET',   name:'MetLife',                marketCap:5.0e10, stooq:'met.us',   logo:'metlife.com',            exchange:'NYSE'},
+  {symbol:'ALL',   name:'Allstate',               marketCap:5.0e10, stooq:'all.us',   logo:'allstate.com',           exchange:'NYSE'},
+  {symbol:'TRV',   name:'Travelers',              marketCap:5.0e10, stooq:'trv.us',   logo:'travelers.com',          exchange:'NYSE'},
+  {symbol:'PNC',   name:'PNC Financial',          marketCap:6.5e10, stooq:'pnc.us',   logo:'pnc.com',                exchange:'NYSE'},
+  {symbol:'USB',   name:'US Bancorp',             marketCap:6.0e10, stooq:'usb.us',   logo:'usbank.com',             exchange:'NYSE'},
+  {symbol:'TFC',   name:'Truist Financial',       marketCap:5.5e10, stooq:'tfc.us',   logo:'truist.com',             exchange:'NYSE'},
+  {symbol:'BK',    name:'BNY Mellon',             marketCap:5.0e10, stooq:'bk.us',    logo:'bnymellon.com',          exchange:'NYSE'},
+  {symbol:'STT',   name:'State Street',           marketCap:2.5e10, stooq:'stt.us',   logo:'statestreet.com',        exchange:'NYSE'},
+  {symbol:'MSCI',  name:'MSCI',                   marketCap:4.5e10, stooq:'msci.us',  logo:'msci.com',               exchange:'NYSE'},
+  {symbol:'NDAQ',  name:'Nasdaq Inc',             marketCap:4.5e10, stooq:'ndaq.us',  logo:'nasdaq.com',             exchange:'NASDAQ'},
+  {symbol:'FIS',   name:'Fidelity Natl Info',     marketCap:3.5e10, stooq:'fis.us',   logo:'fisglobal.com',          exchange:'NYSE'},
+  {symbol:'GPN',   name:'Global Payments',        marketCap:2.5e10, stooq:'gpn.us',   logo:'globalpayments.com',     exchange:'NYSE'},
+  {symbol:'HIG',   name:'Hartford Financial',     marketCap:3.0e10, stooq:'hig.us',   logo:'thehartford.com',        exchange:'NYSE'},
+  {symbol:'IBKR',  name:'Interactive Brokers',    marketCap:2.5e10, stooq:'ibkr.us',  logo:'interactivebrokers.com', exchange:'NASDAQ'},
+  {symbol:'TROW',  name:'T. Rowe Price',          marketCap:2.0e10, stooq:'trow.us',  logo:'troweprice.com',         exchange:'NASDAQ'},
+  {symbol:'TW',    name:'Tradeweb',               marketCap:3.0e10, stooq:'tw.us',    logo:'tradeweb.com',           exchange:'NASDAQ'},
+  {symbol:'CBOE',  name:'Cboe Global Markets',    marketCap:2.0e10, stooq:'cboe.us',  logo:'cboe.com',               exchange:'NYSE'},
+  {symbol:'RF',    name:'Regions Financial',      marketCap:2.0e10, stooq:'rf.us',    logo:'regions.com',            exchange:'NYSE'},
+  {symbol:'FITB',  name:'Fifth Third Bancorp',    marketCap:2.0e10, stooq:'fitb.us',  logo:'53.com',                 exchange:'NASDAQ'},
+  {symbol:'MTB',   name:'M&T Bank',               marketCap:2.5e10, stooq:'mtb.us',   logo:'mtb.com',                exchange:'NYSE'},
+  {symbol:'HBAN',  name:'Huntington Bancshares',  marketCap:1.6e10, stooq:'hban.us',  logo:'huntington.com',         exchange:'NASDAQ'},
+  {symbol:'CFG',   name:'Citizens Financial',     marketCap:1.5e10, stooq:'cfg.us',   logo:'citizensbank.com',       exchange:'NYSE'},
+  {symbol:'KEY',   name:'KeyCorp',                marketCap:1.4e10, stooq:'key.us',   logo:'key.com',                exchange:'NYSE'},
+  // ── 헬스케어 ────────────────────────────────────────────────────────────────
+  {symbol:'LLY',   name:'Eli Lilly',              marketCap:7.5e11, stooq:'lly.us',   logo:'lilly.com',              exchange:'NYSE'},
+  {symbol:'UNH',   name:'UnitedHealth',           marketCap:5.5e11, stooq:'unh.us',   logo:'unitedhealthgroup.com',  exchange:'NYSE'},
+  {symbol:'JNJ',   name:'Johnson & Johnson',      marketCap:3.5e11, stooq:'jnj.us',   logo:'jnj.com',                exchange:'NYSE'},
+  {symbol:'ABBV',  name:'AbbVie',                 marketCap:3.3e11, stooq:'abbv.us',  logo:'abbvie.com',             exchange:'NYSE'},
+  {symbol:'MRK',   name:'Merck',                  marketCap:2.8e11, stooq:'mrk.us',   logo:'merck.com',              exchange:'NYSE'},
+  {symbol:'VRTX',  name:'Vertex Pharma',          marketCap:2.5e11, stooq:'vrtx.us',  logo:'vrtx.com',               exchange:'NASDAQ'},
+  {symbol:'AMGN',  name:'Amgen',                  marketCap:1.5e11, stooq:'amgn.us',  logo:'amgen.com',              exchange:'NASDAQ'},
+  {symbol:'PFE',   name:'Pfizer',                 marketCap:1.5e11, stooq:'pfe.us',   logo:'pfizer.com',             exchange:'NYSE'},
+  {symbol:'BMY',   name:'Bristol-Myers Squibb',   marketCap:1.3e11, stooq:'bmy.us',   logo:'bms.com',                exchange:'NYSE'},
+  {symbol:'ELV',   name:'Elevance Health',        marketCap:1.1e11, stooq:'elv.us',   logo:'elevancehealth.com',     exchange:'NYSE'},
+  {symbol:'MDT',   name:'Medtronic',              marketCap:1.0e11, stooq:'mdt.us',   logo:'medtronic.com',          exchange:'NYSE'},
+  {symbol:'ABT',   name:'Abbott Labs',            marketCap:1.9e11, stooq:'abt.us',   logo:'abbott.com',             exchange:'NYSE'},
+  {symbol:'TMO',   name:'Thermo Fisher',          marketCap:1.9e11, stooq:'tmo.us',   logo:'thermofisher.com',       exchange:'NYSE'},
+  {symbol:'DHR',   name:'Danaher',                marketCap:1.6e11, stooq:'dhr.us',   logo:'danaher.com',            exchange:'NYSE'},
+  {symbol:'ISRG',  name:'Intuitive Surgical',     marketCap:2.0e11, stooq:'isrg.us',  logo:'intuitive.com',          exchange:'NASDAQ'},
+  {symbol:'REGN',  name:'Regeneron',              marketCap:8.5e10, stooq:'regn.us',  logo:'regeneron.com',          exchange:'NASDAQ'},
+  {symbol:'GILD',  name:'Gilead Sciences',        marketCap:9.0e10, stooq:'gild.us',  logo:'gilead.com',             exchange:'NASDAQ'},
+  {symbol:'BSX',   name:'Boston Scientific',      marketCap:1.2e11, stooq:'bsx.us',   logo:'bostonscientific.com',   exchange:'NYSE'},
+  {symbol:'SYK',   name:'Stryker',                marketCap:1.2e11, stooq:'syk.us',   logo:'stryker.com',            exchange:'NYSE'},
+  {symbol:'ZTS',   name:'Zoetis',                 marketCap:8.0e10, stooq:'zts.us',   logo:'zoetis.com',             exchange:'NYSE'},
+  {symbol:'IDXX',  name:'IDEXX Labs',             marketCap:4.5e10, stooq:'idxx.us',  logo:'idexx.com',              exchange:'NASDAQ'},
+  {symbol:'HCA',   name:'HCA Healthcare',         marketCap:8.0e10, stooq:'hca.us',   logo:'hcahealthcare.com',      exchange:'NYSE'},
+  {symbol:'HUM',   name:'Humana',                 marketCap:3.0e10, stooq:'hum.us',   logo:'humana.com',             exchange:'NYSE'},
+  {symbol:'CVS',   name:'CVS Health',             marketCap:7.0e10, stooq:'cvs.us',   logo:'cvshealth.com',          exchange:'NYSE'},
+  {symbol:'MCK',   name:'McKesson',               marketCap:6.5e10, stooq:'mck.us',   logo:'mckesson.com',           exchange:'NYSE'},
+  {symbol:'BIIB',  name:'Biogen',                 marketCap:3.0e10, stooq:'biib.us',  logo:'biogen.com',             exchange:'NASDAQ'},
+  {symbol:'ILMN',  name:'Illumina',               marketCap:1.5e10, stooq:'ilmn.us',  logo:'illumina.com',           exchange:'NASDAQ'},
+  {symbol:'MRNA',  name:'Moderna',                marketCap:2.0e10, stooq:'mrna.us',  logo:'modernatx.com',          exchange:'NASDAQ'},
+  {symbol:'DGX',   name:'Quest Diagnostics',      marketCap:1.8e10, stooq:'dgx.us',   logo:'questdiagnostics.com',   exchange:'NYSE'},
+  {symbol:'LH',    name:'LabCorp',                marketCap:1.5e10, stooq:'lh.us',    logo:'labcorp.com',            exchange:'NYSE'},
+  {symbol:'MOH',   name:'Molina Healthcare',      marketCap:1.5e10, stooq:'moh.us',   logo:'molinahealthcare.com',   exchange:'NYSE'},
+  {symbol:'WAT',   name:'Waters Corp',            marketCap:1.7e10, stooq:'wat.us',   logo:'waters.com',             exchange:'NYSE'},
+  {symbol:'ABC',   name:'Cencora',                marketCap:3.0e10, stooq:'abc.us',   logo:'cencora.com',            exchange:'NYSE'},
+  // ── 소비재 / 유통 ────────────────────────────────────────────────────────────
+  {symbol:'WMT',   name:'Walmart',                marketCap:7.0e11, stooq:'wmt.us',   logo:'walmart.com',            exchange:'NYSE'},
+  {symbol:'COST',  name:'Costco',                 marketCap:4.5e11, stooq:'cost.us',  logo:'costco.com',             exchange:'NASDAQ'},
+  {symbol:'HD',    name:'Home Depot',             marketCap:3.8e11, stooq:'hd.us',    logo:'homedepot.com',          exchange:'NYSE'},
+  {symbol:'PG',    name:'Procter & Gamble',       marketCap:3.7e11, stooq:'pg.us',    logo:'pg.com',                 exchange:'NYSE'},
+  {symbol:'KO',    name:'Coca-Cola',              marketCap:2.4e11, stooq:'ko.us',    logo:'coca-cola.com',          exchange:'NYSE'},
+  {symbol:'PM',    name:'Philip Morris',          marketCap:2.2e11, stooq:'pm.us',    logo:'pmi.com',                exchange:'NYSE'},
+  {symbol:'PEP',   name:'PepsiCo',               marketCap:2.0e11, stooq:'pep.us',   logo:'pepsico.com',            exchange:'NASDAQ'},
+  {symbol:'SBUX',  name:'Starbucks',              marketCap:8.5e10, stooq:'sbux.us',  logo:'starbucks.com',          exchange:'NASDAQ'},
+  {symbol:'TJX',   name:'TJX Companies',          marketCap:1.3e11, stooq:'tjx.us',   logo:'tjx.com',                exchange:'NYSE'},
+  {symbol:'MDLZ',  name:'Mondelez',               marketCap:7.0e10, stooq:'mdlz.us',  logo:'mondelezinternational.com', exchange:'NASDAQ'},
+  {symbol:'MO',    name:'Altria',                 marketCap:8.0e10, stooq:'mo.us',    logo:'altria.com',             exchange:'NYSE'},
+  {symbol:'CL',    name:'Colgate-Palmolive',      marketCap:7.0e10, stooq:'cl.us',    logo:'colgatepalmolive.com',   exchange:'NYSE'},
+  {symbol:'MNST',  name:'Monster Beverage',       marketCap:5.0e10, stooq:'mnst.us',  logo:'monsterbevcorp.com',     exchange:'NASDAQ'},
+  {symbol:'ROST',  name:'Ross Stores',            marketCap:5.0e10, stooq:'rost.us',  logo:'rossstores.com',         exchange:'NASDAQ'},
+  {symbol:'TGT',   name:'Target',                 marketCap:4.5e10, stooq:'tgt.us',   logo:'target.com',             exchange:'NYSE'},
+  {symbol:'LOW',   name:"Lowe's",                 marketCap:1.5e11, stooq:'low.us',   logo:'lowes.com',              exchange:'NYSE'},
+  {symbol:'GIS',   name:'General Mills',          marketCap:3.0e10, stooq:'gis.us',   logo:'generalmills.com',       exchange:'NYSE'},
+  {symbol:'STZ',   name:'Constellation Brands',   marketCap:3.0e10, stooq:'stz.us',   logo:'cbrands.com',            exchange:'NYSE'},
+  {symbol:'EL',    name:'Estee Lauder',           marketCap:2.5e10, stooq:'el.us',    logo:'elcompanies.com',        exchange:'NYSE'},
+  {symbol:'TAP',   name:'Molson Coors',           marketCap:1.0e10, stooq:'tap.us',   logo:'molsoncoors.com',        exchange:'NYSE'},
+  {symbol:'KHC',   name:'Kraft Heinz',            marketCap:3.0e10, stooq:'khc.us',   logo:'kraftheinzcompany.com',  exchange:'NASDAQ'},
+  {symbol:'CPB',   name:'Campbell Soup',          marketCap:1.3e10, stooq:'cpb.us',   logo:'campbellsoupcompany.com', exchange:'NYSE'},
+  {symbol:'LEN',   name:'Lennar',                 marketCap:4.0e10, stooq:'len.us',   logo:'lennar.com',             exchange:'NYSE'},
+  {symbol:'DHI',   name:'D.R. Horton',            marketCap:4.0e10, stooq:'dhi.us',   logo:'drhorton.com',           exchange:'NYSE'},
+  {symbol:'PHM',   name:'PulteGroup',             marketCap:2.0e10, stooq:'phm.us',   logo:'pultegroupinc.com',      exchange:'NYSE'},
+  // ── 테크 ────────────────────────────────────────────────────────────────────
+  {symbol:'CRM',   name:'Salesforce',             marketCap:3.0e11, stooq:'crm.us',   logo:'salesforce.com',         exchange:'NYSE'},
+  {symbol:'AMD',   name:'AMD',                    marketCap:2.6e11, stooq:'amd.us',   logo:'amd.com',                exchange:'NASDAQ'},
+  {symbol:'ORCL',  name:'Oracle',                 marketCap:2.5e11, stooq:'orcl.us',  logo:'oracle.com',             exchange:'NYSE'},
+  {symbol:'INTU',  name:'Intuit',                 marketCap:2.3e11, stooq:'intu.us',  logo:'intuit.com',             exchange:'NASDAQ'},
+  {symbol:'QCOM',  name:'Qualcomm',               marketCap:2.2e11, stooq:'qcom.us',  logo:'qualcomm.com',           exchange:'NASDAQ'},
+  {symbol:'IBM',   name:'IBM',                    marketCap:2.2e11, stooq:'ibm.us',   logo:'ibm.com',                exchange:'NYSE'},
+  {symbol:'NOW',   name:'ServiceNow',             marketCap:2.2e11, stooq:'now.us',   logo:'servicenow.com',         exchange:'NYSE'},
+  {symbol:'PLTR',  name:'Palantir',               marketCap:2.0e11, stooq:'pltr.us',  logo:'palantir.com',           exchange:'NASDAQ'},
+  {symbol:'ACN',   name:'Accenture',              marketCap:2.0e11, stooq:'acn.us',   logo:'accenture.com',          exchange:'NYSE'},
+  {symbol:'CSCO',  name:'Cisco',                  marketCap:2.0e11, stooq:'csco.us',  logo:'cisco.com',              exchange:'NASDAQ'},
+  {symbol:'NFLX',  name:'Netflix',                marketCap:4.0e11, stooq:'nflx.us',  logo:'netflix.com',            exchange:'NASDAQ'},
+  {symbol:'AMAT',  name:'Applied Materials',      marketCap:1.9e11, stooq:'amat.us',  logo:'appliedmaterials.com',   exchange:'NASDAQ'},
+  {symbol:'TXN',   name:'Texas Instruments',      marketCap:1.8e11, stooq:'txn.us',   logo:'ti.com',                 exchange:'NASDAQ'},
+  {symbol:'PANW',  name:'Palo Alto Networks',      marketCap:1.2e11, stooq:'panw.us',  logo:'paloaltonetworks.com',   exchange:'NASDAQ'},
+  {symbol:'CRWD',  name:'CrowdStrike',             marketCap:1.0e11, stooq:'crwd.us',  logo:'crowdstrike.com',        exchange:'NASDAQ'},
+  {symbol:'ANET',  name:'Arista Networks',         marketCap:1.3e11, stooq:'anet.us',  logo:'arista.com',             exchange:'NYSE'},
+  {symbol:'KLAC',  name:'KLA Corp',                marketCap:9.0e10, stooq:'klac.us',  logo:'kla.com',                exchange:'NASDAQ'},
+  {symbol:'LRCX',  name:'Lam Research',            marketCap:9.0e10, stooq:'lrcx.us',  logo:'lamresearch.com',        exchange:'NASDAQ'},
+  {symbol:'ADI',   name:'Analog Devices',          marketCap:9.0e10, stooq:'adi.us',   logo:'analog.com',             exchange:'NASDAQ'},
+  {symbol:'CDNS',  name:'Cadence Design',          marketCap:7.0e10, stooq:'cdns.us',  logo:'cadence.com',            exchange:'NASDAQ'},
+  {symbol:'SNPS',  name:'Synopsys',                marketCap:6.5e10, stooq:'snps.us',  logo:'synopsys.com',           exchange:'NASDAQ'},
+  {symbol:'FTNT',  name:'Fortinet',                marketCap:6.5e10, stooq:'ftnt.us',  logo:'fortinet.com',           exchange:'NASDAQ'},
+  {symbol:'INTC',  name:'Intel',                   marketCap:1.0e11, stooq:'intc.us',  logo:'intel.com',              exchange:'NASDAQ'},
+  {symbol:'MU',    name:'Micron Technology',       marketCap:1.0e11, stooq:'mu.us',    logo:'micron.com',             exchange:'NASDAQ'},
+  {symbol:'ADSK',  name:'Autodesk',                marketCap:5.5e10, stooq:'adsk.us',  logo:'autodesk.com',           exchange:'NASDAQ'},
+  {symbol:'NXPI',  name:'NXP Semiconductors',      marketCap:5.5e10, stooq:'nxpi.us',  logo:'nxp.com',                exchange:'NASDAQ'},
+  {symbol:'MCHP',  name:'Microchip Technology',    marketCap:4.5e10, stooq:'mchp.us',  logo:'microchip.com',          exchange:'NASDAQ'},
+  {symbol:'SNOW',  name:'Snowflake',               marketCap:6.0e10, stooq:'snow.us',  logo:'snowflake.com',          exchange:'NYSE'},
+  {symbol:'COIN',  name:'Coinbase',                marketCap:6.0e10, stooq:'coin.us',  logo:'coinbase.com',           exchange:'NASDAQ'},
+  {symbol:'DDOG',  name:'Datadog',                 marketCap:4.0e10, stooq:'ddog.us',  logo:'datadoghq.com',          exchange:'NASDAQ'},
+  {symbol:'NET',   name:'Cloudflare',              marketCap:5.0e10, stooq:'net.us',   logo:'cloudflare.com',         exchange:'NYSE'},
+  {symbol:'SPOT',  name:'Spotify',                 marketCap:7.0e10, stooq:'spot.us',  logo:'spotify.com',            exchange:'NYSE'},
+  {symbol:'PYPL',  name:'PayPal',                  marketCap:7.5e10, stooq:'pypl.us',  logo:'paypal.com',             exchange:'NASDAQ'},
+  {symbol:'SQ',    name:'Block',                   marketCap:5.0e10, stooq:'sq.us',    logo:'block.xyz',              exchange:'NYSE'},
+  {symbol:'UBER',  name:'Uber',                    marketCap:1.5e11, stooq:'uber.us',  logo:'uber.com',               exchange:'NYSE'},
+  {symbol:'ABNB',  name:'Airbnb',                  marketCap:8.0e10, stooq:'abnb.us',  logo:'airbnb.com',             exchange:'NASDAQ'},
+  {symbol:'DASH',  name:'DoorDash',                marketCap:5.0e10, stooq:'dash.us',  logo:'doordash.com',           exchange:'NYSE'},
+  {symbol:'TTD',   name:'The Trade Desk',          marketCap:5.0e10, stooq:'ttd.us',   logo:'thetradedesk.com',       exchange:'NASDAQ'},
+  {symbol:'ZS',    name:'Zscaler',                 marketCap:3.0e10, stooq:'zs.us',    logo:'zscaler.com',            exchange:'NASDAQ'},
+  {symbol:'MDB',   name:'MongoDB',                 marketCap:2.0e10, stooq:'mdb.us',   logo:'mongodb.com',            exchange:'NASDAQ'},
+  {symbol:'OKTA',  name:'Okta',                    marketCap:1.5e10, stooq:'okta.us',  logo:'okta.com',               exchange:'NASDAQ'},
+  {symbol:'DELL',  name:'Dell Technologies',       marketCap:6.0e10, stooq:'dell.us',  logo:'dell.com',               exchange:'NYSE'},
+  {symbol:'HPQ',   name:'HP Inc',                  marketCap:3.0e10, stooq:'hpq.us',   logo:'hp.com',                 exchange:'NYSE'},
+  {symbol:'HPE',   name:'HP Enterprise',           marketCap:2.5e10, stooq:'hpe.us',   logo:'hpe.com',                exchange:'NYSE'},
+  {symbol:'WDC',   name:'Western Digital',         marketCap:2.0e10, stooq:'wdc.us',   logo:'westerndigital.com',     exchange:'NASDAQ'},
+  {symbol:'STX',   name:'Seagate Technology',      marketCap:2.0e10, stooq:'stx.us',   logo:'seagate.com',            exchange:'NASDAQ'},
+  {symbol:'KEYS',  name:'Keysight Technologies',   marketCap:2.5e10, stooq:'keys.us',  logo:'keysight.com',           exchange:'NYSE'},
+  {symbol:'ANSS',  name:'Ansys',                   marketCap:3.0e10, stooq:'anss.us',  logo:'ansys.com',              exchange:'NASDAQ'},
+  {symbol:'RBLX',  name:'Roblox',                  marketCap:2.0e10, stooq:'rblx.us',  logo:'roblox.com',             exchange:'NYSE'},
+  {symbol:'AFRM',  name:'Affirm',                  marketCap:1.5e10, stooq:'afrm.us',  logo:'affirm.com',             exchange:'NASDAQ'},
+  {symbol:'HOOD',  name:'Robinhood',               marketCap:0.8e10, stooq:'hood.us',  logo:'robinhood.com',          exchange:'NASDAQ'},
+  {symbol:'SOFI',  name:'SoFi Technologies',       marketCap:0.8e10, stooq:'sofi.us',  logo:'sofi.com',               exchange:'NASDAQ'},
+  {symbol:'RIVN',  name:'Rivian',                  marketCap:1.5e10, stooq:'rivn.us',  logo:'rivian.com',             exchange:'NASDAQ'},
+  // ── 산업재 ──────────────────────────────────────────────────────────────────
+  {symbol:'GE',    name:'GE Aerospace',            marketCap:2.2e11, stooq:'ge.us',    logo:'geaerospace.com',        exchange:'NYSE'},
+  {symbol:'CAT',   name:'Caterpillar',             marketCap:1.8e11, stooq:'cat.us',   logo:'caterpillar.com',        exchange:'NYSE'},
+  {symbol:'RTX',   name:'RTX Corp',                marketCap:1.7e11, stooq:'rtx.us',   logo:'rtx.com',                exchange:'NYSE'},
+  {symbol:'ETN',   name:'Eaton',                   marketCap:1.4e11, stooq:'etn.us',   logo:'eaton.com',              exchange:'NYSE'},
+  {symbol:'LMT',   name:'Lockheed Martin',         marketCap:1.1e11, stooq:'lmt.us',   logo:'lockheedmartin.com',     exchange:'NYSE'},
+  {symbol:'UPS',   name:'UPS',                     marketCap:9.0e10, stooq:'ups.us',   logo:'ups.com',                exchange:'NYSE'},
+  {symbol:'BA',    name:'Boeing',                  marketCap:1.2e11, stooq:'ba.us',    logo:'boeing.com',             exchange:'NYSE'},
+  {symbol:'DE',    name:'Deere & Company',         marketCap:1.2e11, stooq:'de.us',    logo:'deere.com',              exchange:'NYSE'},
+  {symbol:'ADP',   name:'ADP',                     marketCap:1.1e11, stooq:'adp.us',   logo:'adp.com',                exchange:'NASDAQ'},
+  {symbol:'TT',    name:'Trane Technologies',      marketCap:8.0e10, stooq:'tt.us',    logo:'tranetechnologies.com',  exchange:'NYSE'},
+  {symbol:'GD',    name:'General Dynamics',        marketCap:7.5e10, stooq:'gd.us',    logo:'gd.com',                 exchange:'NYSE'},
+  {symbol:'ITW',   name:'Illinois Tool Works',     marketCap:7.5e10, stooq:'itw.us',   logo:'itw.com',                exchange:'NYSE'},
+  {symbol:'NOC',   name:'Northrop Grumman',        marketCap:6.5e10, stooq:'noc.us',   logo:'northropgrumman.com',    exchange:'NYSE'},
+  {symbol:'PH',    name:'Parker Hannifin',         marketCap:8.0e10, stooq:'ph.us',    logo:'parker.com',             exchange:'NYSE'},
+  {symbol:'EMR',   name:'Emerson Electric',        marketCap:7.0e10, stooq:'emr.us',   logo:'emerson.com',            exchange:'NYSE'},
+  {symbol:'MMM',   name:'3M',                      marketCap:7.0e10, stooq:'mmm.us',   logo:'3m.com',                 exchange:'NYSE'},
+  {symbol:'CTAS',  name:'Cintas',                  marketCap:8.5e10, stooq:'ctas.us',  logo:'cintas.com',             exchange:'NASDAQ'},
+  {symbol:'WM',    name:'Waste Management',        marketCap:8.5e10, stooq:'wm.us',    logo:'wm.com',                 exchange:'NYSE'},
+  {symbol:'PCAR',  name:'PACCAR',                  marketCap:6.0e10, stooq:'pcar.us',  logo:'paccar.com',             exchange:'NASDAQ'},
+  {symbol:'CARR',  name:'Carrier Global',          marketCap:6.0e10, stooq:'carr.us',  logo:'carrier.com',            exchange:'NYSE'},
+  {symbol:'CPRT',  name:'Copart',                  marketCap:5.5e10, stooq:'cprt.us',  logo:'copart.com',             exchange:'NASDAQ'},
+  {symbol:'ODFL',  name:'Old Dominion Freight',    marketCap:4.0e10, stooq:'odfl.us',  logo:'odfl.com',               exchange:'NASDAQ'},
+  {symbol:'URI',   name:'United Rentals',          marketCap:4.0e10, stooq:'uri.us',   logo:'unitedrentals.com',      exchange:'NYSE'},
+  {symbol:'PWR',   name:'Quanta Services',         marketCap:4.0e10, stooq:'pwr.us',   logo:'quantaservices.com',     exchange:'NYSE'},
+  {symbol:'FAST',  name:'Fastenal',                marketCap:4.0e10, stooq:'fast.us',  logo:'fastenal.com',           exchange:'NASDAQ'},
+  {symbol:'ROK',   name:'Rockwell Automation',     marketCap:3.0e10, stooq:'rok.us',   logo:'rockwellautomation.com', exchange:'NYSE'},
+  {symbol:'GWW',   name:'W.W. Grainger',           marketCap:4.0e10, stooq:'gww.us',   logo:'grainger.com',           exchange:'NYSE'},
+  {symbol:'FDX',   name:'FedEx',                   marketCap:5.5e10, stooq:'fdx.us',   logo:'fedex.com',              exchange:'NYSE'},
+  {symbol:'ROP',   name:'Roper Technologies',      marketCap:6.0e10, stooq:'rop.us',   logo:'ropertech.com',          exchange:'NASDAQ'},
+  {symbol:'DOV',   name:'Dover Corp',              marketCap:2.5e10, stooq:'dov.us',   logo:'dovercorporation.com',   exchange:'NYSE'},
+  {symbol:'XYL',   name:'Xylem',                   marketCap:2.5e10, stooq:'xyl.us',   logo:'xylem.com',              exchange:'NYSE'},
+  {symbol:'PAYX',  name:'Paychex',                 marketCap:5.0e10, stooq:'payx.us',  logo:'paychex.com',            exchange:'NASDAQ'},
+  {symbol:'LDOS',  name:'Leidos',                  marketCap:2.5e10, stooq:'ldos.us',  logo:'leidos.com',             exchange:'NYSE'},
+  {symbol:'TDY',   name:'Teledyne',                marketCap:2.0e10, stooq:'tdy.us',   logo:'teledyne.com',           exchange:'NYSE'},
+  {symbol:'XPO',   name:'XPO',                     marketCap:1.5e10, stooq:'xpo.us',   logo:'xpo.com',                exchange:'NYSE'},
+  {symbol:'JBHT',  name:'J.B. Hunt Transport',     marketCap:2.0e10, stooq:'jbht.us',  logo:'jbhunt.com',             exchange:'NASDAQ'},
+  {symbol:'EXPD',  name:'Expeditors Intl',         marketCap:1.8e10, stooq:'expd.us',  logo:'expeditors.com',         exchange:'NASDAQ'},
+  {symbol:'CHRW',  name:'C.H. Robinson',           marketCap:1.2e10, stooq:'chrw.us',  logo:'chrobinson.com',         exchange:'NASDAQ'},
+  // ── 에너지 ──────────────────────────────────────────────────────────────────
+  {symbol:'XOM',   name:'ExxonMobil',              marketCap:5.3e11, stooq:'xom.us',   logo:'exxonmobil.com',         exchange:'NYSE'},
+  {symbol:'CVX',   name:'Chevron',                 marketCap:2.5e11, stooq:'cvx.us',   logo:'chevron.com',            exchange:'NYSE'},
+  {symbol:'COP',   name:'ConocoPhillips',          marketCap:1.3e11, stooq:'cop.us',   logo:'conocophillips.com',     exchange:'NYSE'},
+  {symbol:'MPC',   name:'Marathon Petroleum',      marketCap:5.0e10, stooq:'mpc.us',   logo:'marathonpetroleum.com',  exchange:'NYSE'},
+  {symbol:'PSX',   name:'Phillips 66',             marketCap:4.5e10, stooq:'psx.us',   logo:'phillips66.com',         exchange:'NYSE'},
+  {symbol:'VLO',   name:'Valero Energy',           marketCap:4.5e10, stooq:'vlo.us',   logo:'valero.com',             exchange:'NYSE'},
+  {symbol:'OXY',   name:'Occidental Petroleum',    marketCap:4.5e10, stooq:'oxy.us',   logo:'oxy.com',                exchange:'NYSE'},
+  {symbol:'EOG',   name:'EOG Resources',           marketCap:5.5e10, stooq:'eog.us',   logo:'eogresources.com',       exchange:'NYSE'},
+  {symbol:'SLB',   name:'SLB',                     marketCap:2.5e10, stooq:'slb.us',   logo:'slb.com',                exchange:'NYSE'},
+  {symbol:'HAL',   name:'Halliburton',             marketCap:3.0e10, stooq:'hal.us',   logo:'halliburton.com',        exchange:'NYSE'},
+  {symbol:'BKR',   name:'Baker Hughes',            marketCap:4.5e10, stooq:'bkr.us',   logo:'bakerhughes.com',        exchange:'NASDAQ'},
+  {symbol:'WMB',   name:'Williams Companies',      marketCap:5.0e10, stooq:'wmb.us',   logo:'williams.com',           exchange:'NYSE'},
+  {symbol:'KMI',   name:'Kinder Morgan',           marketCap:4.5e10, stooq:'kmi.us',   logo:'kindermorgan.com',       exchange:'NYSE'},
+  {symbol:'HES',   name:'Hess',                    marketCap:4.5e10, stooq:'hes.us',   logo:'hess.com',               exchange:'NYSE'},
+  {symbol:'DVN',   name:'Devon Energy',            marketCap:3.0e10, stooq:'dvn.us',   logo:'devonenergy.com',        exchange:'NYSE'},
+  // ── 소재 ────────────────────────────────────────────────────────────────────
+  {symbol:'LIN',   name:'Linde',                   marketCap:2.2e11, stooq:'lin.us',   logo:'linde.com',              exchange:'NYSE'},
+  {symbol:'SHW',   name:'Sherwin-Williams',        marketCap:9.0e10, stooq:'shw.us',   logo:'sherwin-williams.com',   exchange:'NYSE'},
+  {symbol:'FCX',   name:'Freeport-McMoRan',        marketCap:6.0e10, stooq:'fcx.us',   logo:'fcx.com',                exchange:'NYSE'},
+  {symbol:'NEM',   name:'Newmont',                 marketCap:5.5e10, stooq:'nem.us',   logo:'newmont.com',            exchange:'NYSE'},
+  {symbol:'APD',   name:'Air Products',            marketCap:6.0e10, stooq:'apd.us',   logo:'airproducts.com',        exchange:'NYSE'},
+  {symbol:'ECL',   name:'Ecolab',                  marketCap:6.0e10, stooq:'ecl.us',   logo:'ecolab.com',             exchange:'NYSE'},
+  {symbol:'DOW',   name:'Dow Inc',                 marketCap:3.5e10, stooq:'dow.us',   logo:'dow.com',                exchange:'NYSE'},
+  {symbol:'DD',    name:'DuPont',                  marketCap:3.0e10, stooq:'dd.us',    logo:'dupont.com',             exchange:'NYSE'},
+  {symbol:'PPG',   name:'PPG Industries',          marketCap:3.0e10, stooq:'ppg.us',   logo:'ppg.com',                exchange:'NYSE'},
+  {symbol:'NUE',   name:'Nucor',                   marketCap:2.5e10, stooq:'nue.us',   logo:'nucor.com',              exchange:'NYSE'},
+  {symbol:'LYB',   name:'LyondellBasell',          marketCap:2.5e10, stooq:'lyb.us',   logo:'lyondellbasell.com',     exchange:'NYSE'},
+  {symbol:'ALB',   name:'Albemarle',               marketCap:1.0e10, stooq:'alb.us',   logo:'albemarle.com',          exchange:'NYSE'},
+  // ── 유틸리티 ────────────────────────────────────────────────────────────────
+  {symbol:'NEE',   name:'NextEra Energy',          marketCap:1.2e11, stooq:'nee.us',   logo:'nexteraenergy.com',      exchange:'NYSE'},
+  {symbol:'SO',    name:'Southern Company',        marketCap:8.0e10, stooq:'so.us',    logo:'southerncompany.com',    exchange:'NYSE'},
+  {symbol:'DUK',   name:'Duke Energy',             marketCap:8.0e10, stooq:'duk.us',   logo:'duke-energy.com',        exchange:'NYSE'},
+  {symbol:'SRE',   name:'Sempra',                  marketCap:5.0e10, stooq:'sre.us',   logo:'sempra.com',             exchange:'NYSE'},
+  {symbol:'AEP',   name:'American Electric Power', marketCap:4.5e10, stooq:'aep.us',   logo:'aep.com',                exchange:'NASDAQ'},
+  {symbol:'EXC',   name:'Exelon',                  marketCap:4.5e10, stooq:'exc.us',   logo:'exeloncorp.com',         exchange:'NASDAQ'},
+  {symbol:'XEL',   name:'Xcel Energy',             marketCap:3.0e10, stooq:'xel.us',   logo:'xcelenergy.com',         exchange:'NASDAQ'},
+  {symbol:'WEC',   name:'WEC Energy',              marketCap:2.8e10, stooq:'wec.us',   logo:'wecenergygroup.com',     exchange:'NYSE'},
+  {symbol:'ETR',   name:'Entergy',                 marketCap:2.5e10, stooq:'etr.us',   logo:'entergy.com',            exchange:'NYSE'},
+  {symbol:'DTE',   name:'DTE Energy',              marketCap:2.5e10, stooq:'dte.us',   logo:'dteenergy.com',          exchange:'NYSE'},
+  {symbol:'PPL',   name:'PPL Corp',                marketCap:2.0e10, stooq:'ppl.us',   logo:'pplweb.com',             exchange:'NYSE'},
+  {symbol:'FE',    name:'FirstEnergy',             marketCap:2.0e10, stooq:'fe.us',    logo:'firstenergycorp.com',    exchange:'NYSE'},
+  {symbol:'CMS',   name:'CMS Energy',              marketCap:1.8e10, stooq:'cms.us',   logo:'cmsenergy.com',          exchange:'NYSE'},
+  {symbol:'AES',   name:'AES Corp',                marketCap:1.5e10, stooq:'aes.us',   logo:'aes.com',                exchange:'NYSE'},
+  // ── 부동산 ──────────────────────────────────────────────────────────────────
+  {symbol:'PLD',   name:'Prologis',                marketCap:9.0e10, stooq:'pld.us',   logo:'prologis.com',           exchange:'NYSE'},
+  {symbol:'AMT',   name:'American Tower',          marketCap:9.0e10, stooq:'amt.us',   logo:'americantower.com',      exchange:'NYSE'},
+  {symbol:'EQIX',  name:'Equinix',                 marketCap:8.0e10, stooq:'eqix.us',  logo:'equinix.com',            exchange:'NASDAQ'},
+  {symbol:'CCI',   name:'Crown Castle',            marketCap:4.5e10, stooq:'cci.us',   logo:'crowncastle.com',        exchange:'NYSE'},
+  {symbol:'PSA',   name:'Public Storage',          marketCap:5.5e10, stooq:'psa.us',   logo:'publicstorage.com',      exchange:'NYSE'},
+  {symbol:'O',     name:'Realty Income',           marketCap:4.5e10, stooq:'o.us',     logo:'realtyincome.com',       exchange:'NYSE'},
+  {symbol:'DLR',   name:'Digital Realty',          marketCap:4.5e10, stooq:'dlr.us',   logo:'digitalrealty.com',      exchange:'NYSE'},
+  {symbol:'VICI',  name:'VICI Properties',         marketCap:2.8e10, stooq:'vici.us',  logo:'viciproperties.com',     exchange:'NYSE'},
+  {symbol:'IRM',   name:'Iron Mountain',           marketCap:2.8e10, stooq:'irm.us',   logo:'ironmountain.com',       exchange:'NYSE'},
+  // ── 통신 ────────────────────────────────────────────────────────────────────
+  {symbol:'T',     name:'AT&T',                    marketCap:1.5e11, stooq:'t.us',     logo:'att.com',                exchange:'NYSE'},
+  {symbol:'VZ',    name:'Verizon',                 marketCap:1.8e11, stooq:'vz.us',    logo:'verizon.com',            exchange:'NYSE'},
+  {symbol:'TMUS',  name:'T-Mobile',                marketCap:2.5e11, stooq:'tmus.us',  logo:'t-mobile.com',           exchange:'NASDAQ'},
+  {symbol:'MSI',   name:'Motorola Solutions',      marketCap:7.0e10, stooq:'msi.us',   logo:'motorolasolutions.com',  exchange:'NYSE'},
+  // ── 여행 / 레저 ──────────────────────────────────────────────────────────────
+  {symbol:'BKNG',  name:'Booking Holdings',        marketCap:1.6e11, stooq:'bkng.us',  logo:'bookingholdings.com',    exchange:'NASDAQ'},
+  {symbol:'MAR',   name:'Marriott',                marketCap:7.0e10, stooq:'mar.us',   logo:'marriott.com',           exchange:'NASDAQ'},
+  {symbol:'HLT',   name:'Hilton',                  marketCap:5.0e10, stooq:'hlt.us',   logo:'hilton.com',             exchange:'NYSE'},
+  {symbol:'RCL',   name:'Royal Caribbean',         marketCap:5.5e10, stooq:'rcl.us',   logo:'rcl.com',                exchange:'NYSE'},
+  {symbol:'CCL',   name:'Carnival',                marketCap:3.0e10, stooq:'ccl.us',   logo:'carnival.com',           exchange:'NYSE'},
+  {symbol:'LVS',   name:'Las Vegas Sands',         marketCap:3.0e10, stooq:'lvs.us',   logo:'sands.com',              exchange:'NYSE'},
+  {symbol:'MGM',   name:'MGM Resorts',             marketCap:1.4e10, stooq:'mgm.us',   logo:'mgmresorts.com',         exchange:'NYSE'},
+  {symbol:'WYNN',  name:'Wynn Resorts',            marketCap:1.0e10, stooq:'wynn.us',  logo:'wynnresorts.com',        exchange:'NASDAQ'},
+  {symbol:'GM',    name:'General Motors',          marketCap:5.0e10, stooq:'gm.us',    logo:'gm.com',                 exchange:'NYSE'},
+  {symbol:'F',     name:'Ford',                    marketCap:4.5e10, stooq:'f.us',     logo:'ford.com',               exchange:'NYSE'},
+  {symbol:'LYFT',  name:'Lyft',                    marketCap:0.6e10, stooq:'lyft.us',  logo:'lyft.com',               exchange:'NASDAQ'},
+  // ── 기타 S&P500 ──────────────────────────────────────────────────────────────
+  {symbol:'VRSK',  name:'Verisk Analytics',        marketCap:4.0e10, stooq:'vrsk.us',  logo:'verisk.com',             exchange:'NASDAQ'},
+  {symbol:'CSGP',  name:'CoStar Group',            marketCap:3.0e10, stooq:'csgp.us',  logo:'costargroup.com',        exchange:'NASDAQ'},
+  {symbol:'ACGL',  name:'Arch Capital',            marketCap:3.5e10, stooq:'acgl.us',  logo:'archcapitalgroup.com',   exchange:'NASDAQ'},
+  {symbol:'MKL',   name:'Markel',                  marketCap:2.3e10, stooq:'mkl.us',   logo:'markel.com',             exchange:'NYSE'},
+  {symbol:'FSLR',  name:'First Solar',             marketCap:2.0e10, stooq:'fslr.us',  logo:'firstsolar.com',         exchange:'NASDAQ'},
+  {symbol:'ENPH',  name:'Enphase Energy',          marketCap:1.5e10, stooq:'enph.us',  logo:'enphase.com',            exchange:'NASDAQ'},
+  {symbol:'HEI',   name:'HEICO',                   marketCap:2.3e10, stooq:'hei.us',   logo:'heico.com',              exchange:'NYSE'},
+  {symbol:'RPM',   name:'RPM International',       marketCap:1.6e10, stooq:'rpm.us',   logo:'rpminc.com',             exchange:'NYSE'},
+  {symbol:'NCLH',  name:'Norwegian Cruise Line',   marketCap:1.0e10, stooq:'nclh.us',  logo:'nclhltd.com',            exchange:'NYSE'},
+  {symbol:'NVR',   name:'NVR Inc',                 marketCap:1.8e10, stooq:'nvr.us',   logo:'nvrinc.com',             exchange:'NYSE'},
+  {symbol:'WBA',   name:'Walgreens',               marketCap:0.5e10, stooq:'wba.us',   logo:'walgreens.com',          exchange:'NASDAQ'},
+  {symbol:'NBIS',  name:'Nebius Group',            marketCap:1.2e10, stooq:'nbis.us',  logo:'nebius.com',             exchange:'NASDAQ'},
 ];
 
 function abortFetch(ms) {
@@ -1271,69 +1543,26 @@ async function fetchStooqHistory(stooqSymbol, days = 90) {
   } catch (_) { return null; }
 }
 
-// ── Finnhub API (CORS 허용, 무료 실시간) ─────────────────────────────────────
-// quote: c=현재가, d=변동, dp=변동%, h=고가, l=저가, o=시가, pc=전일종가
-async function fetchFinnhubQuote(symbol) {
-  try {
-    const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_TOKEN}`;
-    const res = await fetch(url, { signal: abortFetch(8000) });
-    if (!res.ok) return null;
-    const d = await res.json();
-    return (d && d.c != null && d.c !== 0) ? d : null;
-  } catch (_) { return null; }
-}
-
-// metrics: 52WeekHigh, 52WeekLow, 52WeekPriceReturnDaily, peBasicExclExtraTTM 등
-async function fetchFinnhubMetrics(symbol) {
-  try {
-    const url = `https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${FINNHUB_TOKEN}`;
-    const res = await fetch(url, { signal: abortFetch(8000) });
-    if (!res.ok) return null;
-    const d = await res.json();
-    return d?.metric || null;
-  } catch (_) { return null; }
-}
-
-// profile2: 시가총액(marketCapitalization, 백만달러 단위)
-async function fetchFinnhubProfile(symbol) {
-  try {
-    const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_TOKEN}`;
-    const res = await fetch(url, { signal: abortFetch(8000) });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (_) { return null; }
-}
-
-// candle: 일봉 OHLCV, pts = [{x:Date, y:close}], lastVolume = 최근 거래량
-async function fetchFinnhubCandle(symbol, days = 90) {
-  try {
-    const to   = Math.floor(Date.now() / 1000);
-    const from = to - days * 86400;
-    const url  = `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${from}&to=${to}&token=${FINNHUB_TOKEN}`;
-    const res  = await fetch(url, { signal: abortFetch(8000) });
-    if (!res.ok) return null;
-    const d = await res.json();
-    if (d?.s !== 'ok' || !d.t?.length) return null;
-    return {
-      pts:        d.t.map((t, i) => ({ x: new Date(t * 1000), y: d.c[i] })).filter(p => p.y != null),
-      lastVolume: d.v?.[d.v.length - 1] ?? null,
-    };
-  } catch (_) { return null; }
-}
 
 // Yahoo Finance 시세 조회 — Cloudflare Worker 경유 (서버사이드 → CORS 무관)
+// 401(세션 만료) 시 최대 2회 재시도
 async function fetchYahooMarketCap(yahooSymbols) {
   const sym    = yahooSymbols.join(',');
   const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState,regularMarketVolume,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,trailingPE,52WeekChange';
-  try {
-    const url = `${WORKER_URL}/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false`;
-    const res = await fetch(url, { signal: abortFetch(10000) });
-    if (res.ok) {
-      const json = await res.json();
-      const result = json.quoteResponse?.result;
-      if (Array.isArray(result) && result.length > 0) return result;
-    }
-  } catch (_) {}
+  const url = `${WORKER_URL}/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false`;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 1500 * attempt)); // 재시도 전 대기
+      const res = await fetch(url, { signal: abortFetch(10000) });
+      if (res.status === 401 || res.status === 403) continue; // 세션 만료 → 재시도
+      if (res.ok) {
+        const json = await res.json();
+        const result = json.quoteResponse?.result;
+        if (Array.isArray(result) && result.length > 0) return result;
+      }
+    } catch (_) {}
+  }
 
   return [];
 }
@@ -1379,6 +1608,8 @@ async function loadMarketCap(market) {
   if (allYahoo.length > 0) {
     const yahooMap = {};
     allYahoo.forEach(q => { yahooMap[q.symbol] = q; });
+    const exMap = { 'NMS':'NASDAQ','NGM':'NASDAQ','NCM':'NASDAQ','NasdaqGS':'NASDAQ','NasdaqCM':'NASDAQ','NasdaqNM':'NASDAQ',
+                    'NYQ':'NYSE','NYSE':'NYSE','PCX':'NYSE Arca','ARCA':'NYSE Arca','ASE':'NYSE American','AMEX':'NYSE American' };
     finalData = base.map((s, i) => {
       const ySym = yahooSymbols[i];
       const q = yahooMap[ySym];
@@ -1388,10 +1619,12 @@ async function loadMarketCap(market) {
         marketCap: (!isKR && q?.marketCap) ? q.marketCap : s.marketCap,
         price:     q?.regularMarketPrice || 0,
         change:    q?.regularMarketChangePercent || 0,
+        // 미국 거래소 코드 → 읽기 쉬운 이름 (NMS→NASDAQ, NYQ→NYSE 등)
+        exchange:  !isKR && q?.exchange ? (exMap[q.exchange] || s.exchange || '') : s.exchange,
       };
     }).sort((a, b) => b.marketCap - a.marketCap);
 
-    renderMcTable(market, finalData.slice(0, 100));
+    renderMcTable(market, finalData.slice(0, 300));
     const now = new Date().toLocaleTimeString('ko-KR');
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 실시간 &nbsp;|&nbsp; ${now} 기준</div>`;
   } else {
@@ -1405,7 +1638,7 @@ async function loadMarketCap(market) {
         change: 0,
       };
     });
-    renderMcTable(market, finalData.slice(0, 100));
+    renderMcTable(market, finalData.slice(0, 300));
     const now = new Date().toLocaleTimeString('ko-KR');
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 시가총액: 2025년 기준 (참고값) &nbsp;|&nbsp; 시세: ${now} 조회</div>`;
   }
@@ -1707,32 +1940,7 @@ async function loadNebiusDashboard() {
     applyMyPos(price);
     document.getElementById('nbis-status').textContent = `🔴 Yahoo Finance | ${new Date().toLocaleTimeString('ko-KR')} 기준`;
   } else {
-    // 2순위: Finnhub 폴백
-    const [fq, metrics, profile, candle] = await Promise.all([
-      fetchFinnhubQuote(SYMBOL), fetchFinnhubMetrics(SYMBOL),
-      fetchFinnhubProfile(SYMBOL), fetchFinnhubCandle(SYMBOL, 90),
-    ]);
-    if (fq && fq.c) {
-      const price = fq.c; const change = fq.dp ?? 0; const diff = fq.d ?? 0; const sign = change >= 0 ? '+' : '';
-      document.getElementById('nbis-cur-price').textContent = '$' + price.toFixed(2);
-      document.getElementById('nbis-market-state').textContent = 'Finnhub';
-      const chgEl = document.getElementById('nbis-change');
-      chgEl.textContent = `${sign}$${Math.abs(diff).toFixed(2)} (${sign}${change.toFixed(2)}%)`;
-      chgEl.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
-      document.getElementById('ns-prev').textContent = fmtUSD(fq.pc);
-      if (profile?.marketCapitalization) document.getElementById('ns-mktcap').textContent = fmtCap(profile.marketCapitalization * 1e6);
-      if (metrics) {
-        document.getElementById('ns-high52').textContent = fmtUSD(metrics['52WeekHigh']);
-        document.getElementById('ns-low52').textContent  = fmtUSD(metrics['52WeekLow']);
-        const pe = metrics.peBasicExclExtraTTM ?? metrics.peNormalizedAnnual ?? null;
-        document.getElementById('ns-per').textContent = pe ? pe.toFixed(1) + 'x' : 'N/A';
-      }
-      if (candle?.lastVolume) document.getElementById('ns-vol').textContent = fmtVol(candle.lastVolume);
-      applyMyPos(price);
-      document.getElementById('nbis-status').textContent = `🔴 Finnhub | ${new Date().toLocaleTimeString('ko-KR')} 기준`;
-    } else {
-      document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
-    }
+    document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
   }
 
   drawNbisChart();
@@ -1814,6 +2022,8 @@ async function loadUSMarketCap() {
   if (results.length > 0) {
     const yahooMap = {};
     results.forEach(q => { yahooMap[q.symbol] = q; });
+    const exMap = { 'NMS':'NASDAQ','NGM':'NASDAQ','NCM':'NASDAQ','NasdaqGS':'NASDAQ','NasdaqCM':'NASDAQ','NasdaqNM':'NASDAQ',
+                    'NYQ':'NYSE','NYSE':'NYSE','PCX':'NYSE Arca','ARCA':'NYSE Arca','ASE':'NYSE American','AMEX':'NYSE American' };
     const finalStocks = US_BASE.map(s => {
       const q = yahooMap[s.symbol];
       if (!q) return { ...s, price: 0, change: 0, yoy: null };
@@ -1824,56 +2034,53 @@ async function loadUSMarketCap() {
         price:     best.price,
         change:    best.change,
         yoy:       q['52WeekChange'] != null ? q['52WeekChange'] * 100 : null,
+        exchange:  q.exchange ? (exMap[q.exchange] || s.exchange || '') : (s.exchange || ''),
       };
     }).sort((a, b) => b.marketCap - a.marketCap);
+
+    // NBIS 순위 계산
+    const nbisAllIdx = finalStocks.findIndex(s => s.symbol === 'NBIS');
+    if (nbisAllIdx >= 0) {
+      document.getElementById('nbis-rank-overall').textContent = `${nbisAllIdx + 1}위`;
+      const nasdaqOnly = finalStocks.filter(s => s.exchange === 'NASDAQ');
+      const nbisNdIdx  = nasdaqOnly.findIndex(s => s.symbol === 'NBIS');
+      if (nbisNdIdx >= 0) document.getElementById('nbis-rank-nasdaq').textContent = `${nbisNdIdx + 1}위`;
+    }
+
     renderMcTable('us', finalStocks);
     const now = new Date().toLocaleTimeString('ko-KR');
     const label = [...new Set(results.map(q => getBestYahooPrice(q).label))].join('/') || '종가';
     statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 (${label}) &nbsp;|&nbsp; ${now} 기준</div>`;
     statusEl.style.display = '';
+
+    // 백그라운드: YoY(52주 수익률) 보강
+    enrichUSYoY(finalStocks);
   } else {
-    // 2순위: Finnhub 병렬 조회
-    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Finnhub 조회 중...</div>';
-    const quoteResults = await Promise.allSettled(US_BASE.map(s => fetchFinnhubQuote(s.symbol)));
-    const successCount = quoteResults.filter(r => r.status === 'fulfilled' && r.value).length;
-    if (successCount > 0) {
-      quoteResults.forEach((r, i) => {
-        const q = r.status === 'fulfilled' ? r.value : null;
-        if (q) { stocks[i].price = q.c; stocks[i].change = q.dp; }
+    // 2순위: Stooq 폴백
+    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Stooq 조회 중...</div>';
+    const stooqMap = await fetchStooqPrices(US_BASE);
+    const now = new Date().toLocaleTimeString('ko-KR');
+    if (Object.keys(stooqMap).length > 0) {
+      US_BASE.forEach((s, i) => {
+        const sq = stooqMap[s.stooq.toLowerCase()];
+        if (!sq) return;
+        const close = parseFloat(sq.Close) || 0;
+        const open  = parseFloat(sq.Open)  || close;
+        stocks[i].price  = close;
+        stocks[i].change = (open > 0 && close > 0) ? (close - open) / open * 100 : 0;
       });
       stocks.sort((a, b) => b.marketCap - a.marketCap);
       renderMcTable('us', stocks);
-      const now = new Date().toLocaleTimeString('ko-KR');
-      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Finnhub 실시간 &nbsp;|&nbsp; ${now} 기준</div>`;
-      statusEl.style.display = '';
+      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📊 Stooq 시세 &nbsp;|&nbsp; ${now} 기준 &nbsp;
+        <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
     } else {
-      // 3순위: Stooq 폴백
-      statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Stooq 조회 중...</div>';
-      const stooqMap = await fetchStooqPrices(US_BASE);
-      const now = new Date().toLocaleTimeString('ko-KR');
-      if (Object.keys(stooqMap).length > 0) {
-        US_BASE.forEach((s, i) => {
-          const sq = stooqMap[s.stooq.toLowerCase()];
-          if (!sq) return;
-          const close = parseFloat(sq.Close) || 0;
-          const open  = parseFloat(sq.Open)  || close;
-          stocks[i].price  = close;
-          stocks[i].change = (open > 0 && close > 0) ? (close - open) / open * 100 : 0;
-        });
-        stocks.sort((a, b) => b.marketCap - a.marketCap);
-        renderMcTable('us', stocks);
-        statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📊 Stooq 시세 &nbsp;|&nbsp; ${now} 기준 &nbsp;
-          <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
-      } else {
-        statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 기준값 표시 중 &nbsp;
-          <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
-      }
-      statusEl.style.display = '';
+      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 기준값 표시 중 &nbsp;
+        <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
     }
+    statusEl.style.display = '';
   }
 }
 
-// YoY(52주 수익률) 백그라운드 보강 - Finnhub metric
 // 네이버 금융 시가총액 순위 페이지 파싱
 async function fetchNaverMarketCap(sosok, page) {
   const url = `https://finance.naver.com/sise/sise_market_sum.naver?sosok=${sosok}&page=${page}`;
@@ -1969,6 +2176,28 @@ async function loadKoreaMarketCap() {
   }
 }
 
+// ── 미국 종목 YoY 보강 (Yahoo Finance 백그라운드) ────────────────────────────
+async function enrichUSYoY(stocks) {
+  const symbols = stocks.map(s => s.symbol);
+  const BATCH = 50;
+  let updated = false;
+  for (let i = 0; i < symbols.length; i += BATCH) {
+    try {
+      const results = await fetchYahooMarketCap(symbols.slice(i, i + BATCH));
+      results.forEach(q => {
+        const idx = stocks.findIndex(s => s.symbol === q.symbol);
+        const val = q['52WeekChange'] ?? q['fiftyTwoWeekChange'];
+        if (idx >= 0 && val != null) {
+          stocks[idx].yoy = val * 100;
+          updated = true;
+        }
+      });
+    } catch (_) {}
+    if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 400));
+  }
+  if (updated) renderMcTable('us', stocks);
+}
+
 // ── 한국 종목 YoY 보강 (Yahoo Finance 백그라운드) ────────────────────────────
 async function enrichKrYoY(stocks) {
   const symbols = stocks.map(s => s.market === 'KOSDAQ' ? s.symbol + '.KQ' : s.symbol + '.KS');
@@ -2016,17 +2245,25 @@ function renderMcTable(market, stocks) {
     const isTop3 = rank <= 3;
     const price  = isKR ? `₩${fmt(s.price || 0)}` : `$${(s.price || 0).toFixed(2)}`;
     const chg    = s.change ?? 0;
-    const exchangeCell = isKR && s.market
-      ? `<td><span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;white-space:nowrap">${s.market}</span></td>`
+    const isMyStock = (isKR && s.symbol === '440110') || (!isKR && s.symbol === 'NBIS');
+    const rowStyle = isMyStock
+      ? 'background:rgba(167,139,250,0.08);border-top:1px solid rgba(167,139,250,0.4);border-bottom:1px solid rgba(167,139,250,0.4);'
       : '';
+    const exLabel = isKR ? s.market : s.exchange;
+    const exchangeCell = exLabel
+      ? `<td><span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;white-space:nowrap">${exLabel}</span></td>`
+      : '<td></td>';
 
-    const logoHtml = s.logo
-      ? `<img src="https://www.google.com/s2/favicons?domain=${s.logo}&sz=64"
+    const logoSrc = s.symbol === '440110'
+      ? 'https://ssl.pstatic.net/imgstock/fn/real/logo/png/stock/Stock440110.png'
+      : s.logo ? `https://www.google.com/s2/favicons?domain=${s.logo}&sz=64` : null;
+    const logoHtml = logoSrc
+      ? `<img src="${logoSrc}"
               style="width:30px;height:30px;border-radius:6px;object-fit:contain;background:#fff;padding:3px;flex-shrink:0"
               onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'${(s.name||'?')[0]}',style:'width:30px;height:30px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0'}))">`
       : `<div style="width:30px;height:30px;border-radius:6px;background:var(--border);color:var(--muted);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(s.name||'?')[0]}</div>`;
 
-    return `<tr>
+    return `<tr style="${rowStyle}">
       <td style="text-align:center">
         <span class="rank-badge${isTop3 ? ' top3' : ''}">${rank}</span>
       </td>
