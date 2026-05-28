@@ -965,6 +965,19 @@ async function loadPortfolioPrices() {
 
   await Promise.allSettled([...krPromises, usPromise, fxPromise]);
 
+  // 새로 가져온 가격이 있으면 캐시 저장
+  const gotPrices = Object.keys(_portPrices).length > 0;
+  if (gotPrices) {
+    saveCache('portfolio_prices', { prices: { ..._portPrices }, fx: _liveFxRate });
+  } else {
+    // 전부 실패 → 캐시에서 복원
+    const c = loadCache('portfolio_prices');
+    if (c && c.prices) {
+      Object.assign(_portPrices, c.prices);
+      if (c.fx > 100) _liveFxRate = c.fx;
+    }
+  }
+
   _portLoaded = true;
   renderPortfolio();
 
@@ -972,7 +985,12 @@ async function loadPortfolioPrices() {
   const srcs = [];
   if (krItems.length)  srcs.push('네이버');
   if (usItems.length)  srcs.push('Yahoo');
-  if (statusEl) statusEl.textContent = `🔴 ${srcs.join('+')} 실시간 | $1 = ₩${fmt(Math.round(_liveFxRate))} | ${now} 기준`;
+  if (gotPrices) {
+    if (statusEl) statusEl.textContent = `🔴 ${srcs.join('+')} 실시간 | $1 = ₩${fmt(Math.round(_liveFxRate))} | ${now} 기준`;
+  } else {
+    const c = loadCache('portfolio_prices');
+    if (statusEl) statusEl.textContent = `📦 캐시 | ${cacheAge(c?._ts)} | $1 = ₩${fmt(Math.round(_liveFxRate))}`;
+  }
   if (btn) { btn.disabled = false; btn.textContent = '시세 갱신'; }
 }
 
@@ -1606,6 +1624,22 @@ function abortFetch(ms) {
   return ctrl.signal;
 }
 
+// ─── 시세 캐시 (localStorage) ────────────────────────────────────────────────
+function saveCache(key, data) {
+  try { localStorage.setItem('price_cache_' + key, JSON.stringify({ ...data, _ts: Date.now() })); } catch (_) {}
+}
+function loadCache(key) {
+  try { const r = localStorage.getItem('price_cache_' + key); return r ? JSON.parse(r) : null; } catch (_) { return null; }
+}
+function cacheAge(ts) {
+  if (!ts) return '시간 불명';
+  const m = Math.round((Date.now() - ts) / 60000);
+  if (m < 1)    return '방금 전';
+  if (m < 60)   return `${m}분 전`;
+  if (m < 1440) return `${Math.round(m / 60)}시간 전`;
+  return `${Math.round(m / 1440)}일 전`;
+}
+
 // Stooq에서 OHLCV 시세 조회 (CORS 없이 직접 호출 가능)
 async function fetchStooqPrices(items) {
   const symbols = items.map(s => s.stooq).join(',');
@@ -1874,6 +1908,12 @@ async function loadFaduDashboard() {
       const now = new Date().toLocaleTimeString('ko-KR');
       document.getElementById('fadu-status').textContent = `🔴 Yahoo Finance 실시간 | ${now} 기준`;
       yahooOk = true;
+      saveCache('fadu', {
+        price, diff: price - (q.regularMarketPreviousClose || price), changePct: change,
+        marketCap: q.marketCap, vol: q.regularMarketVolume,
+        prev: q.regularMarketPreviousClose, high52: q.fiftyTwoWeekHigh,
+        low52: q.fiftyTwoWeekLow, per: q.trailingPE, label: best.label
+      });
     }
   } catch (_) {}
 
@@ -1891,13 +1931,35 @@ async function loadFaduDashboard() {
         document.getElementById('fs-low52').textContent   = fmtKrw(naver.low52);
         document.getElementById('fs-per').textContent     = naver.per != null ? naver.per.toFixed(1) + 'x' : '-';
         applyMyPos(naver.price);
+        yahooOk = true;
 
         const now = new Date().toLocaleTimeString('ko-KR');
         document.getElementById('fadu-status').textContent = `🟡 네이버 금융 실시간 | ${now} 기준`;
-      } else {
-        document.getElementById('fadu-status').textContent = '❌ 시세 로드 실패';
+        saveCache('fadu', {
+          price: naver.price, diff: naver.change, changePct: naver.changePct,
+          marketCap: naver.marketCap, vol: naver.volume,
+          prev: naver.prevClose, high52: naver.high52, low52: naver.low52,
+          per: naver.per, label: '네이버 캐시'
+        });
       }
-    } catch (e) {
+    } catch (_) {}
+  }
+
+  // ── 3단계: 전부 실패 → localStorage 캐시 ─────────────────────────────────
+  if (!yahooOk) {
+    const c = loadCache('fadu');
+    if (c && c.price) {
+      applyPrice(c.price, c.diff, c.changePct, c.label || '캐시');
+      document.getElementById('fs-mktcap').textContent  = fmtCap(c.marketCap);
+      document.getElementById('fs-vol').textContent     = c.vol
+        ? Math.round(c.vol / 1000).toLocaleString('ko-KR') + '천주' : '-';
+      document.getElementById('fs-prev').textContent    = fmtKrw(c.prev);
+      document.getElementById('fs-high52').textContent  = fmtKrw(c.high52);
+      document.getElementById('fs-low52').textContent   = fmtKrw(c.low52);
+      document.getElementById('fs-per').textContent     = c.per != null ? c.per.toFixed(1) + 'x' : '-';
+      applyMyPos(c.price);
+      document.getElementById('fadu-status').textContent = `📦 캐시 | ${cacheAge(c._ts)} 기준`;
+    } else {
       document.getElementById('fadu-status').textContent = '❌ 시세 로드 실패';
     }
   }
@@ -2028,8 +2090,33 @@ async function loadNebiusDashboard() {
 
     applyMyPos(price);
     document.getElementById('nbis-status').textContent = `🔴 Yahoo Finance | ${new Date().toLocaleTimeString('ko-KR')} 기준`;
+    saveCache('nbis', {
+      price, diff, changePct: change,
+      marketCap: yq.marketCap, vol: yq.regularMarketVolume,
+      prev: yq.regularMarketPreviousClose, high52: yq.fiftyTwoWeekHigh,
+      low52: yq.fiftyTwoWeekLow, per: yq.trailingPE, label: best.label
+    });
   } else {
-    document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
+    // 캐시 폴백
+    const c = loadCache('nbis');
+    if (c && c.price) {
+      const sign = (c.changePct || 0) >= 0 ? '+' : '';
+      document.getElementById('nbis-cur-price').textContent = '$' + c.price.toFixed(2);
+      document.getElementById('nbis-market-state').textContent = c.label || '캐시';
+      const chgEl = document.getElementById('nbis-change');
+      chgEl.textContent = `${sign}$${Math.abs(c.diff || 0).toFixed(2)} (${sign}${(c.changePct || 0).toFixed(2)}%)`;
+      chgEl.style.color = (c.changePct || 0) >= 0 ? 'var(--green)' : 'var(--red)';
+      document.getElementById('ns-mktcap').textContent = fmtCap(c.marketCap);
+      document.getElementById('ns-vol').textContent    = c.vol ? (c.vol >= 1e6 ? (c.vol/1e6).toFixed(1)+'M주' : Math.round(c.vol/1e3)+'K주') : '-';
+      document.getElementById('ns-prev').textContent   = fmtUSD(c.prev);
+      document.getElementById('ns-high52').textContent = fmtUSD(c.high52);
+      document.getElementById('ns-low52').textContent  = fmtUSD(c.low52);
+      document.getElementById('ns-per').textContent    = c.per != null ? c.per.toFixed(1) + 'x' : 'N/A';
+      applyMyPos(c.price);
+      document.getElementById('nbis-status').textContent = `📦 캐시 | ${cacheAge(c._ts)} 기준`;
+    } else {
+      document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
+    }
   }
 
   drawNbisChart();
