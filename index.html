@@ -563,17 +563,17 @@ const HOLDINGS = [
   { name: 'MU',          sub: 'Micron Technology Inc',              currency: 'USD', avgCost: 223.98,  qty: 220,  currentPrice: 896.26  },
   { name: 'SNDK',        sub: 'Sandisk Corp',                       currency: 'USD', avgCost: 266.47,  qty: 100,  currentPrice: 1589    },
   { name: 'NBIS',        sub: 'Nebius Group NV',                    currency: 'USD', avgCost: 134.60,  qty: 400,  currentPrice: 207.89  },
-  { name: '파두',         sub: '440110',                             currency: 'KRW', avgCost: 98115,   qty: 1300, currentPrice: 115600  },
-  { name: 'KODEX AI전력핵심설비', sub: '487240',                    currency: 'KRW', avgCost: 52123,   qty: 800,  currentPrice: 52005   },
-  { name: '두산에너빌리티', sub: '034020',                           currency: 'KRW', avgCost: 69014,   qty: 300,  currentPrice: 109700  },
-  { name: 'KODEX 미국나스닥100', sub: '379810',                     currency: 'KRW', avgCost: 20684,   qty: 1005, currentPrice: 29950   },
-  { name: 'KODEX 미국S&P500',   sub: '379800',                     currency: 'KRW', avgCost: 19480,   qty: 1005, currentPrice: 25575   },
+  { name: '파두',         sub: '440110',  yahooSym: '440110.KQ',    currency: 'KRW', avgCost: 98115,   qty: 1300, currentPrice: 115600  },
+  { name: 'KODEX AI전력핵심설비', sub: '487240', yahooSym: '487240.KS', currency: 'KRW', avgCost: 52123, qty: 800, currentPrice: 52005 },
+  { name: '두산에너빌리티', sub: '034020', yahooSym: '034020.KS',   currency: 'KRW', avgCost: 69014,   qty: 300,  currentPrice: 109700  },
+  { name: 'KODEX 미국나스닥100', sub: '379810', yahooSym: '379810.KS', currency: 'KRW', avgCost: 20684, qty: 1005, currentPrice: 29950 },
+  { name: 'KODEX 미국S&P500',   sub: '379800', yahooSym: '379800.KS', currency: 'KRW', avgCost: 19480, qty: 1005, currentPrice: 25575 },
   { name: 'SOL AI반도체TOP2플러스', sub: '0167A0',                  currency: 'KRW', avgCost: 23726,   qty: 1000, currentPrice: 23480   },
-  { name: 'TIGER 구리실물',      sub: '160580',                     currency: 'KRW', avgCost: 16341,   qty: 1045, currentPrice: 16895   },
-  { name: 'ACE KRX금현물',       sub: '411060',                     currency: 'KRW', avgCost: 26610,   qty: 434,  currentPrice: 29805   },
-  { name: '산일전기',             sub: '062040',                     currency: 'KRW', avgCost: 260000,  qty: 20,   currentPrice: 267500  },
+  { name: 'TIGER 구리실물',  sub: '160580', yahooSym: '160580.KS', currency: 'KRW', avgCost: 16341,   qty: 1045, currentPrice: 16895   },
+  { name: 'ACE KRX금현물',   sub: '411060', yahooSym: '411060.KS', currency: 'KRW', avgCost: 26610,   qty: 434,  currentPrice: 29805   },
+  { name: '산일전기',        sub: '062040', yahooSym: '062040.KS', currency: 'KRW', avgCost: 260000,  qty: 20,   currentPrice: 267500  },
   { name: 'TIME 미국나스닥100채권혼합50액티브', sub: '0019K0',      currency: 'KRW', avgCost: 11823,   qty: 190,  currentPrice: 14390   },
-  { name: '인텔리안테크',         sub: '189300',                     currency: 'KRW', avgCost: 150000,  qty: 10,   currentPrice: 147000  },
+  { name: '인텔리안테크',    sub: '189300', yahooSym: '189300.KQ', currency: 'KRW', avgCost: 150000,  qty: 10,   currentPrice: 147000  },
   { name: '원화',         sub: 'KRW',                               currency: 'KRW', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 527923 },
   { name: '달러',         sub: 'USD',                               currency: 'USD', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 106.35 },
 ];
@@ -937,9 +937,26 @@ async function loadPortfolioPrices() {
   if (btn) { btn.disabled = true; btn.textContent = '조회 중...'; }
   if (statusEl) statusEl.textContent = '⏳ 시세 조회 중...';
 
-  // 한국 종목: Naver Finance 병렬 조회
   const krItems = HOLDINGS.filter(h => h.currency === 'KRW' && h.qty != null);
-  const krPromises = krItems.map(async h => {
+
+  // 한국 종목 (Yahoo 심볼 있는 것): Cloudflare Worker → Yahoo Finance 배치 조회
+  const krYahooItems = krItems.filter(h => h.yahooSym);
+  const krYahooPromise = (async () => {
+    if (!krYahooItems.length) return;
+    try {
+      const quotes = await fetchYahooMarketCap(krYahooItems.map(h => h.yahooSym));
+      quotes.forEach(q => {
+        const item = krYahooItems.find(h => h.yahooSym === q.symbol);
+        if (!item) return;
+        const best = getBestYahooPrice(q);
+        if (best.price) _portPrices[item.name] = best.price;
+      });
+    } catch (_) {}
+  })();
+
+  // 한국 종목 (Yahoo 심볼 없는 것, 펀드코드 등): Naver Finance fallback
+  const krNaverItems = krItems.filter(h => !h.yahooSym);
+  const krNaverPromises = krNaverItems.map(async h => {
     try {
       const d = await fetchNaverStockDetail(h.sub);
       if (d.price != null) _portPrices[h.name] = d.price;
@@ -963,7 +980,7 @@ async function loadPortfolioPrices() {
   // 환율도 병렬 조회
   const fxPromise = fetchLiveFxRate().then(r => { _liveFxRate = r; });
 
-  await Promise.allSettled([...krPromises, usPromise, fxPromise]);
+  await Promise.allSettled([krYahooPromise, ...krNaverPromises, usPromise, fxPromise]);
 
   // 새로 가져온 가격이 있으면 캐시 저장
   const gotPrices = Object.keys(_portPrices).length > 0;
@@ -1319,6 +1336,7 @@ const KR_BASE = [
   {symbol:'003410',name:'쌍용씨앤이',     market:'KOSPI', marketCap:1.50e12, stooq:'003410.kw', logo:'sscnc.co.kr'},
   {symbol:'238120',name:'SFA반도체',      market:'KOSDAQ',marketCap:1.50e12, stooq:'238120.kq', logo:'sfasemi.com'},
   {symbol:'064760',name:'티씨케이',        market:'KOSDAQ',marketCap:1.50e12, stooq:'064760.kq', logo:'tck.co.kr'},
+  {symbol:'440110',name:'파두',            market:'KOSDAQ',marketCap:1.00e12, stooq:'440110.kq', logo:'fadu.io'},
 ].sort((a, b) => b.marketCap - a.marketCap);
 
 // 미국 시가총액 상위 (순위·시가총액은 2025년 상반기 기준 내장값, USD)
@@ -2318,24 +2336,74 @@ function isKrETF(name) {
   return KR_ETF_PREFIXES.some(p => u === p || u.startsWith(p + ' '));
 }
 
+// 한국 시총 순위 표 + 파두 순위 업데이트 공통 헬퍼
+function applyKrStocksToUI(stocks, statusHtml) {
+  renderMcTable('kr', stocks);
+  document.getElementById('mc-kr-table').style.display = '';
+  const faduAllIdx = stocks.findIndex(s => s.symbol === '440110');
+  if (faduAllIdx >= 0) {
+    const rank = faduAllIdx + 1;
+    document.getElementById('fadu-rank-overall').innerHTML = `${rank}위${getRankArrow('fadu_kr_overall', rank)}`;
+    const kdOnly = stocks.filter(s => s.market === 'KOSDAQ');
+    const kdIdx  = kdOnly.findIndex(s => s.symbol === '440110');
+    if (kdIdx >= 0) {
+      const kdr = kdIdx + 1;
+      document.getElementById('fadu-rank-kosdaq').innerHTML = `${kdr}위${getRankArrow('fadu_kr_kosdaq', kdr)}`;
+    }
+  }
+  const statusEl = document.getElementById('mc-kr-status');
+  statusEl.innerHTML = statusHtml;
+  statusEl.style.display = '';
+}
+
 async function loadKoreaMarketCap() {
   const statusEl = document.getElementById('mc-kr-status');
-  const tableEl = document.getElementById('mc-kr-table');
+  const tableEl  = document.getElementById('mc-kr-table');
   statusEl.style.display = '';
-  statusEl.innerHTML = '⏳ 네이버 금융에서 데이터 조회 중...';
+  statusEl.innerHTML = '⏳ 데이터 조회 중...';
   tableEl.style.display = 'none';
+
+  // 즉시 내장 기준 데이터 표시
+  renderMcTable('kr', KR_BASE.map(s => ({ ...s, price: 0, change: 0 })));
+  tableEl.style.display = '';
+  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Yahoo Finance 실시간 시세 조회 중...</div>';
+
+  // ── 1순위: Cloudflare Worker → Yahoo Finance (KR_BASE 배치 조회) ─────────────
+  const yahooSymbols = KR_BASE.map(s => s.market === 'KOSDAQ' ? s.symbol + '.KQ' : s.symbol + '.KS');
+  const BATCH = 20;
+  const allYahoo = [];
+  for (let i = 0; i < yahooSymbols.length; i += BATCH) {
+    try {
+      const res = await fetchYahooMarketCap(yahooSymbols.slice(i, i + BATCH));
+      allYahoo.push(...res);
+    } catch (_) {}
+    if (i + BATCH < yahooSymbols.length) await new Promise(r => setTimeout(r, 300));
+  }
+
+  if (allYahoo.length > 0) {
+    const yMap = {};
+    allYahoo.forEach(q => { yMap[q.symbol] = q; });
+    const stocks = KR_BASE.map((s, i) => ({
+      ...s,
+      price:  yMap[yahooSymbols[i]]?.regularMarketPrice || 0,
+      change: yMap[yahooSymbols[i]]?.regularMarketChangePercent || 0,
+    })).sort((a, b) => b.marketCap - a.marketCap);
+
+    const now = new Date().toLocaleTimeString('ko-KR');
+    const krCount = stocks.filter(s => s.market === 'KOSPI').length;
+    const kdCount = stocks.filter(s => s.market === 'KOSDAQ').length;
+    applyKrStocksToUI(stocks,
+      `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개</div>`);
+    return;
+  }
+
+  // ── 2순위: Yahoo 실패 → 네이버 금융 fallback ─────────────────────────────────
+  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ 네이버 금융 조회 중 (fallback)...</div>';
   try {
-    // KOSPI 5페이지(~250개) + KOSDAQ 2페이지(~100개) 병렬 조회 후
-    // ETF 제거하고 시가총액 기준으로 합산 정렬 → 상위 200개
-    // Promise.allSettled: 일부 페이지 실패해도 성공 데이터로 렌더링
     const settled = await Promise.allSettled([
-      fetchNaverMarketCap(0, 1),
-      fetchNaverMarketCap(0, 2),
-      fetchNaverMarketCap(0, 3),
-      fetchNaverMarketCap(0, 4),
-      fetchNaverMarketCap(0, 5),
-      fetchNaverMarketCap(1, 1),
-      fetchNaverMarketCap(1, 2),
+      fetchNaverMarketCap(0, 1), fetchNaverMarketCap(0, 2), fetchNaverMarketCap(0, 3),
+      fetchNaverMarketCap(0, 4), fetchNaverMarketCap(0, 5),
+      fetchNaverMarketCap(1, 1), fetchNaverMarketCap(1, 2),
     ]);
     const [kp1, kp2, kp3, kp4, kp5, kd1, kd2] = settled.map(r => r.status === 'fulfilled' ? r.value : []);
     const kospiPool  = [...kp1, ...kp2, ...kp3, ...kp4, ...kp5].filter(s => !isKrETF(s.name));
@@ -2345,21 +2413,6 @@ async function loadKoreaMarketCap() {
     const failedCount = settled.filter(r => r.status === 'rejected' || (r.value && r.value.length === 0)).length;
     if (allStocks.length === 0) throw new Error('데이터 없음');
 
-    // 파두 순위: slice 전 전체 기준 (ETF 필터 적용, 표와 동일 데이터)
-    const faduAllIdx = allSorted.findIndex(s => s.symbol === '440110');
-    if (faduAllIdx >= 0) {
-      const faduAllRank = faduAllIdx + 1;
-      document.getElementById('fadu-rank-overall').innerHTML = `${faduAllRank}위${getRankArrow('fadu_kr_overall', faduAllRank)}`;
-      const kdOnly    = allSorted.filter(s => s.market === 'KOSDAQ');
-      const faduKdIdx = kdOnly.findIndex(s => s.symbol === '440110');
-      if (faduKdIdx >= 0) {
-        const faduKdRank = faduKdIdx + 1;
-        document.getElementById('fadu-rank-kosdaq').innerHTML = `${faduKdRank}위${getRankArrow('fadu_kr_kosdaq', faduKdRank)}`;
-      }
-    }
-
-    renderMcTable('kr', allStocks);
-    tableEl.style.display = '';
     const now = new Date().toLocaleTimeString('ko-KR');
     const krCount = allStocks.filter(s => s.market === 'KOSPI').length;
     const kdCount = allStocks.filter(s => s.market === 'KOSDAQ').length;
@@ -2367,10 +2420,10 @@ async function loadKoreaMarketCap() {
       ? ` &nbsp;<span style="color:var(--orange)">⚠ ${failedCount}개 페이지 미로드</span>
           <button onclick="retryMc('kr')" style="margin-left:6px;padding:2px 8px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px">재시도</button>`
       : '';
-    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개${warnHtml}</div>`;
-
+    applyKrStocksToUI(allStocks,
+      `<div style="font-size:12px;color:var(--muted)">🟡 네이버 금융 (fallback) &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개${warnHtml}</div>`);
   } catch (e) {
-    statusEl.innerHTML = `<div style="color:var(--red)">❌ 네이버 금융 데이터 조회 실패: ${e.message}</div>
+    statusEl.innerHTML = `<div style="color:var(--red)">❌ 데이터 조회 실패: ${e.message}</div>
       <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
     statusEl.style.display = '';
   }
