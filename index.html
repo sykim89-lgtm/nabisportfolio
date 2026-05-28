@@ -2485,7 +2485,7 @@ function renderMcTable(market, stocks) {
     const price  = isKR ? `₩${fmt(s.price || 0)}` : `$${(s.price || 0).toFixed(2)}`;
     const chg    = s.change ?? 0;
     const isMyStock = (isKR && s.symbol === '440110') || (!isKR && s.symbol === 'NBIS');
-    const rankArrow = isMyStock ? getRankArrow(isKR ? 'fadu_kr' : 'nbis_us', rank) : '';
+    const rankArrow = isMyStock ? getRankArrow(isKR ? 'fadu_kr_overall' : 'nbis_us_overall', rank) : '';
     const rowStyle = isMyStock
       ? 'background:rgba(139,92,246,0.18);border-top:2px solid rgba(139,92,246,0.7);border-bottom:2px solid rgba(139,92,246,0.7);'
       : '';
