@@ -2291,11 +2291,28 @@ async function loadKoreaMarketCap() {
 
 // ── 전일대비 순위 변동 화살표 (localStorage 기반) ──────────────────────────────
 function getRankArrow(key, currentRank) {
-  const stored = JSON.parse(localStorage.getItem(`rank_${key}`) || 'null');
-  const today  = new Date().toDateString();
-  localStorage.setItem(`rank_${key}`, JSON.stringify({ rank: currentRank, date: today }));
-  if (!stored || stored.date === today) return '';
-  const delta = stored.rank - currentRank; // 양수 = 순위 상승 (숫자 감소)
+  const today   = new Date().toDateString();
+  const dateKey = `rank_date_${key}`;
+  const todayK  = `rank_today_${key}`;
+  const prevK   = `rank_prev_${key}`;
+
+  const storedDate = localStorage.getItem(dateKey);
+
+  if (storedDate !== today) {
+    // 날짜가 바뀌면: 오늘 순위 → 전일 순위로 이동
+    const oldToday = parseInt(localStorage.getItem(todayK));
+    if (!isNaN(oldToday)) localStorage.setItem(prevK, String(oldToday));
+    localStorage.setItem(todayK, String(currentRank));
+    localStorage.setItem(dateKey, today);
+  } else {
+    // 당일 재로드: 오늘 순위만 갱신 (전일 순위는 유지)
+    localStorage.setItem(todayK, String(currentRank));
+  }
+
+  const prevRank = parseInt(localStorage.getItem(prevK));
+  if (isNaN(prevRank)) return ''; // 전일 기록 없음 (첫 방문)
+
+  const delta = prevRank - currentRank; // 양수 = 순위 상승
   if (delta > 0) return `<span style="color:#10b981;font-size:13px;font-weight:800;margin-left:5px">▲${delta}</span>`;
   if (delta < 0) return `<span style="color:#ef4444;font-size:13px;font-weight:800;margin-left:5px">▼${Math.abs(delta)}</span>`;
   return `<span style="color:var(--muted);font-size:13px;margin-left:5px">—</span>`;
