@@ -2383,11 +2383,20 @@ async function loadKoreaMarketCap() {
   if (allYahoo.length > 0) {
     const yMap = {};
     allYahoo.forEach(q => { yMap[q.symbol] = q; });
-    const stocks = KR_BASE.map((s, i) => ({
-      ...s,
-      price:  yMap[yahooSymbols[i]]?.regularMarketPrice || 0,
-      change: yMap[yahooSymbols[i]]?.regularMarketChangePercent || 0,
-    })).sort((a, b) => b.marketCap - a.marketCap);
+    const stocks = KR_BASE.map((s, i) => {
+      const q = yMap[yahooSymbols[i]];
+      // Yahoo 시총이 KRW인지 USD인지 판별:
+      // KRW면 KR_BASE(원화 기준)와 비슷한 자릿수 → ratio < 500
+      // USD면 환율(~1350) 만큼 작아서 ratio > 500
+      const yMktCap = q?.marketCap;
+      const useYMktCap = yMktCap && yMktCap > 0 && (s.marketCap / yMktCap) < 500;
+      return {
+        ...s,
+        marketCap: useYMktCap ? yMktCap : s.marketCap,
+        price:     q?.regularMarketPrice || 0,
+        change:    q?.regularMarketChangePercent || 0,
+      };
+    }).sort((a, b) => b.marketCap - a.marketCap);
 
     const now = new Date().toLocaleTimeString('ko-KR');
     const krCount = stocks.filter(s => s.market === 'KOSPI').length;
