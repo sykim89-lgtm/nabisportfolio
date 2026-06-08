@@ -2366,9 +2366,38 @@ async function loadKoreaMarketCap() {
   // 즉시 내장 기준 데이터 표시 (skipArrow=true: localStorage에 임시 순위 기록 방지)
   renderMcTable('kr', KR_BASE.map(s => ({ ...s, price: 0, change: 0 })), true);
   tableEl.style.display = '';
-  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Yahoo Finance 실시간 시세 조회 중...</div>';
+  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ 네이버 금융 조회 중...</div>';
 
-  // ── 1순위: Cloudflare Worker → Yahoo Finance (KR_BASE 배치 조회) ─────────────
+  // ── 1순위: 네이버 금융 (KOSPI 5페이지 + KOSDAQ 2페이지, 전체 종목) ────────────
+  try {
+    const settled = await Promise.allSettled([
+      fetchNaverMarketCap(0, 1), fetchNaverMarketCap(0, 2), fetchNaverMarketCap(0, 3),
+      fetchNaverMarketCap(0, 4), fetchNaverMarketCap(0, 5),
+      fetchNaverMarketCap(1, 1), fetchNaverMarketCap(1, 2),
+    ]);
+    const [kp1, kp2, kp3, kp4, kp5, kd1, kd2] = settled.map(r => r.status === 'fulfilled' ? r.value : []);
+    const kospiPool  = [...kp1, ...kp2, ...kp3, ...kp4, ...kp5].filter(s => !isKrETF(s.name));
+    const kosdaqPool = [...kd1, ...kd2].filter(s => !isKrETF(s.name));
+    const allSorted  = [...kospiPool, ...kosdaqPool].sort((a, b) => b.marketCap - a.marketCap);
+    const allStocks  = allSorted.slice(0, 200);
+    const failedCount = settled.filter(r => r.status === 'rejected' || (r.value && r.value.length === 0)).length;
+
+    if (allStocks.length > 0) {
+      const now = new Date().toLocaleTimeString('ko-KR');
+      const krCount = allStocks.filter(s => s.market === 'KOSPI').length;
+      const kdCount = allStocks.filter(s => s.market === 'KOSDAQ').length;
+      const warnHtml = failedCount > 0
+        ? ` &nbsp;<span style="color:var(--orange)">⚠ ${failedCount}개 페이지 미로드</span>
+            <button onclick="retryMc('kr')" style="margin-left:6px;padding:2px 8px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px">재시도</button>`
+        : '';
+      applyKrStocksToUI(allStocks,
+        `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개${warnHtml}</div>`);
+      return;
+    }
+  } catch (_) {}
+
+  // ── 2순위: 네이버 실패 → Cloudflare Worker → Yahoo Finance (KR_BASE) ──────────
+  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Yahoo Finance 조회 중 (fallback)...</div>';
   const yahooSymbols = KR_BASE.map(s => s.market === 'KOSDAQ' ? s.symbol + '.KQ' : s.symbol + '.KS');
   const BATCH = 20;
   const allYahoo = [];
@@ -2385,10 +2414,8 @@ async function loadKoreaMarketCap() {
     allYahoo.forEach(q => { yMap[q.symbol] = q; });
     const stocks = KR_BASE.map((s, i) => {
       const q = yMap[yahooSymbols[i]];
-      // Yahoo 시총이 KRW인지 USD인지 판별:
-      // KRW면 KR_BASE(원화 기준)와 비슷한 자릿수 → ratio < 500
-      // USD면 환율(~1350) 만큼 작아서 ratio > 500
       const yMktCap = q?.marketCap;
+      // KRW면 KR_BASE와 자릿수 유사(ratio<500), USD면 환율만큼 작아서 ratio>500
       const useYMktCap = yMktCap && yMktCap > 0 && (s.marketCap / yMktCap) < 500;
       return {
         ...s,
@@ -2402,40 +2429,14 @@ async function loadKoreaMarketCap() {
     const krCount = stocks.filter(s => s.market === 'KOSPI').length;
     const kdCount = stocks.filter(s => s.market === 'KOSDAQ').length;
     applyKrStocksToUI(stocks,
-      `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개</div>`);
+      `<div style="font-size:12px;color:var(--muted)">🟡 Yahoo Finance (fallback) &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개</div>`);
     return;
   }
 
-  // ── 2순위: Yahoo 실패 → 네이버 금융 fallback ─────────────────────────────────
-  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ 네이버 금융 조회 중 (fallback)...</div>';
-  try {
-    const settled = await Promise.allSettled([
-      fetchNaverMarketCap(0, 1), fetchNaverMarketCap(0, 2), fetchNaverMarketCap(0, 3),
-      fetchNaverMarketCap(0, 4), fetchNaverMarketCap(0, 5),
-      fetchNaverMarketCap(1, 1), fetchNaverMarketCap(1, 2),
-    ]);
-    const [kp1, kp2, kp3, kp4, kp5, kd1, kd2] = settled.map(r => r.status === 'fulfilled' ? r.value : []);
-    const kospiPool  = [...kp1, ...kp2, ...kp3, ...kp4, ...kp5].filter(s => !isKrETF(s.name));
-    const kosdaqPool = [...kd1, ...kd2].filter(s => !isKrETF(s.name));
-    const allSorted  = [...kospiPool, ...kosdaqPool].sort((a, b) => b.marketCap - a.marketCap);
-    const allStocks  = allSorted.slice(0, 200);
-    const failedCount = settled.filter(r => r.status === 'rejected' || (r.value && r.value.length === 0)).length;
-    if (allStocks.length === 0) throw new Error('데이터 없음');
-
-    const now = new Date().toLocaleTimeString('ko-KR');
-    const krCount = allStocks.filter(s => s.market === 'KOSPI').length;
-    const kdCount = allStocks.filter(s => s.market === 'KOSDAQ').length;
-    const warnHtml = failedCount > 0
-      ? ` &nbsp;<span style="color:var(--orange)">⚠ ${failedCount}개 페이지 미로드</span>
-          <button onclick="retryMc('kr')" style="margin-left:6px;padding:2px 8px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px">재시도</button>`
-      : '';
-    applyKrStocksToUI(allStocks,
-      `<div style="font-size:12px;color:var(--muted)">🟡 네이버 금융 (fallback) &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개${warnHtml}</div>`);
-  } catch (e) {
-    statusEl.innerHTML = `<div style="color:var(--red)">❌ 데이터 조회 실패: ${e.message}</div>
-      <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
-    statusEl.style.display = '';
-  }
+  // ── 전부 실패 ─────────────────────────────────────────────────────────────────
+  statusEl.innerHTML = `<div style="color:var(--red)">❌ 데이터 조회 실패</div>
+    <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
+  statusEl.style.display = '';
 }
 
 // ── 전일대비 순위 변동 화살표 (localStorage 기반) ──────────────────────────────
