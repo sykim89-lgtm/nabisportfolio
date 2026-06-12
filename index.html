@@ -2004,72 +2004,66 @@ async function loadUSMarketCap() {
   const tableEl  = document.getElementById('mc-us-table');
   statusEl.style.display = '';
   statusEl.innerHTML = '⏳ 시가총액 순위 조회 중...';
-  tableEl.style.display = 'none';
 
   const exMap = { 'NMS':'NASDAQ','NGM':'NASDAQ','NCM':'NASDAQ','NasdaqGS':'NASDAQ','NasdaqCM':'NASDAQ','NasdaqNM':'NASDAQ',
                   'NYQ':'NYSE','NYSE':'NYSE','PCX':'NYSE Arca','ARCA':'NYSE Arca','ASE':'NYSE American','AMEX':'NYSE American' };
 
-  // 로고 참조용 (기존 US_BASE 활용)
+  // 로고 참조용
   const logoMap = {};
   US_BASE.forEach(s => { if (s.logo) logoMap[s.symbol] = s.logo; });
 
+  // 기존 US_BASE 즉시 표시 (항상 뭔가 보이도록)
+  const baseStocks = US_BASE.map(s => ({ ...s, price: 0, change: 0, yoy: null }))
+                             .sort((a, b) => b.marketCap - a.marketCap);
+  renderMcTable('us', baseStocks);
+  tableEl.style.display = '';
+
   const screenerBody = (offset) => ({
-    offset,
-    size: 100,
-    sortField: 'intradaymarketcap',
-    sortType: 'DESC',
-    quoteType: 'EQUITY',
-    topOperator: 'AND',
-    query: {
-      operator: 'AND',
-      operands: [{ operator: 'or', operands: [
-        { operator: 'EQ', operands: ['exchange', 'NMS'] },
-        { operator: 'EQ', operands: ['exchange', 'NYQ'] },
-        { operator: 'EQ', operands: ['exchange', 'NGM'] },
-        { operator: 'EQ', operands: ['exchange', 'NCM'] },
-        { operator: 'EQ', operands: ['exchange', 'PCX'] },
-      ]}]
-    },
+    offset, size: 100,
+    sortField: 'intradaymarketcap', sortType: 'DESC',
+    quoteType: 'EQUITY', topOperator: 'AND',
+    query: { operator: 'AND', operands: [{ operator: 'or', operands: [
+      { operator: 'EQ', operands: ['exchange', 'NMS'] },
+      { operator: 'EQ', operands: ['exchange', 'NYQ'] },
+      { operator: 'EQ', operands: ['exchange', 'NGM'] },
+      { operator: 'EQ', operands: ['exchange', 'NCM'] },
+      { operator: 'EQ', operands: ['exchange', 'PCX'] },
+    ]}]},
     userId: '', userIdType: 'guid'
   });
 
+  // 스크리너 시도
+  let allQuotes = [];
   try {
-    // 상위 300개 (3배치 × 100)
-    let allQuotes = [];
     for (let offset = 0; offset < 300; offset += 100) {
-      try {
-        const res = await fetch(`${WORKER_URL}/v1/finance/screener`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(screenerBody(offset)),
-          signal: abortFetch(15000)
-        });
-        if (!res.ok) continue;
-        const json = await res.json();
-        const quotes = json?.finance?.result?.[0]?.quotes || [];
-        allQuotes = [...allQuotes, ...quotes];
-        if (quotes.length < 100) break;
-      } catch (_) {}
-      if (offset + 100 < 300) await new Promise(r => setTimeout(r, 300));
+      const res = await fetch(`${WORKER_URL}/v1/finance/screener`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(screenerBody(offset)),
+        signal: abortFetch(15000)
+      });
+      if (!res.ok) { console.warn('screener HTTP', res.status); break; }
+      const json = await res.json();
+      console.log('screener response', JSON.stringify(json).slice(0, 300));
+      const quotes = json?.finance?.result?.[0]?.quotes || [];
+      allQuotes = [...allQuotes, ...quotes];
+      if (quotes.length < 100) break;
+      await new Promise(r => setTimeout(r, 300));
     }
+  } catch (e) { console.error('screener error', e); }
 
-    if (allQuotes.length === 0) throw new Error('스크리너 결과 없음');
+  if (allQuotes.length > 0) {
+    const finalStocks = allQuotes.map(q => ({
+      symbol:    q.symbol,
+      name:      q.shortName || q.longName || q.symbol,
+      marketCap: q.marketCap || 0,
+      price:     q.regularMarketPrice || 0,
+      change:    q.regularMarketChangePercent || 0,
+      yoy:       null,
+      exchange:  exMap[q.exchange] || q.exchange || '',
+      logo:      logoMap[q.symbol] || null,
+    })).sort((a, b) => b.marketCap - a.marketCap);
 
-    const finalStocks = allQuotes.map(q => {
-      const best = getBestYahooPrice(q);
-      return {
-        symbol:    q.symbol,
-        name:      q.shortName || q.longName || q.symbol,
-        marketCap: q.marketCap || 0,
-        price:     best.price,
-        change:    best.change,
-        yoy:       q['52WeekChange'] != null ? q['52WeekChange'] * 100 : null,
-        exchange:  exMap[q.exchange] || q.exchange || '',
-        logo:      logoMap[q.symbol] || null,
-      };
-    }).sort((a, b) => b.marketCap - a.marketCap);
-
-    // NBIS 순위 계산
     const nbisAllIdx = finalStocks.findIndex(s => s.symbol === 'NBIS');
     if (nbisAllIdx >= 0) {
       document.getElementById('nbis-rank-overall').textContent = `${nbisAllIdx + 1}위`;
@@ -2079,42 +2073,33 @@ async function loadUSMarketCap() {
     }
 
     renderMcTable('us', finalStocks);
-    tableEl.style.display = '';
     const now = new Date().toLocaleTimeString('ko-KR');
-    const label = [...new Set(allQuotes.map(q => getBestYahooPrice(q).label).filter(Boolean))].join('/') || '실시간';
-    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 (${label}) &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; 미국 전체 시총 상위 ${finalStocks.length}개</div>`;
-    statusEl.style.display = '';
-
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; 미국 전체 시총 상위 ${finalStocks.length}개</div>`;
     enrichUSYoY(finalStocks);
+    return;
+  }
 
-  } catch (e) {
-    // 폴백: 기존 하드코딩 방식
-    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⚠️ 스크리너 실패, 기존 방식으로 조회 중...</div>';
-    const symbols = US_BASE.map(s => s.symbol);
-    const results = await fetchYahooMarketCap(symbols);
-    const now = new Date().toLocaleTimeString('ko-KR');
-    if (results.length > 0) {
-      const yahooMap = {};
-      results.forEach(q => { yahooMap[q.symbol] = q; });
-      const fallbackStocks = US_BASE.map(s => {
-        const q = yahooMap[s.symbol];
-        if (!q) return { ...s, price: 0, change: 0, yoy: null };
-        const best = getBestYahooPrice(q);
-        return { ...s, marketCap: q.marketCap || s.marketCap, price: best.price, change: best.change,
-                 yoy: q['52WeekChange'] != null ? q['52WeekChange'] * 100 : null,
-                 exchange: q.exchange ? (exMap[q.exchange] || s.exchange || '') : (s.exchange || '') };
-      }).sort((a, b) => b.marketCap - a.marketCap);
-      renderMcTable('us', fallbackStocks);
-      tableEl.style.display = '';
-      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📊 Yahoo Finance &nbsp;|&nbsp; ${now} 기준 (폴백)</div>`;
-      enrichUSYoY(fallbackStocks);
-    } else {
-      renderMcTable('us', US_BASE.map(s => ({ ...s, price: 0, change: 0, yoy: null })).sort((a,b) => b.marketCap - a.marketCap));
-      tableEl.style.display = '';
-      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 기준값 표시 중 &nbsp;
-        <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
-    }
-    statusEl.style.display = '';
+  // 스크리너 실패 → 기존 Yahoo v7 quote 폴백
+  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⚠️ 스크리너 실패, 기존 방식으로 조회 중...</div>';
+  const results = await fetchYahooMarketCap(US_BASE.map(s => s.symbol));
+  const now = new Date().toLocaleTimeString('ko-KR');
+  if (results.length > 0) {
+    const yahooMap = {};
+    results.forEach(q => { yahooMap[q.symbol] = q; });
+    const fallbackStocks = US_BASE.map(s => {
+      const q = yahooMap[s.symbol];
+      if (!q) return { ...s, price: 0, change: 0, yoy: null };
+      const best = getBestYahooPrice(q);
+      return { ...s, marketCap: q.marketCap || s.marketCap, price: best.price, change: best.change,
+               yoy: null, exchange: q.exchange ? (exMap[q.exchange] || s.exchange || '') : (s.exchange || '') };
+    }).sort((a, b) => b.marketCap - a.marketCap);
+    renderMcTable('us', fallbackStocks);
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📊 Yahoo Finance (폴백) &nbsp;|&nbsp; ${now} 기준
+      <button onclick="retryMc('us')" style="margin-left:8px;padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
+    enrichUSYoY(fallbackStocks);
+  } else {
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 기준값 표시 중
+      <button onclick="retryMc('us')" style="margin-left:8px;padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
   }
 }
 
