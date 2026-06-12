@@ -142,9 +142,8 @@
     th {
       text-align: right;
       padding: 9px 14px;
-      color: var(--text);
-      font-weight: 600;
-      font-size: 15px;
+      color: var(--muted);
+      font-weight: 500;
       border-bottom: 1px solid var(--border);
     }
     th:first-child { text-align: left; }
@@ -190,10 +189,8 @@
       gap: 14px;
       margin-bottom: 22px;
     }
-    .port-table { font-size: 15px; }
-    .port-table td { font-size: 14px; font-weight: 600; }
-    .port-table td:first-child { font-weight: 600; }
-    .port-table .sub { font-size: 13px; color: var(--muted); margin-top: 2px; font-weight: 400; }
+    .port-table td:first-child { font-weight: 500; }
+    .port-table .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .weight-bar {
       height: 4px;
       background: var(--border);
@@ -236,12 +233,12 @@
     .mc-table td { font-size: 13px; }
     /* ── 파두 대시보드 ──────────────────────────────── */
     .fadu-stat { background:var(--border);border-radius:8px;padding:10px 12px; }
-    .fadu-stat-label { font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
-    .fadu-stat-val { font-size:17px;font-weight:600; }
+    .fadu-stat-label { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
+    .fadu-stat-val { font-size:14px;font-weight:600; }
     .fadu-rank-box { flex:1;background:var(--border);border-radius:10px;padding:7px 14px;text-align:center; }
-    .fadu-rank-title { font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px; }
-    .fadu-rank-num { font-size:24px;font-weight:400;color:var(--text);line-height:1; }
-    .fadu-rank-sub { font-size:13px;color:var(--muted);margin-top:4px; }
+    .fadu-rank-title { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px; }
+    .fadu-rank-num { font-size:22px;font-weight:400;color:var(--text);line-height:1; }
+    .fadu-rank-sub { font-size:11px;color:var(--muted);margin-top:4px; }
 
     .rank-badge {
       display: inline-block;
@@ -345,28 +342,19 @@
 <div id="tab-portfolio" style="display:none">
 
   <div class="chart-card">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
-      <div>
-        <div class="chart-title">보유 종목</div>
-        <div class="chart-subtitle">평가금액 기준 정렬</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span id="port-status" style="font-size:13px;color:var(--muted)"></span>
-        <button class="btn" id="port-refresh-btn" onclick="loadPortfolioPrices()"
-          style="padding:6px 14px;font-size:14px;background:var(--card);color:var(--text);border:1px solid var(--border)">시세 갱신</button>
-      </div>
-    </div>
+    <div class="chart-title">보유 종목</div>
+    <div class="chart-subtitle">평가금액 기준 정렬</div>
     <table id="t-portfolio" class="port-table">
       <thead>
         <tr>
-          <th style="text-align:left;font-size:15px;font-weight:600;color:var(--text)">종목명</th>
-          <th style="font-size:15px;font-weight:600;color:var(--text)">평단가</th>
-          <th style="font-size:15px;font-weight:600;color:var(--text)">보유수량</th>
-          <th style="font-size:15px;font-weight:600;color:var(--text)">현재가</th>
-          <th style="font-size:15px;font-weight:600;color:var(--text)">평가금액</th>
-          <th style="font-size:15px;font-weight:600;color:var(--text)">보유비중</th>
-          <th style="font-size:15px;font-weight:600;color:var(--text)">평가손익</th>
-          <th style="font-size:15px;font-weight:600;color:var(--text)">평가수익률</th>
+          <th style="text-align:left">종목명</th>
+          <th>평단가</th>
+          <th>보유수량</th>
+          <th>현재가</th>
+          <th>평가금액</th>
+          <th>보유비중</th>
+          <th>평가손익</th>
+          <th>평가수익률</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -385,15 +373,15 @@
              style="width:44px;height:44px;border-radius:10px;background:#fff;padding:4px;flex-shrink:0;object-fit:contain"
              onerror="this.outerHTML='<div style=&quot;width:44px;height:44px;border-radius:10px;background:var(--accent);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0&quot;>파</div>'">
         <div style="flex:1;min-width:0">
-          <div style="font-size:19px;font-weight:700;display:flex;align-items:center;gap:6px">
+          <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:6px">
             파두
-            <span id="fadu-market-state" style="font-size:13px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
+            <span id="fadu-market-state" style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
           </div>
-          <div style="font-size:14px;color:var(--muted);margin-top:2px">440110 · KOSDAQ</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">440110 · KOSDAQ</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div id="fadu-cur-price" style="font-size:28px;font-weight:700;line-height:1.1">-</div>
-          <div id="fadu-change" style="font-size:15px;margin-top:4px;color:var(--muted)">-</div>
+          <div id="fadu-cur-price" style="font-size:26px;font-weight:700;line-height:1.1">-</div>
+          <div id="fadu-change" style="font-size:13px;margin-top:4px;color:var(--muted)">-</div>
         </div>
       </div>
 
@@ -423,7 +411,7 @@
 
       <!-- 내 포지션 -->
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
           <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">98,115원</div></div>
           <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">1,300주</div></div>
@@ -434,11 +422,11 @@
 
       <!-- 3개월 차트 -->
       <div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
         <div style="position:relative;height:120px"><canvas id="fadu-chart"></canvas></div>
       </div>
 
-      <div id="fadu-status" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:right"></div>
+      <div id="fadu-status" style="font-size:11px;color:var(--muted);margin-top:10px;text-align:right"></div>
     </div>
     <!-- /파두 대시보드 -->
 
@@ -450,12 +438,13 @@
         <table class="mc-table">
           <thead>
             <tr>
-              <th style="text-align:center;width:50px;font-size:15px;font-weight:600;color:var(--text)">순위</th>
-              <th style="text-align:left;padding-left:14px;width:220px;font-size:15px;font-weight:600;color:var(--text)">종목명</th>
-              <th style="text-align:left;width:80px;font-size:15px;font-weight:600;color:var(--text)">거래소</th>
-              <th style="font-size:15px;font-weight:600;color:var(--text)">시가총액</th>
-              <th style="font-size:15px;font-weight:600;color:var(--text)">현재가</th>
-              <th style="font-size:15px;font-weight:600;color:var(--text)">등락률</th>
+              <th style="text-align:center;width:50px">순위</th>
+              <th style="text-align:left;padding-left:14px;width:220px">종목명</th>
+              <th style="text-align:left;width:80px">거래소</th>
+              <th>시가총액</th>
+              <th>현재가</th>
+              <th>등락률</th>
+              <th>YoY</th>
             </tr>
           </thead>
           <tbody id="mc-kr-tbody"></tbody>
@@ -474,15 +463,15 @@
              style="width:44px;height:44px;border-radius:10px;background:#fff;padding:4px;flex-shrink:0;object-fit:contain"
              onerror="this.outerHTML='<div style=&quot;width:44px;height:44px;border-radius:10px;background:var(--accent);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0&quot;>N</div>'">
         <div style="flex:1;min-width:0">
-          <div style="font-size:19px;font-weight:700;display:flex;align-items:center;gap:6px">
+          <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:6px">
             Nebius Group
-            <span id="nbis-market-state" style="font-size:13px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
+            <span id="nbis-market-state" style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-weight:400"></span>
           </div>
-          <div style="font-size:14px;color:var(--muted);margin-top:2px">NBIS · NASDAQ</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">NBIS · NASDAQ</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div id="nbis-cur-price" style="font-size:28px;font-weight:700;line-height:1.1">-</div>
-          <div id="nbis-change" style="font-size:15px;margin-top:4px;color:var(--muted)">-</div>
+          <div id="nbis-cur-price" style="font-size:26px;font-weight:700;line-height:1.1">-</div>
+          <div id="nbis-change" style="font-size:13px;margin-top:4px;color:var(--muted)">-</div>
         </div>
       </div>
 
@@ -510,7 +499,7 @@
       </div>
 
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">내 포지션</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
           <div class="fadu-stat"><div class="fadu-stat-label">평균단가</div><div class="fadu-stat-val">$134.60</div></div>
           <div class="fadu-stat"><div class="fadu-stat-label">보유수량</div><div class="fadu-stat-val">400주</div></div>
@@ -520,26 +509,27 @@
       </div>
 
       <div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600">3개월 주가 추이</div>
         <div style="position:relative;height:120px"><canvas id="nbis-chart"></canvas></div>
       </div>
-      <div id="nbis-status" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:right"></div>
+      <div id="nbis-status" style="font-size:11px;color:var(--muted);margin-top:10px;text-align:right"></div>
     </div>
 
     <div class="chart-card">
       <div class="chart-title">미국 시가총액 순위</div>
-      <div class="chart-subtitle">S&amp;P500 + NASDAQ100 구성종목 — 시가총액 기준 정렬</div>
+      <div class="chart-subtitle">미국 전체 상장 종목 — 시가총액 기준 실시간 정렬</div>
       <div id="mc-us-status" class="mc-status">⏳ 데이터 로딩 중...</div>
       <div id="mc-us-table" style="display:none;overflow-x:auto">
         <table class="mc-table">
           <thead>
             <tr>
-              <th style="text-align:center;width:50px;font-size:15px;font-weight:600;color:var(--text)">순위</th>
-              <th style="text-align:left;padding-left:14px;width:200px;font-size:15px;font-weight:600;color:var(--text)">종목명</th>
-              <th style="text-align:left;width:90px;font-size:15px;font-weight:600;color:var(--text)">거래소</th>
-              <th style="font-size:15px;font-weight:600;color:var(--text)">시가총액</th>
-              <th style="font-size:15px;font-weight:600;color:var(--text)">현재가</th>
-              <th style="font-size:15px;font-weight:600;color:var(--text)">등락률</th>
+              <th style="text-align:center;width:50px">순위</th>
+              <th style="text-align:left;padding-left:14px;width:200px">종목명</th>
+              <th style="text-align:left;width:90px">거래소</th>
+              <th>시가총액</th>
+              <th>현재가</th>
+              <th>등락률</th>
+              <th>YoY</th>
             </tr>
           </thead>
           <tbody id="mc-us-tbody"></tbody>
@@ -560,21 +550,18 @@ const WORKER_URL    = 'https://solitary-block-7836.silver1arrow.workers.dev';
 const FX_USD_KRW = 1471.32; // USD → KRW 환율
 
 const HOLDINGS = [
-  { name: 'MU',          sub: 'Micron Technology Inc',              currency: 'USD', avgCost: 223.98,  qty: 220,  currentPrice: 896.26  },
-  { name: 'SNDK',        sub: 'Sandisk Corp',                       currency: 'USD', avgCost: 266.47,  qty: 100,  currentPrice: 1589    },
-  { name: 'NBIS',        sub: 'Nebius Group NV',                    currency: 'USD', avgCost: 134.60,  qty: 400,  currentPrice: 207.89  },
-  { name: '파두',         sub: '440110',  yahooSym: '440110.KQ',    currency: 'KRW', avgCost: 98115,   qty: 1300, currentPrice: 115600  },
-  { name: 'KODEX AI전력핵심설비', sub: '487240', yahooSym: '487240.KS', currency: 'KRW', avgCost: 52123, qty: 800, currentPrice: 52005 },
-  { name: '두산에너빌리티', sub: '034020', yahooSym: '034020.KS',   currency: 'KRW', avgCost: 69014,   qty: 300,  currentPrice: 109700  },
-  { name: 'KODEX 미국나스닥100', sub: '379810', yahooSym: '379810.KS', currency: 'KRW', avgCost: 20684, qty: 1005, currentPrice: 29950 },
-  { name: 'KODEX 미국S&P500',   sub: '379800', yahooSym: '379800.KS', currency: 'KRW', avgCost: 19480, qty: 1005, currentPrice: 25575 },
-  { name: 'SOL AI반도체TOP2플러스', sub: '0167A0',                  currency: 'KRW', avgCost: 23726,   qty: 1000, currentPrice: 23480   },
-  { name: 'TIGER 구리실물',  sub: '160580', yahooSym: '160580.KS', currency: 'KRW', avgCost: 16341,   qty: 1045, currentPrice: 16895   },
-  { name: 'ACE KRX금현물',   sub: '411060', yahooSym: '411060.KS', currency: 'KRW', avgCost: 26610,   qty: 434,  currentPrice: 29805   },
-  { name: '산일전기',        sub: '062040', yahooSym: '062040.KS', currency: 'KRW', avgCost: 260000,  qty: 20,   currentPrice: 267500  },
-  { name: 'TIME 미국나스닥100채권혼합50액티브', sub: '0019K0',      currency: 'KRW', avgCost: 11823,   qty: 190,  currentPrice: 14390   },
-  { name: '인텔리안테크',    sub: '189300', yahooSym: '189300.KQ', currency: 'KRW', avgCost: 150000,  qty: 10,   currentPrice: 147000  },
-  { name: '원화',         sub: 'KRW',                               currency: 'KRW', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 527923 },
+  { name: 'MU',          sub: 'Micron Technology Inc',              currency: 'USD', avgCost: 223.98,  qty: 220,  currentPrice: 724.09  },
+  { name: 'SNDK',        sub: 'Sandisk Corp',                       currency: 'USD', avgCost: 266.47,  qty: 100,  currentPrice: 1407    },
+  { name: 'NBIS',        sub: 'Nebius Group NV',                    currency: 'USD', avgCost: 134.60,  qty: 400,  currentPrice: 219.89  },
+  { name: '파두',         sub: '440110',                             currency: 'KRW', avgCost: 98115,   qty: 1300, currentPrice: 100100  },
+  { name: '원화',         sub: 'KRW',                               currency: 'KRW', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 71261764 },
+  { name: '두산에너빌리티', sub: '034020',                           currency: 'KRW', avgCost: 70306,   qty: 500,  currentPrice: 110800  },
+  { name: 'KODEX 미국나스닥100', sub: '379810',                     currency: 'KRW', avgCost: 20684,   qty: 1005, currentPrice: 29075   },
+  { name: 'KODEX 미국S&P500',   sub: '379800',                     currency: 'KRW', avgCost: 19480,   qty: 1005, currentPrice: 25280   },
+  { name: 'TIGER 구리실물',      sub: '160580',                     currency: 'KRW', avgCost: 16320,   qty: 1060, currentPrice: 16580   },
+  { name: 'PLUS 글로벌원자력밸류체인', sub: '0007G0',               currency: 'KRW', avgCost: 17907,   qty: 1000, currentPrice: 16460   },
+  { name: 'ACE KRX금현물',       sub: '411060',                     currency: 'KRW', avgCost: 26610,   qty: 434,  currentPrice: 30495   },
+  { name: 'TIME 미국나스닥100채권혼합50액티브', sub: '0019K0',      currency: 'KRW', avgCost: 11823,   qty: 190,  currentPrice: 13975   },
   { name: '달러',         sub: 'USD',                               currency: 'USD', avgCost: null,    qty: null, currentPrice: null,   fixedValue: 106.35 },
 ];
 
@@ -904,113 +891,6 @@ function renderYearly(yearlyData, sp500, nasdaq, monthly) {
   tbody.innerHTML = rows;
 }
 
-// ─── 실시간 USD/KRW 환율 조회 ────────────────────────────────────────────────
-async function fetchLiveFxRate() {
-  // 1순위: Yahoo Finance via Worker (KRW=X)
-  try {
-    const res = await fetch(
-      `${WORKER_URL}/v7/finance/quote?symbols=KRW%3DX&fields=regularMarketPrice&formatted=false`,
-      { signal: abortFetch(6000) }
-    );
-    if (res.ok) {
-      const json = await res.json();
-      const rate = json.quoteResponse?.result?.[0]?.regularMarketPrice;
-      if (rate > 100) return rate;
-    }
-  } catch (_) {}
-  // 2순위: Frankfurter (ECB, CORS 허용)
-  try {
-    const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW', { signal: abortFetch(6000) });
-    if (res.ok) {
-      const j = await res.json();
-      if (j.rates?.KRW > 100) return j.rates.KRW;
-    }
-  } catch (_) {}
-  // 폴백: 하드코딩
-  return FX_USD_KRW;
-}
-
-// ─── 포트폴리오 실시간 시세 로드 ──────────────────────────────────────────────
-async function loadPortfolioPrices() {
-  const btn      = document.getElementById('port-refresh-btn');
-  const statusEl = document.getElementById('port-status');
-  if (btn) { btn.disabled = true; btn.textContent = '조회 중...'; }
-  if (statusEl) statusEl.textContent = '⏳ 시세 조회 중...';
-
-  const krItems = HOLDINGS.filter(h => h.currency === 'KRW' && h.qty != null);
-
-  // 한국 종목 (Yahoo 심볼 있는 것): Cloudflare Worker → Yahoo Finance 배치 조회
-  const krYahooItems = krItems.filter(h => h.yahooSym);
-  const krYahooPromise = (async () => {
-    if (!krYahooItems.length) return;
-    try {
-      const quotes = await fetchYahooMarketCap(krYahooItems.map(h => h.yahooSym));
-      quotes.forEach(q => {
-        const item = krYahooItems.find(h => h.yahooSym === q.symbol);
-        if (!item) return;
-        const best = getBestYahooPrice(q);
-        if (best.price) _portPrices[item.name] = best.price;
-      });
-    } catch (_) {}
-  })();
-
-  // 한국 종목 (Yahoo 심볼 없는 것, 펀드코드 등): Naver Finance fallback
-  const krNaverItems = krItems.filter(h => !h.yahooSym);
-  const krNaverPromises = krNaverItems.map(async h => {
-    try {
-      const d = await fetchNaverStockDetail(h.sub);
-      if (d.price != null) _portPrices[h.name] = d.price;
-    } catch (_) {}
-  });
-
-  // 미국 종목: Cloudflare Worker → Yahoo Finance 배치 조회
-  const usItems   = HOLDINGS.filter(h => h.currency === 'USD' && h.qty != null);
-  const usSymbols = usItems.map(h => h.name);
-  const usPromise = (async () => {
-    if (!usSymbols.length) return;
-    try {
-      const quotes = await fetchYahooMarketCap(usSymbols);
-      quotes.forEach(q => {
-        const best = getBestYahooPrice(q);
-        if (best.price) _portPrices[q.symbol] = best.price;
-      });
-    } catch (_) {}
-  })();
-
-  // 환율도 병렬 조회
-  const fxPromise = fetchLiveFxRate().then(r => { _liveFxRate = r; });
-
-  await Promise.allSettled([krYahooPromise, ...krNaverPromises, usPromise, fxPromise]);
-
-  // 새로 가져온 가격이 있으면 캐시 저장
-  const gotPrices = Object.keys(_portPrices).length > 0;
-  if (gotPrices) {
-    saveCache('portfolio_prices', { prices: { ..._portPrices }, fx: _liveFxRate });
-  } else {
-    // 전부 실패 → 캐시에서 복원
-    const c = loadCache('portfolio_prices');
-    if (c && c.prices) {
-      Object.assign(_portPrices, c.prices);
-      if (c.fx > 100) _liveFxRate = c.fx;
-    }
-  }
-
-  _portLoaded = true;
-  renderPortfolio();
-
-  const now = new Date().toLocaleTimeString('ko-KR');
-  const srcs = [];
-  if (krItems.length)  srcs.push('네이버');
-  if (usItems.length)  srcs.push('Yahoo');
-  if (gotPrices) {
-    if (statusEl) statusEl.textContent = `🔴 ${srcs.join('+')} 실시간 | $1 = ₩${fmt(Math.round(_liveFxRate))} | ${now} 기준`;
-  } else {
-    const c = loadCache('portfolio_prices');
-    if (statusEl) statusEl.textContent = `📦 캐시 | ${cacheAge(c?._ts)} | $1 = ₩${fmt(Math.round(_liveFxRate))}`;
-  }
-  if (btn) { btn.disabled = false; btn.textContent = '시세 갱신'; }
-}
-
 // ─── 탭 전환 ──────────────────────────────────────────────────────────────────
 function switchTab(tab) {
   const tabMap = {
@@ -1023,8 +903,6 @@ function switchTab(tab) {
     document.getElementById(div).style.display = t === tab ? '' : 'none';
     document.getElementById(btn).classList.toggle('active', t === tab);
   });
-  // 포트폴리오 탭 최초 진입 시 실시간 시세 로드
-  if (tab === 'portfolio' && !_portLoaded) loadPortfolioPrices();
   // 시가총액 탭 최초 진입 시 자동 로드
   if (tab === 'mc-kr' && !mcTabLoaded.kr) {
     mcTabLoaded.kr = true;
@@ -1038,18 +916,12 @@ function switchTab(tab) {
   }
 }
 
-// ─── 포트폴리오 실시간 시세 캐시 ─────────────────────────────────────────────
-const _portPrices  = {};   // name → 실시간 현재가
-let   _portLoaded  = false;
-let   _liveFxRate  = FX_USD_KRW; // 실시간 환율 (폴백: 하드코딩)
-
 // ─── 포트폴리오 렌더링 ────────────────────────────────────────────────────────
 function renderPortfolio() {
-  const fx = _liveFxRate;
+  const fx = FX_USD_KRW;
 
-  // 원화 환산 평가금액 계산 (실시간 시세 우선, 없으면 기준값)
+  // 원화 환산 평가금액 계산
   const enriched = HOLDINGS.map(h => {
-    const cp = (_portPrices[h.name] != null) ? _portPrices[h.name] : h.currentPrice;
     let valueKRW, value, gain, gainPct;
 
     if (h.fixedValue != null) {
@@ -1058,12 +930,12 @@ function renderPortfolio() {
       gain     = null;
       gainPct  = null;
     } else {
-      value    = h.qty * cp;
+      value    = h.qty * h.currentPrice;
       valueKRW = h.currency === 'USD' ? value * fx : value;
-      gain     = (cp - h.avgCost) * h.qty;
-      gainPct  = ((cp - h.avgCost) / h.avgCost) * 100;
+      gain     = (h.currentPrice - h.avgCost) * h.qty;
+      gainPct  = ((h.currentPrice - h.avgCost) / h.avgCost) * 100;
     }
-    return { ...h, currentPrice: cp, value, valueKRW, gain, gainPct };
+    return { ...h, value, valueKRW, gain, gainPct };
   });
 
   const totalKRW   = enriched.reduce((s, h) => s + h.valueKRW, 0);
@@ -1108,7 +980,7 @@ function renderPortfolio() {
       <td class="${h.gainPct != null ? cls(h.gainPct) : 'neu'}">${h.gainPct != null ? fmtPct(h.gainPct) : '-'}</td>
     </tr>`;
   }).join('') + `
-  <tr style="border-top:2px solid var(--border);font-weight:700;font-size:16px">
+  <tr style="border-top:2px solid var(--border);font-weight:700;font-size:14px">
     <td>합계</td>
     <td>-</td>
     <td>-</td>
@@ -1336,7 +1208,6 @@ const KR_BASE = [
   {symbol:'003410',name:'쌍용씨앤이',     market:'KOSPI', marketCap:1.50e12, stooq:'003410.kw', logo:'sscnc.co.kr'},
   {symbol:'238120',name:'SFA반도체',      market:'KOSDAQ',marketCap:1.50e12, stooq:'238120.kq', logo:'sfasemi.com'},
   {symbol:'064760',name:'티씨케이',        market:'KOSDAQ',marketCap:1.50e12, stooq:'064760.kq', logo:'tck.co.kr'},
-  {symbol:'440110',name:'파두',            market:'KOSDAQ',marketCap:1.00e12, stooq:'440110.kq', logo:'fadu.io'},
 ].sort((a, b) => b.marketCap - a.marketCap);
 
 // 미국 시가총액 상위 (순위·시가총액은 2025년 상반기 기준 내장값, USD)
@@ -1642,22 +1513,6 @@ function abortFetch(ms) {
   return ctrl.signal;
 }
 
-// ─── 시세 캐시 (localStorage) ────────────────────────────────────────────────
-function saveCache(key, data) {
-  try { localStorage.setItem('price_cache_' + key, JSON.stringify({ ...data, _ts: Date.now() })); } catch (_) {}
-}
-function loadCache(key) {
-  try { const r = localStorage.getItem('price_cache_' + key); return r ? JSON.parse(r) : null; } catch (_) { return null; }
-}
-function cacheAge(ts) {
-  if (!ts) return '시간 불명';
-  const m = Math.round((Date.now() - ts) / 60000);
-  if (m < 1)    return '방금 전';
-  if (m < 60)   return `${m}분 전`;
-  if (m < 1440) return `${Math.round(m / 60)}시간 전`;
-  return `${Math.round(m / 1440)}일 전`;
-}
-
 // Stooq에서 OHLCV 시세 조회 (CORS 없이 직접 호출 가능)
 async function fetchStooqPrices(items) {
   const symbols = items.map(s => s.stooq).join(',');
@@ -1687,10 +1542,11 @@ async function fetchStooqHistory(stooqSymbol, days = 90) {
 
 
 // Yahoo Finance 시세 조회 — Cloudflare Worker 경유 (서버사이드 → CORS 무관)
-// Yahoo Finance v7 quote (fields 필터 없이 → 52WeekChange 포함 전 필드 반환)
+// 401(세션 만료) 시 최대 2회 재시도
 async function fetchYahooMarketCap(yahooSymbols) {
-  const sym = yahooSymbols.join(',');
-  const url = `${WORKER_URL}/v7/finance/quote?symbols=${sym}&formatted=false`;
+  const sym    = yahooSymbols.join(',');
+  const fields = 'symbol,shortName,marketCap,regularMarketPrice,regularMarketChangePercent,postMarketPrice,postMarketChangePercent,preMarketPrice,preMarketChangePercent,marketState,regularMarketVolume,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,trailingPE,52WeekChange';
+  const url = `${WORKER_URL}/v7/finance/quote?symbols=${sym}&fields=${fields}&formatted=false`;
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -1727,8 +1583,8 @@ async function loadMarketCap(market) {
   statusEl.innerHTML = '⏳ 데이터 조회 중...';
   tableEl.style.display = 'none';
 
-  // 내장 기준 데이터로 즉시 표시 (skipArrow=true: localStorage에 임시 순위 기록 방지)
-  renderMcTable(market, base.map(s => ({ ...s, price: 0, change: 0 })), true);
+  // 내장 기준 데이터로 즉시 표시
+  renderMcTable(market, base.map(s => ({ ...s, price: 0, change: 0 })));
   tableEl.style.display = '';
   statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ 최신 시세 업데이트 중...</div>';
 
@@ -1926,12 +1782,6 @@ async function loadFaduDashboard() {
       const now = new Date().toLocaleTimeString('ko-KR');
       document.getElementById('fadu-status').textContent = `🔴 Yahoo Finance 실시간 | ${now} 기준`;
       yahooOk = true;
-      saveCache('fadu', {
-        price, diff: price - (q.regularMarketPreviousClose || price), changePct: change,
-        marketCap: q.marketCap, vol: q.regularMarketVolume,
-        prev: q.regularMarketPreviousClose, high52: q.fiftyTwoWeekHigh,
-        low52: q.fiftyTwoWeekLow, per: q.trailingPE, label: best.label
-      });
     }
   } catch (_) {}
 
@@ -1949,35 +1799,13 @@ async function loadFaduDashboard() {
         document.getElementById('fs-low52').textContent   = fmtKrw(naver.low52);
         document.getElementById('fs-per').textContent     = naver.per != null ? naver.per.toFixed(1) + 'x' : '-';
         applyMyPos(naver.price);
-        yahooOk = true;
 
         const now = new Date().toLocaleTimeString('ko-KR');
         document.getElementById('fadu-status').textContent = `🟡 네이버 금융 실시간 | ${now} 기준`;
-        saveCache('fadu', {
-          price: naver.price, diff: naver.change, changePct: naver.changePct,
-          marketCap: naver.marketCap, vol: naver.volume,
-          prev: naver.prevClose, high52: naver.high52, low52: naver.low52,
-          per: naver.per, label: '네이버 캐시'
-        });
+      } else {
+        document.getElementById('fadu-status').textContent = '❌ 시세 로드 실패';
       }
-    } catch (_) {}
-  }
-
-  // ── 3단계: 전부 실패 → localStorage 캐시 ─────────────────────────────────
-  if (!yahooOk) {
-    const c = loadCache('fadu');
-    if (c && c.price) {
-      applyPrice(c.price, c.diff, c.changePct, c.label || '캐시');
-      document.getElementById('fs-mktcap').textContent  = fmtCap(c.marketCap);
-      document.getElementById('fs-vol').textContent     = c.vol
-        ? Math.round(c.vol / 1000).toLocaleString('ko-KR') + '천주' : '-';
-      document.getElementById('fs-prev').textContent    = fmtKrw(c.prev);
-      document.getElementById('fs-high52').textContent  = fmtKrw(c.high52);
-      document.getElementById('fs-low52').textContent   = fmtKrw(c.low52);
-      document.getElementById('fs-per').textContent     = c.per != null ? c.per.toFixed(1) + 'x' : '-';
-      applyMyPos(c.price);
-      document.getElementById('fadu-status').textContent = `📦 캐시 | ${cacheAge(c._ts)} 기준`;
-    } else {
+    } catch (e) {
       document.getElementById('fadu-status').textContent = '❌ 시세 로드 실패';
     }
   }
@@ -2108,33 +1936,8 @@ async function loadNebiusDashboard() {
 
     applyMyPos(price);
     document.getElementById('nbis-status').textContent = `🔴 Yahoo Finance | ${new Date().toLocaleTimeString('ko-KR')} 기준`;
-    saveCache('nbis', {
-      price, diff, changePct: change,
-      marketCap: yq.marketCap, vol: yq.regularMarketVolume,
-      prev: yq.regularMarketPreviousClose, high52: yq.fiftyTwoWeekHigh,
-      low52: yq.fiftyTwoWeekLow, per: yq.trailingPE, label: best.label
-    });
   } else {
-    // 캐시 폴백
-    const c = loadCache('nbis');
-    if (c && c.price) {
-      const sign = (c.changePct || 0) >= 0 ? '+' : '';
-      document.getElementById('nbis-cur-price').textContent = '$' + c.price.toFixed(2);
-      document.getElementById('nbis-market-state').textContent = c.label || '캐시';
-      const chgEl = document.getElementById('nbis-change');
-      chgEl.textContent = `${sign}$${Math.abs(c.diff || 0).toFixed(2)} (${sign}${(c.changePct || 0).toFixed(2)}%)`;
-      chgEl.style.color = (c.changePct || 0) >= 0 ? 'var(--green)' : 'var(--red)';
-      document.getElementById('ns-mktcap').textContent = fmtCap(c.marketCap);
-      document.getElementById('ns-vol').textContent    = c.vol ? (c.vol >= 1e6 ? (c.vol/1e6).toFixed(1)+'M주' : Math.round(c.vol/1e3)+'K주') : '-';
-      document.getElementById('ns-prev').textContent   = fmtUSD(c.prev);
-      document.getElementById('ns-high52').textContent = fmtUSD(c.high52);
-      document.getElementById('ns-low52').textContent  = fmtUSD(c.low52);
-      document.getElementById('ns-per').textContent    = c.per != null ? c.per.toFixed(1) + 'x' : 'N/A';
-      applyMyPos(c.price);
-      document.getElementById('nbis-status').textContent = `📦 캐시 | ${cacheAge(c._ts)} 기준`;
-    } else {
-      document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
-    }
+    document.getElementById('nbis-status').textContent = '❌ 시세 로드 실패';
   }
 
   drawNbisChart();
@@ -2200,81 +2003,114 @@ async function loadUSMarketCap() {
   const statusEl = document.getElementById('mc-us-status');
   const tableEl  = document.getElementById('mc-us-table');
   statusEl.style.display = '';
-  statusEl.innerHTML = '⏳ 데이터 조회 중...';
+  statusEl.innerHTML = '⏳ 시가총액 순위 조회 중...';
   tableEl.style.display = 'none';
 
-  // 기준 데이터 즉시 표시 (skipArrow=true: localStorage에 임시 순위 기록 방지)
-  const stocks = US_BASE.map(s => ({ ...s, price: 0, change: 0 }));
-  renderMcTable('us', stocks, true);
-  tableEl.style.display = '';
-  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Yahoo Finance 조회 중...</div>';
+  const exMap = { 'NMS':'NASDAQ','NGM':'NASDAQ','NCM':'NASDAQ','NasdaqGS':'NASDAQ','NasdaqCM':'NASDAQ','NasdaqNM':'NASDAQ',
+                  'NYQ':'NYSE','NYSE':'NYSE','PCX':'NYSE Arca','ARCA':'NYSE Arca','ASE':'NYSE American','AMEX':'NYSE American' };
 
-  // 1순위: Cloudflare Worker → Yahoo Finance (50개씩 배치)
-  const symbols = US_BASE.map(s => s.symbol);
-  const BATCH = 50;
-  const allResults = [];
-  for (let i = 0; i < symbols.length; i += BATCH) {
-    const batch = await fetchYahooMarketCap(symbols.slice(i, i + BATCH));
-    allResults.push(...batch);
-    if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 200));
-  }
-  const results = allResults;
+  // 로고 참조용 (기존 US_BASE 활용)
+  const logoMap = {};
+  US_BASE.forEach(s => { if (s.logo) logoMap[s.symbol] = s.logo; });
 
-  if (results.length > 0) {
-    const yahooMap = {};
-    results.forEach(q => { yahooMap[q.symbol] = q; });
-    const exMap = { 'NMS':'NASDAQ','NGM':'NASDAQ','NCM':'NASDAQ','NasdaqGS':'NASDAQ','NasdaqCM':'NASDAQ','NasdaqNM':'NASDAQ',
-                    'NYQ':'NYSE','NYSE':'NYSE','PCX':'NYSE Arca','ARCA':'NYSE Arca','ASE':'NYSE American','AMEX':'NYSE American' };
-    const finalStocks = US_BASE.map(s => {
-      const q = yahooMap[s.symbol];
-      if (!q) return { ...s, price: 0, change: 0 };
+  const screenerBody = (offset) => ({
+    offset,
+    size: 100,
+    sortField: 'intradaymarketcap',
+    sortType: 'DESC',
+    quoteType: 'EQUITY',
+    topOperator: 'AND',
+    query: {
+      operator: 'AND',
+      operands: [{ operator: 'or', operands: [
+        { operator: 'EQ', operands: ['exchange', 'NMS'] },
+        { operator: 'EQ', operands: ['exchange', 'NYQ'] },
+        { operator: 'EQ', operands: ['exchange', 'NGM'] },
+        { operator: 'EQ', operands: ['exchange', 'NCM'] },
+        { operator: 'EQ', operands: ['exchange', 'PCX'] },
+      ]}]
+    },
+    userId: '', userIdType: 'guid'
+  });
+
+  try {
+    // 상위 300개 (3배치 × 100)
+    let allQuotes = [];
+    for (let offset = 0; offset < 300; offset += 100) {
+      try {
+        const res = await fetch(`${WORKER_URL}/v1/finance/screener`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(screenerBody(offset)),
+          signal: abortFetch(15000)
+        });
+        if (!res.ok) continue;
+        const json = await res.json();
+        const quotes = json?.finance?.result?.[0]?.quotes || [];
+        allQuotes = [...allQuotes, ...quotes];
+        if (quotes.length < 100) break;
+      } catch (_) {}
+      if (offset + 100 < 300) await new Promise(r => setTimeout(r, 300));
+    }
+
+    if (allQuotes.length === 0) throw new Error('스크리너 결과 없음');
+
+    const finalStocks = allQuotes.map(q => {
       const best = getBestYahooPrice(q);
       return {
-        ...s,
-        marketCap: q.marketCap || s.marketCap,
+        symbol:    q.symbol,
+        name:      q.shortName || q.longName || q.symbol,
+        marketCap: q.marketCap || 0,
         price:     best.price,
         change:    best.change,
-        exchange:  q.exchange ? (exMap[q.exchange] || s.exchange || '') : (s.exchange || ''),
+        yoy:       q['52WeekChange'] != null ? q['52WeekChange'] * 100 : null,
+        exchange:  exMap[q.exchange] || q.exchange || '',
+        logo:      logoMap[q.symbol] || null,
       };
     }).sort((a, b) => b.marketCap - a.marketCap);
 
     // NBIS 순위 계산
     const nbisAllIdx = finalStocks.findIndex(s => s.symbol === 'NBIS');
     if (nbisAllIdx >= 0) {
-      const nbisAllRank = nbisAllIdx + 1;
-      document.getElementById('nbis-rank-overall').innerHTML = `${nbisAllRank}위${getRankArrow('nbis_us_overall', nbisAllRank)}`;
+      document.getElementById('nbis-rank-overall').textContent = `${nbisAllIdx + 1}위`;
       const nasdaqOnly = finalStocks.filter(s => s.exchange === 'NASDAQ');
       const nbisNdIdx  = nasdaqOnly.findIndex(s => s.symbol === 'NBIS');
-      if (nbisNdIdx >= 0) {
-        const nbisNdRank = nbisNdIdx + 1;
-        document.getElementById('nbis-rank-nasdaq').innerHTML = `${nbisNdRank}위${getRankArrow('nbis_us_nasdaq', nbisNdRank)}`;
-      }
+      if (nbisNdIdx >= 0) document.getElementById('nbis-rank-nasdaq').textContent = `${nbisNdIdx + 1}위`;
     }
 
     renderMcTable('us', finalStocks);
+    tableEl.style.display = '';
     const now = new Date().toLocaleTimeString('ko-KR');
-    const label = [...new Set(results.map(q => getBestYahooPrice(q).label))].join('/') || '종가';
-    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 (${label}) &nbsp;|&nbsp; ${now} 기준</div>`;
+    const label = [...new Set(allQuotes.map(q => getBestYahooPrice(q).label).filter(Boolean))].join('/') || '실시간';
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 Yahoo Finance 실시간 (${label}) &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; 미국 전체 시총 상위 ${finalStocks.length}개</div>`;
     statusEl.style.display = '';
-  } else {
-    // 2순위: Stooq 폴백
-    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Stooq 조회 중...</div>';
-    const stooqMap = await fetchStooqPrices(US_BASE);
+
+    enrichUSYoY(finalStocks);
+
+  } catch (e) {
+    // 폴백: 기존 하드코딩 방식
+    statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⚠️ 스크리너 실패, 기존 방식으로 조회 중...</div>';
+    const symbols = US_BASE.map(s => s.symbol);
+    const results = await fetchYahooMarketCap(symbols);
     const now = new Date().toLocaleTimeString('ko-KR');
-    if (Object.keys(stooqMap).length > 0) {
-      US_BASE.forEach((s, i) => {
-        const sq = stooqMap[s.stooq.toLowerCase()];
-        if (!sq) return;
-        const close = parseFloat(sq.Close) || 0;
-        const open  = parseFloat(sq.Open)  || close;
-        stocks[i].price  = close;
-        stocks[i].change = (open > 0 && close > 0) ? (close - open) / open * 100 : 0;
-      });
-      stocks.sort((a, b) => b.marketCap - a.marketCap);
-      renderMcTable('us', stocks);
-      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📊 Stooq 시세 &nbsp;|&nbsp; ${now} 기준 &nbsp;
-        <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
+    if (results.length > 0) {
+      const yahooMap = {};
+      results.forEach(q => { yahooMap[q.symbol] = q; });
+      const fallbackStocks = US_BASE.map(s => {
+        const q = yahooMap[s.symbol];
+        if (!q) return { ...s, price: 0, change: 0, yoy: null };
+        const best = getBestYahooPrice(q);
+        return { ...s, marketCap: q.marketCap || s.marketCap, price: best.price, change: best.change,
+                 yoy: q['52WeekChange'] != null ? q['52WeekChange'] * 100 : null,
+                 exchange: q.exchange ? (exMap[q.exchange] || s.exchange || '') : (s.exchange || '') };
+      }).sort((a, b) => b.marketCap - a.marketCap);
+      renderMcTable('us', fallbackStocks);
+      tableEl.style.display = '';
+      statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📊 Yahoo Finance &nbsp;|&nbsp; ${now} 기준 (폴백)</div>`;
+      enrichUSYoY(fallbackStocks);
     } else {
+      renderMcTable('us', US_BASE.map(s => ({ ...s, price: 0, change: 0, yoy: null })).sort((a,b) => b.marketCap - a.marketCap));
+      tableEl.style.display = '';
       statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">📅 기준값 표시 중 &nbsp;
         <button onclick="retryMc('us')" style="padding:3px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">재시도</button></div>`;
     }
@@ -2282,44 +2118,36 @@ async function loadUSMarketCap() {
   }
 }
 
-// 네이버 금융 시가총액 순위 페이지 파싱 (이중 프록시, 실패시 빈 배열)
+// 네이버 금융 시가총액 순위 페이지 파싱
 async function fetchNaverMarketCap(sosok, page) {
   const url = `https://finance.naver.com/sise/sise_market_sum.naver?sosok=${sosok}&page=${page}`;
-  const proxies = [
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  ];
-  for (const proxyUrl of proxies) {
-    try {
-      const res = await fetch(proxyUrl, { signal: abortFetch(10000) });
-      if (!res.ok) continue;
-      const buf  = await res.arrayBuffer();
-      const html = new TextDecoder('euc-kr').decode(buf);
-      const doc  = new DOMParser().parseFromString(html, 'text/html');
-      const rows = doc.querySelectorAll('table.type_2 tbody tr');
-      const stocks = [];
-      rows.forEach(tr => {
-        const tds = tr.querySelectorAll('td');
-        if (tds.length < 7) return;
-        const rank = tds[0]?.textContent?.trim();
-        if (!rank || isNaN(parseInt(rank))) return;
-        const nameEl = tds[1]?.querySelector('a');
-        const name = nameEl?.textContent?.trim();
-        const code = nameEl?.href?.match(/code=(\d+)/)?.[1] || '';
-        const price = parseInt((tds[2]?.textContent || '').replace(/,/g, '')) || 0;
-        const changeRate = parseFloat((tds[4]?.textContent || '').replace('%', '')) || 0;
-        const marketCapUk = parseInt((tds[6]?.textContent || '').replace(/,/g, '')) || 0;
-        const marketCap = marketCapUk * 1e8; // 네이버는 억원 단위
-        const market = sosok === 0 ? 'KOSPI' : 'KOSDAQ';
-        if (name && code) {
-          const base = KR_BASE.find(b => b.symbol === code);
-          stocks.push({ symbol: code, name, market, marketCap, price, change: changeRate, logo: base?.logo });
-        }
-      });
-      if (stocks.length > 0) return stocks; // 성공
-    } catch (_) {}
-  }
-  return []; // 모든 프록시 실패 → 빈 배열 (throw 안 함)
+  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+  const res = await fetch(proxyUrl, { signal: abortFetch(10000) });
+  if (!res.ok) throw new Error('Naver API error: ' + res.status);
+  const buf = await res.arrayBuffer();
+  const html = new TextDecoder('euc-kr').decode(buf);
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const rows = doc.querySelectorAll('table.type_2 tbody tr');
+  const stocks = [];
+  rows.forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if (tds.length < 7) return;
+    const rank = tds[0]?.textContent?.trim();
+    if (!rank || isNaN(parseInt(rank))) return;
+    const nameEl = tds[1]?.querySelector('a');
+    const name = nameEl?.textContent?.trim();
+    const code = nameEl?.href?.match(/code=(\d+)/)?.[1] || '';
+    const price = parseInt((tds[2]?.textContent || '').replace(/,/g, '')) || 0;
+    const changeRate = parseFloat((tds[4]?.textContent || '').replace('%', '')) || 0;
+    const marketCapUk = parseInt((tds[6]?.textContent || '').replace(/,/g, '')) || 0;
+    const marketCap = marketCapUk * 1e8; // 네이버는 억원 단위
+    const market = sosok === 0 ? 'KOSPI' : 'KOSDAQ';
+    if (name && code) {
+      const base = KR_BASE.find(b => b.symbol === code);
+      stocks.push({ symbol: code, name, market, marketCap, price, change: changeRate, logo: base?.logo });
+    }
+  });
+  return stocks;
 }
 
 // 한국 시가총액 - 네이버 금융 실시간 시세
@@ -2336,140 +2164,100 @@ function isKrETF(name) {
   return KR_ETF_PREFIXES.some(p => u === p || u.startsWith(p + ' '));
 }
 
-// 한국 시총 순위 표 + 파두 순위 업데이트 공통 헬퍼
-function applyKrStocksToUI(stocks, statusHtml) {
-  renderMcTable('kr', stocks);
-  document.getElementById('mc-kr-table').style.display = '';
-  const faduAllIdx = stocks.findIndex(s => s.symbol === '440110');
-  if (faduAllIdx >= 0) {
-    const rank = faduAllIdx + 1;
-    document.getElementById('fadu-rank-overall').innerHTML = `${rank}위${getRankArrow('fadu_kr_overall', rank)}`;
-    const kdOnly = stocks.filter(s => s.market === 'KOSDAQ');
-    const kdIdx  = kdOnly.findIndex(s => s.symbol === '440110');
-    if (kdIdx >= 0) {
-      const kdr = kdIdx + 1;
-      document.getElementById('fadu-rank-kosdaq').innerHTML = `${kdr}위${getRankArrow('fadu_kr_kosdaq', kdr)}`;
-    }
-  }
-  const statusEl = document.getElementById('mc-kr-status');
-  statusEl.innerHTML = statusHtml;
-  statusEl.style.display = '';
-}
-
 async function loadKoreaMarketCap() {
   const statusEl = document.getElementById('mc-kr-status');
-  const tableEl  = document.getElementById('mc-kr-table');
+  const tableEl = document.getElementById('mc-kr-table');
   statusEl.style.display = '';
-  statusEl.innerHTML = '⏳ 데이터 조회 중...';
+  statusEl.innerHTML = '⏳ 네이버 금융에서 데이터 조회 중...';
   tableEl.style.display = 'none';
-
-  // 즉시 내장 기준 데이터 표시 (skipArrow=true: localStorage에 임시 순위 기록 방지)
-  renderMcTable('kr', KR_BASE.map(s => ({ ...s, price: 0, change: 0 })), true);
-  tableEl.style.display = '';
-  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ 네이버 금융 조회 중...</div>';
-
-  // ── 1순위: 네이버 금융 (KOSPI 5페이지 + KOSDAQ 2페이지, 전체 종목) ────────────
   try {
-    const settled = await Promise.allSettled([
-      fetchNaverMarketCap(0, 1), fetchNaverMarketCap(0, 2), fetchNaverMarketCap(0, 3),
-      fetchNaverMarketCap(0, 4), fetchNaverMarketCap(0, 5),
-      fetchNaverMarketCap(1, 1), fetchNaverMarketCap(1, 2),
+    // KOSPI 5페이지(~250개) + KOSDAQ 2페이지(~100개) 병렬 조회 후
+    // ETF 제거하고 시가총액 기준으로 합산 정렬 → 상위 200개
+    const [kp1, kp2, kp3, kp4, kp5, kd1, kd2] = await Promise.all([
+      fetchNaverMarketCap(0, 1),
+      fetchNaverMarketCap(0, 2),
+      fetchNaverMarketCap(0, 3),
+      fetchNaverMarketCap(0, 4),
+      fetchNaverMarketCap(0, 5),
+      fetchNaverMarketCap(1, 1),
+      fetchNaverMarketCap(1, 2),
     ]);
-    const [kp1, kp2, kp3, kp4, kp5, kd1, kd2] = settled.map(r => r.status === 'fulfilled' ? r.value : []);
     const kospiPool  = [...kp1, ...kp2, ...kp3, ...kp4, ...kp5].filter(s => !isKrETF(s.name));
     const kosdaqPool = [...kd1, ...kd2].filter(s => !isKrETF(s.name));
     const allSorted  = [...kospiPool, ...kosdaqPool].sort((a, b) => b.marketCap - a.marketCap);
-    const allStocks  = allSorted.slice(0, 200);
-    const failedCount = settled.filter(r => r.status === 'rejected' || (r.value && r.value.length === 0)).length;
+    const allStocks  = allSorted.slice(0, 200).map(s => ({ ...s, yoy: null }));
+    if (allStocks.length === 0) throw new Error('데이터 없음');
 
-    if (allStocks.length > 0) {
-      const now = new Date().toLocaleTimeString('ko-KR');
-      const krCount = allStocks.filter(s => s.market === 'KOSPI').length;
-      const kdCount = allStocks.filter(s => s.market === 'KOSDAQ').length;
-      const warnHtml = failedCount > 0
-        ? ` &nbsp;<span style="color:var(--orange)">⚠ ${failedCount}개 페이지 미로드</span>
-            <button onclick="retryMc('kr')" style="margin-left:6px;padding:2px 8px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px">재시도</button>`
-        : '';
-      applyKrStocksToUI(allStocks,
-        `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개${warnHtml}</div>`);
-      return;
+    // 파두 순위: slice 전 전체 기준 (ETF 필터 적용, 표와 동일 데이터)
+    const faduAllIdx = allSorted.findIndex(s => s.symbol === '440110');
+    if (faduAllIdx >= 0) {
+      document.getElementById('fadu-rank-overall').textContent = `${faduAllIdx + 1}위`;
+      const kdOnly   = allSorted.filter(s => s.market === 'KOSDAQ');
+      const faduKdIdx = kdOnly.findIndex(s => s.symbol === '440110');
+      if (faduKdIdx >= 0) document.getElementById('fadu-rank-kosdaq').textContent = `${faduKdIdx + 1}위`;
     }
-  } catch (_) {}
 
-  // ── 2순위: 네이버 실패 → Cloudflare Worker → Yahoo Finance (KR_BASE) ──────────
-  statusEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Yahoo Finance 조회 중 (fallback)...</div>';
-  const yahooSymbols = KR_BASE.map(s => s.market === 'KOSDAQ' ? s.symbol + '.KQ' : s.symbol + '.KS');
-  const BATCH = 20;
-  const allYahoo = [];
-  for (let i = 0; i < yahooSymbols.length; i += BATCH) {
-    try {
-      const res = await fetchYahooMarketCap(yahooSymbols.slice(i, i + BATCH));
-      allYahoo.push(...res);
-    } catch (_) {}
-    if (i + BATCH < yahooSymbols.length) await new Promise(r => setTimeout(r, 300));
-  }
-
-  if (allYahoo.length > 0) {
-    const yMap = {};
-    allYahoo.forEach(q => { yMap[q.symbol] = q; });
-    const stocks = KR_BASE.map((s, i) => {
-      const q = yMap[yahooSymbols[i]];
-      const yMktCap = q?.marketCap;
-      // KRW면 KR_BASE와 자릿수 유사(ratio<500), USD면 환율만큼 작아서 ratio>500
-      const useYMktCap = yMktCap && yMktCap > 0 && (s.marketCap / yMktCap) < 500;
-      return {
-        ...s,
-        marketCap: useYMktCap ? yMktCap : s.marketCap,
-        price:     q?.regularMarketPrice || 0,
-        change:    q?.regularMarketChangePercent || 0,
-      };
-    }).sort((a, b) => b.marketCap - a.marketCap);
-
+    renderMcTable('kr', allStocks);
+    tableEl.style.display = '';
     const now = new Date().toLocaleTimeString('ko-KR');
-    const krCount = stocks.filter(s => s.market === 'KOSPI').length;
-    const kdCount = stocks.filter(s => s.market === 'KOSDAQ').length;
-    applyKrStocksToUI(stocks,
-      `<div style="font-size:12px;color:var(--muted)">🟡 Yahoo Finance (fallback) &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; KOSPI ${krCount}개 + KOSDAQ ${kdCount}개</div>`);
-    return;
-  }
+    const krCount = allStocks.filter(s => s.market === 'KOSPI').length;
+    const kdCount = allStocks.filter(s => s.market === 'KOSDAQ').length;
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">🔴 네이버 금융 실시간 &nbsp;|&nbsp; ${now} 기준 &nbsp;|&nbsp; 시총 상위 200개 (KOSPI ${krCount}개 + KOSDAQ ${kdCount}개)</div>`;
 
-  // ── 전부 실패 ─────────────────────────────────────────────────────────────────
-  statusEl.innerHTML = `<div style="color:var(--red)">❌ 데이터 조회 실패</div>
-    <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
-  statusEl.style.display = '';
+    // 백그라운드: Yahoo Finance에서 YoY(52주 수익률) 보강
+    enrichKrYoY(allStocks);
+  } catch (e) {
+    statusEl.innerHTML = `<div style="color:var(--red)">❌ 네이버 금융 데이터 조회 실패: ${e.message}</div>
+      <button onclick="retryMc('kr')" style="margin-top:12px;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">재시도</button>`;
+    statusEl.style.display = '';
+  }
 }
 
-// ── 전일대비 순위 변동 화살표 (localStorage 기반) ──────────────────────────────
-function getRankArrow(key, currentRank) {
-  const today   = new Date().toDateString();
-  const dateKey = `rank_date_${key}`;
-  const todayK  = `rank_today_${key}`;
-  const prevK   = `rank_prev_${key}`;
-
-  const storedDate = localStorage.getItem(dateKey);
-
-  if (storedDate !== today) {
-    // 날짜가 바뀌면: 오늘 순위 → 전일 순위로 이동
-    const oldToday = parseInt(localStorage.getItem(todayK));
-    if (!isNaN(oldToday)) localStorage.setItem(prevK, String(oldToday));
-    localStorage.setItem(todayK, String(currentRank));
-    localStorage.setItem(dateKey, today);
-  } else {
-    // 당일 재로드: 오늘 순위만 갱신 (전일 순위는 유지)
-    localStorage.setItem(todayK, String(currentRank));
+// ── 미국 종목 YoY 보강 (Yahoo Finance 백그라운드) ────────────────────────────
+async function enrichUSYoY(stocks) {
+  const symbols = stocks.map(s => s.symbol);
+  const BATCH = 50;
+  let updated = false;
+  for (let i = 0; i < symbols.length; i += BATCH) {
+    try {
+      const results = await fetchYahooMarketCap(symbols.slice(i, i + BATCH));
+      results.forEach(q => {
+        const idx = stocks.findIndex(s => s.symbol === q.symbol);
+        const val = q['52WeekChange'] ?? q['fiftyTwoWeekChange'];
+        if (idx >= 0 && val != null) {
+          stocks[idx].yoy = val * 100;
+          updated = true;
+        }
+      });
+    } catch (_) {}
+    if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 400));
   }
+  if (updated) renderMcTable('us', stocks);
+}
 
-  const prevRank = parseInt(localStorage.getItem(prevK));
-  if (isNaN(prevRank)) return ''; // 전일 기록 없음 (첫 방문)
-
-  const delta = prevRank - currentRank; // 양수 = 순위 상승
-  if (delta > 0) return `<span style="color:#10b981;font-size:13px;font-weight:800;margin-left:5px">▲${delta}</span>`;
-  if (delta < 0) return `<span style="color:#ef4444;font-size:13px;font-weight:800;margin-left:5px">▼${Math.abs(delta)}</span>`;
-  return `<span style="color:var(--muted);font-size:13px;margin-left:5px">—</span>`;
+// ── 한국 종목 YoY 보강 (Yahoo Finance 백그라운드) ────────────────────────────
+async function enrichKrYoY(stocks) {
+  const symbols = stocks.map(s => s.market === 'KOSDAQ' ? s.symbol + '.KQ' : s.symbol + '.KS');
+  const BATCH = 50;
+  let updated = false;
+  for (let i = 0; i < symbols.length; i += BATCH) {
+    try {
+      const results = await fetchYahooMarketCap(symbols.slice(i, i + BATCH));
+      results.forEach(q => {
+        const idx = symbols.findIndex(s => s.toUpperCase() === (q.symbol || '').toUpperCase());
+        if (idx >= 0 && q['52WeekChange'] != null) {
+          stocks[idx].yoy = q['52WeekChange'] * 100;
+          updated = true;
+        }
+      });
+    } catch (_) {}
+    if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 400));
+  }
+  if (updated) renderMcTable('kr', stocks);
 }
 
 // ── 시가총액 테이블 렌더링 ─────────────────────────────────────────────────────
-function renderMcTable(market, stocks, skipArrow = false) {
+function renderMcTable(market, stocks) {
   const isKR = market === 'kr';
   const fmtCap = cap => {
     if (!cap || cap === 0) return '-';
@@ -2495,9 +2283,8 @@ function renderMcTable(market, stocks, skipArrow = false) {
     const price  = isKR ? `₩${fmt(s.price || 0)}` : `$${(s.price || 0).toFixed(2)}`;
     const chg    = s.change ?? 0;
     const isMyStock = (isKR && s.symbol === '440110') || (!isKR && s.symbol === 'NBIS');
-    const rankArrow = (isMyStock && !skipArrow) ? getRankArrow(isKR ? 'fadu_kr_overall' : 'nbis_us_overall', rank) : '';
     const rowStyle = isMyStock
-      ? 'background:rgba(139,92,246,0.18);border-top:2px solid rgba(139,92,246,0.7);border-bottom:2px solid rgba(139,92,246,0.7);'
+      ? 'background:rgba(167,139,250,0.08);border-top:1px solid rgba(167,139,250,0.4);border-bottom:1px solid rgba(167,139,250,0.4);'
       : '';
     const exLabel = isKR ? s.market : s.exchange;
     const exchangeCell = exLabel
@@ -2516,21 +2303,21 @@ function renderMcTable(market, stocks, skipArrow = false) {
     return `<tr style="${rowStyle}">
       <td style="text-align:center">
         <span class="rank-badge${isTop3 ? ' top3' : ''}">${rank}</span>
-        ${rankArrow}
       </td>
       <td style="text-align:left;padding-left:14px">
         <div style="display:flex;align-items:center;gap:10px;white-space:nowrap">
           ${logoHtml}
           <div>
-            <div style="font-size:15px;font-weight:600">${s.name || s.companyName || '-'}</div>
-            <div style="font-size:13px;color:var(--muted)">${s.symbol || ''}</div>
+            <div style="font-weight:600">${s.name || s.companyName || '-'}</div>
+            <div style="font-size:11px;color:var(--muted)">${s.symbol || ''}</div>
           </div>
         </div>
       </td>
       ${exchangeCell}
-      <td style="text-align:right;font-size:15px;font-weight:600">${fmtCap(s.marketCap)}</td>
-      <td style="text-align:right;font-size:15px;font-weight:600">${price}</td>
-      <td style="text-align:right;font-size:15px;font-weight:600" class="${cls(chg)}">${fmtPct(chg)}</td>
+      <td style="text-align:right">${fmtCap(s.marketCap)}</td>
+      <td style="text-align:right">${price}</td>
+      <td style="text-align:right" class="${cls(chg)}">${fmtPct(chg)}</td>
+      <td style="text-align:right" class="${s.yoy != null ? cls(s.yoy) : 'neu'}">${s.yoy != null ? fmtPct(s.yoy) : '-'}</td>
     </tr>`;
   }).join('');
 }
